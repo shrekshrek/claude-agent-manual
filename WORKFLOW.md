@@ -10,7 +10,7 @@
 1. [项目生命周期总览](#1-项目生命周期总览)
 2. [Plan Mode 与 /plan 命令](#2-plan-mode-与-plan-命令)
 3. [Phase 0：立项与规划](#3-phase-0立项与规划)
-4. [路径选择与架构设计](#4-路径选择与架构设计)
+4. [模块开发路径选择](#4-模块开发路径选择)
 5. [模块开发详解（Plan Mode 工作流）](#5-模块开发详解plan-mode-工作流)
 6. [Phase 3：集成与收尾](#6-phase-3集成与收尾)
 7. [会话管理：开始与结束仪式](#7-会话管理开始与结束仪式)
@@ -29,6 +29,7 @@ flowchart TD
     subgraph P0["Phase 0: 立项与规划"]
         Brainstorm["头脑风暴\nBrainstorming"] --> InitClaude["初始化项目文件\nCLAUDE.md + PROGRESS.md"]
         InitClaude --> Research["技术调研 (可选)\nContext7 / Crawl4AI"]
+        Research --> Arch["架构设计\ndocs/architecture.md"]
     end
 
     %% Phase 1+2: 模块开发循环
@@ -59,13 +60,13 @@ flowchart TD
     end
 
     %% 连接各阶段
-    Research --> ModuleStart
+    Arch --> ModuleStart
     Update -->|"所有模块完成"| TechVerify
 ```
 
 | 阶段 | 目标 | 核心指令 | 产出物 |
 |:---|:---|:---|:---|
-| Phase 0 | 明确做什么、不做什么 | Brainstorming | 需求清单、CLAUDE.md + PROGRESS.md 初版 |
+| Phase 0 | 明确做什么、怎么做 | Brainstorming → 架构设计 | CLAUDE.md + PROGRESS.md + docs/architecture.md |
 | Phase 1-2 | 逐模块设计与实现 | **路径 A**: Plan Mode → 执行 → 验证 → `/code-review` → `/commit` | 可运行的代码 + 测试 |
 |  |  | **路径 B**: `/feature-dev`（7 阶段一体化）→ 验证 → `/commit` |  |
 | Phase 3 | 全局验证与上线 | `/verify` → `/e2e` → `/review-pr` → 安全审查 → `/commit-push-pr` | PR、部署产物 |
@@ -126,7 +127,7 @@ Shift+Tab 循环：Normal → Plan → Auto-accept → Normal → ...
 ```
 1. Shift+Tab → 进入 Plan 模式
 2. 多轮对话讨论方案，反复打磨直到满意
-3. 让 Claude 把详细方案写入 docs/plan.md，同时更新 PROGRESS.md 的模块状态
+3. 让 Claude 把当前模块的方案写入 docs/plan.md，同时更新 PROGRESS.md 的模块状态
 4. (可选) 用其他模型审查 docs/plan.md ← 复杂功能建议做
 5. /compact                    ← 方案已持久化，压缩上下文为执行腾出空间
 6. Shift+Tab → 切到 Auto-accept 模式
@@ -143,7 +144,7 @@ Shift+Tab 循环：Normal → Plan → Auto-accept → Normal → ...
 > 直接让主 agent 整理更准确：
 >
 > ```
-> 把我们刚才讨论确定的方案整理成结构化文档，包含：
+> 把我们刚才讨论确定的当前模块方案整理成结构化文档，包含：
 > 需求确认、架构变更、实施步骤、测试策略、风险评估
 > 写入 docs/plan.md，然后更新 PROGRESS.md 的模块状态
 > ```
@@ -152,7 +153,7 @@ Shift+Tab 循环：Normal → Plan → Auto-accept → Normal → ...
 
 ## 3. Phase 0：立项与规划
 
-**目标**: 从模糊的想法收敛到可执行的需求清单。
+**目标**: 从模糊的想法收敛到可执行的需求清单和全局架构设计。
 
 ### 步骤 1：头脑风暴
 
@@ -173,7 +174,7 @@ Brainstorming 技能会引导你思考：
 
 ```
 根据刚才的头脑风暴结果，帮我创建：
-1. CLAUDE.md — 项目简介、功能范围、技术选型、模块清单、编码约定（< 300 行，参考第 11 节模板）
+1. CLAUDE.md — 项目简介、功能范围、技术选型（初版）、模块清单、编码约定（< 300 行，参考第 11 节模板）
 2. PROGRESS.md — 模块进度表、下次继续的入口
 ```
 
@@ -195,11 +196,62 @@ Brainstorming 技能会引导你思考：
 用 Context7 查一下 Next.js 15 和 Nuxt 4 在 SSR 性能上的差异
 ```
 
+### 步骤 4：架构设计
+
+`Shift+Tab` 进入 Plan Mode（参见第 2 节），讨论项目的全局架构：
+
+- 系统架构：模块间如何通信、数据如何流转
+- 数据模型：核心实体及其关系
+- 模块边界：每个模块的职责、对外接口
+- 关键决策：技术选型的 trade-off
+
+讨论中可借助以下技能：
+
+| 技能 | 用途 | 调用方式 |
+|:---|:---|:---|
+| **Backend Architect** | 服务拆分、API 全局设计 | 描述需求时自动触发 |
+| **Architect** agent | 系统设计、技术选型 | 涉及架构决策时自动触发 |
+| **Mermaid Diagrams** | 生成架构图、ER 图、时序图 | "用 mermaid-diagrams 画出系统架构图" |
+| **Architect Review** | 评审 SOLID/DDD 合规性 | "用 architect-review 审查方案"（复杂项目推荐） |
+
+讨论确认后，将方案文档化：
+
+```
+把我们确认的架构方案写入 docs/architecture.md，包含：
+1. 系统架构图（Mermaid）
+2. 数据模型（ER 图或表结构）
+3. 模块边界（职责、接口、依赖）
+4. 关键设计决策（trade-off 分析）
+```
+
+> `docs/architecture.md` 是项目的**全局设计详情文档**，整个项目生命周期内持续维护。
+> 与 CLAUDE.md 中的"架构概览"（一段话摘要）互补：CLAUDE.md 给方向，`docs/architecture.md` 给细节。
+
+### 全局设计 vs 模块方案
+
+Step 4 产出的 `docs/architecture.md` 是**全局设计**——解决"系统怎么搭"。进入模块开发后，每个模块还有自己的**实施方案**（`docs/plan.md`）——解决"这个模块怎么写"。两者都用 Plan Mode 讨论，但范围和辅助技能不同：
+
+| | 全局设计（Phase 0） | 模块方案（Phase 1-2 每模块） |
+|:---|:---|:---|
+| **解决的问题** | 系统怎么搭 | 这个模块怎么写 |
+| **讨论范围** | 系统架构、数据模型、模块边界、技术选型 | 表结构、API 路由、实现步骤、测试策略 |
+| **辅助技能** | Backend Architect、Mermaid Diagrams、Architect Review | 技术栈对应技能（自动触发）、/tdd、Testing Patterns |
+| **产出文件** | `docs/architecture.md`（持久） | `docs/plan.md`（临时，每模块覆盖） |
+
+> 模块方案讨论中，技术栈相关的技能会根据讨论内容自动触发（如 FastAPI Expert、Vercel React/Next.js、Supabase Best Practices 等）。完整的技能选用指南见 `README.md` 第 5 节。
+
+### Phase 0 完成检查清单
+
+- [ ] `CLAUDE.md` 已创建（项目简介、技术选型、模块清单、编码约定，< 300 行）
+- [ ] `PROGRESS.md` 已创建（模块进度表、下次继续的入口）
+- [ ] `docs/architecture.md` 已创建（架构图、数据模型、模块边界、设计决策）
+- [ ] `/commit` 提交当前状态
+
 ---
 
-## 4. 路径选择与架构设计
+## 4. 模块开发路径选择
 
-**目标**: 确定技术方案、模块边界、数据模型。
+**目标**: 为每个模块选择合适的开发路径。
 
 ```mermaid
 flowchart TD
@@ -223,7 +275,9 @@ flowchart TD
 
 ### 路径 A：Plan Mode 工作流
 
-用 Plan Mode 讨论方案（参见第 2 节），确认后将详细方案写入 `docs/plan.md`，更新 PROGRESS.md，然后按第 5 节的流程执行开发。
+用 Plan Mode 讨论方案（参见第 2 节），确认后将**当前模块**的详细实施方案写入 `docs/plan.md`，更新 PROGRESS.md，然后按第 5 节的流程执行开发。
+
+> `docs/plan.md` 是**当前模块的临时实施方案**，每开发一个新模块时覆盖更新。它的作用是跨越 `/compact` 的上下文桥梁——压缩后 Claude 可以重新读取该文件恢复方案细节。
 
 ### 路径 B：`/feature-dev` 工作流
 
@@ -253,26 +307,6 @@ flowchart TD
 3. 更新 PROGRESS.md 的模块状态和下次入口
 4. → 下一个模块（回到路径选择）或 → Phase 3 集成收尾
 ```
-
-### 生成架构图（推荐）
-
-无论走哪条路径，确认架构后建议生成可视化图：
-
-```
-用 mermaid-diagrams 画出系统架构图和模块依赖关系图
-```
-
-将生成的 Mermaid 代码保存在项目中（如 `docs/architecture.md`），方便后续查阅。
-
-### 模块开始前检查清单
-
-- [ ] `CLAUDE.md` 已包含技术选型和模块清单
-- [ ] `PROGRESS.md` 已包含模块进度表
-- [ ] 详细架构方案已写入 `docs/`（如 `docs/architecture.md`、`docs/plan.md`）
-- [ ] 模块拆分明确，每个模块有清晰的职责边界
-- [ ] 技术选型已确定并记录理由
-- [ ] 数据模型已设计（至少是草案）
-- [ ] `/commit` 提交当前状态
 
 ---
 
@@ -318,6 +352,8 @@ Shift+Tab → 进入 Plan 模式
 ```
 
 Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约束、要求 Claude 探查现有代码、对比不同方案，直到满意为止。这是规划环节最重要的部分。
+
+讨论中，技术栈相关的技能（如 FastAPI Expert、Vercel React/Next.js、Supabase Best Practices）和 Architect agent 会根据讨论内容自动触发，无需手动调用。全局 vs 模块的范围区分见第 3 节「全局设计 vs 模块方案」。
 
 `/plan` 可以作为**可选的起点**——如果你不确定从哪里开始讨论，先用 `/plan "模块描述"` 让 Claude 输出一份结构化方案，然后在 Plan 模式下针对这份方案逐项讨论修改。
 
@@ -611,7 +647,8 @@ Claude 会自动加载 `CLAUDE.md`，但 `PROGRESS.md` 需要显式要求读取�
 | **L1 自动** | 根目录 `CLAUDE.md` | 静态 | 每次会话自动加载 | 项目简介、技术选型、编码约定、常见错误 | **100-300 行** |
 | **L2 按需自动** | `src/xxx/CLAUDE.md` | 静态 | Claude 读取该目录文件时自动加载 | 模块级上下文：接口契约、数据模型、注意事项 | 每个 50-150 行 |
 | **L3 显式读取** | `PROGRESS.md` | 动态 | 会话开始时显式要求读取 | 模块进度表、下次继续的入口 | 不限 |
-| **L3 显式读取** | `docs/plan.md` 等 | 静态 | 需要时显式要求读取 | 详细方案、架构图、ADR | 不限 |
+| **L3 显式读取** | `docs/architecture.md` | 静态 | 需要时显式要求读取 | 全局设计详情：架构图、数据模型、模块边界、设计决策 | 不限 |
+| **L3 显式读取** | `docs/plan.md` | 临时 | 需要时显式要求读取 | 当前模块的实施方案（每个模块覆盖更新） | 不限 |
 | **L4 全局经验** | `/learn` 产出 | 静态 | 持久化到 `~/.claude/`，自动生效 | 经验教训、踩坑记录 | — |
 
 > **核心分离原则**：静态配置（CLAUDE.md）与动态进度（PROGRESS.md）分开存放。
@@ -640,10 +677,10 @@ Claude 会自动加载 `CLAUDE.md`，但 `PROGRESS.md` 需要显式要求读取�
 
 不适合放入 CLAUDE.md 的内容（应外移）：
 - 模块进度和状态 → `PROGRESS.md`
-- 详细的实施方案 → `docs/plan.md`
+- 全局设计详情（架构图、数据模型、模块边界、设计决策） → `docs/architecture.md`
+- 当前模块的实施方案 → `docs/plan.md`（临时，每模块覆盖）
 - 架构决策记录 (ADR) → `docs/adr/` 目录
 - 模块接口契约 → `src/xxx/CLAUDE.md`
-- 架构图 → `docs/architecture.md`
 
 **PROGRESS.md（动态进度，每次会话更新）**：
 1. **每次会话结束时更新**: 标记完成的模块，更新下次入口
@@ -667,8 +704,8 @@ Claude 会自动加载 `CLAUDE.md`，但 `PROGRESS.md` 需要显式要求读取�
 │   └── payments/
 │       └── CLAUDE.md      ← 模块级：支付模块的接口契约、数据模型、注意事项
 └── docs/
-    ├── plan.md            ← 当前迭代的详细实施方案
-    ├── architecture.md    ← 架构图（Mermaid）
+    ├── architecture.md    ← 全局设计详情（架构图、数据模型、模块边界、设计决策）
+    ├── plan.md            ← 当前模块的实施方案（临时，每模块覆盖更新）
     └── adr/               ← 架构决策记录
 ```
 
@@ -787,7 +824,8 @@ Shift+Tab → 切回 Plan 模式
 | 部署 | Vercel | 与 Next.js 无缝集成 |
 
 ## 架构概览
-前后端分离，Next.js API Routes + Supabase。详见 `docs/architecture.md`。
+前后端分离，Next.js API Routes + Supabase。
+详细架构图、数据模型和模块边界见 `docs/architecture.md`。
 
 ## 模块清单
 - auth/ — 用户认证（注册、登录、Token 刷新）
@@ -808,8 +846,8 @@ Shift+Tab → 切回 Plan 模式
 
 ## 参考文档
 - `PROGRESS.md` — 模块进度和当前入口
-- `docs/plan.md` — 当前迭代的详细实施方案
-- `docs/architecture.md` — 系统架构图
+- `docs/architecture.md` — 全局设计详情（架构图、数据模型、模块边界、设计决策）
+- `docs/plan.md` — 当前模块的实施方案
 - `docs/adr/` — 架构决策记录
 ```
 

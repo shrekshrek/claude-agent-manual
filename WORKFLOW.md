@@ -17,7 +17,7 @@
 8. [跨会话持续性策略](#8-跨会话持续性策略)
 9. [质量关卡速查](#9-质量关卡速查)
 10. [故障排除与常见陷阱](#10-故障排除与常见陷阱)
-11. [附录：CLAUDE.md 模板](#11-附录claudemd-模板)
+11. [附录：项目模板](#11-附录项目模板)
 
 ---
 
@@ -27,7 +27,7 @@
 flowchart TD
     %% Phase 0
     subgraph P0["Phase 0: 立项与规划"]
-        Brainstorm["头脑风暴\nBrainstorming"] --> InitClaude["初始化 CLAUDE.md"]
+        Brainstorm["头脑风暴\nBrainstorming"] --> InitClaude["初始化项目文件\nCLAUDE.md + PROGRESS.md"]
         InitClaude --> Research["技术调研 (可选)\nContext7 / Crawl4AI"]
     end
 
@@ -45,7 +45,7 @@ flowchart TD
         FD --> Verify2["验证功能"]
         Verify2 --> Commit2["/commit"]
 
-        Commit1 --> Update["更新 CLAUDE.md 进度"]
+        Commit1 --> Update["更新 PROGRESS.md"]
         Commit2 --> Update
         Update -->|"还有模块"| ModuleStart
     end
@@ -65,7 +65,7 @@ flowchart TD
 
 | 阶段 | 目标 | 核心指令 | 产出物 |
 |:---|:---|:---|:---|
-| Phase 0 | 明确做什么、不做什么 | Brainstorming | 需求清单、CLAUDE.md 初版 |
+| Phase 0 | 明确做什么、不做什么 | Brainstorming | 需求清单、CLAUDE.md + PROGRESS.md 初版 |
 | Phase 1-2 | 逐模块设计与实现 | **路径 A**: Plan Mode → 执行 → 验证 → `/code-review` → `/commit` | 可运行的代码 + 测试 |
 |  |  | **路径 B**: `/feature-dev`（7 阶段一体化）→ 验证 → `/commit` |  |
 | Phase 3 | 全局验证与上线 | `/verify` → `/e2e` → `/review-pr` → 安全审查 → `/commit-push-pr` | PR、部署产物 |
@@ -126,15 +126,15 @@ Shift+Tab 循环：Normal → Plan → Auto-accept → Normal → ...
 ```
 1. Shift+Tab → 进入 Plan 模式
 2. 多轮对话讨论方案，反复打磨直到满意
-3. 让 Claude 把讨论结论整理成结构化文档并写入 CLAUDE.md
-4. (可选) 用其他模型审查方案 ← 复杂功能建议做
+3. 让 Claude 把详细方案写入 docs/plan.md，同时更新 PROGRESS.md 的模块状态
+4. (可选) 用其他模型审查 docs/plan.md ← 复杂功能建议做
 5. /compact                    ← 方案已持久化，压缩上下文为执行腾出空间
 6. Shift+Tab → 切到 Auto-accept 模式
 7. Claude 按方案执行
 ```
 
 > **可选：用独立模型审查方案**
-> 复杂功能建议在执行前，将 CLAUDE.md 中的方案交给另一个 AI（Gemini、Codex 等）以 Staff Engineer 角色审查。
+> 复杂功能建议在执行前，将 `docs/plan.md` 中的方案交给另一个 AI（Gemini、Codex 等）以 Staff Engineer 角色审查。
 > 同一个模型讨论出的方案容易有确认偏误，独立模型能从不同角度发现盲点。
 > 简单功能无需此步骤。
 
@@ -145,7 +145,7 @@ Shift+Tab 循环：Normal → Plan → Auto-accept → Normal → ...
 > ```
 > 把我们刚才讨论确定的方案整理成结构化文档，包含：
 > 需求确认、架构变更、实施步骤、测试策略、风险评估
-> 然后写入 CLAUDE.md
+> 写入 docs/plan.md，然后更新 PROGRESS.md 的模块状态
 > ```
 
 ---
@@ -167,18 +167,21 @@ Brainstorming 技能会引导你思考：
 
 **产出**: 一份需求要点列表。
 
-### 步骤 2：初始化 CLAUDE.md
+### 步骤 2：初始化项目文件
 
 头脑风暴结束后，立即让 Claude 创建项目的 `CLAUDE.md`：
 
 ```
-根据刚才的头脑风暴结果，帮我在项目根目录创建 CLAUDE.md，
-包含：项目简介、功能范围、模块拆分初稿、进度跟踪表
+根据刚才的头脑风暴结果，帮我创建：
+1. CLAUDE.md — 项目简介、功能范围、技术选型、模块清单、编码约定（< 300 行，参考第 11 节模板）
+2. PROGRESS.md — 模块进度表、下次继续的入口
 ```
 
 > **为什么这一步不能跳过？**
 > `CLAUDE.md` 是 Claude Code 的"长期记忆"。每次新会话自动加载。
 > 没有它，下次开会话你得从头解释一遍背景。
+>
+> **为什么分两个文件？** CLAUDE.md 放不常变的静态配置（技术选型、编码约定），PROGRESS.md 放频繁变化的动态进度（模块状态、当前入口）。这样 CLAUDE.md 保持稳定精简，进度更新不会污染它。详见 8.1 节。
 
 ### 步骤 3：技术调研（可选）
 
@@ -203,7 +206,7 @@ flowchart TD
     Start["开始开发一个模块"] --> Q{"需要深度理解\n现有代码?"}
     Q -->|"否 (新项目/小改动)"| PM["Plan Mode 讨论方案\n→ 执行 → 验证 → /code-review"]
     Q -->|"是 (大量现有代码)"| FD["/feature-dev 7 阶段\n探索 → 架构 → 实现 → 审查"]
-    PM --> Commit["/commit → 更新 CLAUDE.md"]
+    PM --> Commit["/commit → 更新 PROGRESS.md"]
     FD --> Verify["验证功能"] --> Commit
     Commit -->|"还有模块"| Start
     Commit -->|"全部完成"| P3["Phase 3: 集成与收尾"]
@@ -220,7 +223,7 @@ flowchart TD
 
 ### 路径 A：Plan Mode 工作流
 
-用 Plan Mode 讨论方案（参见第 2 节），确认后写入 CLAUDE.md，然后按第 5 节的流程执行开发。
+用 Plan Mode 讨论方案（参见第 2 节），确认后将详细方案写入 `docs/plan.md`，更新 PROGRESS.md，然后按第 5 节的流程执行开发。
 
 ### 路径 B：`/feature-dev` 工作流
 
@@ -247,7 +250,7 @@ flowchart TD
 ```
 1. 验证：运行 dev server / 测试套件，确认功能正常工作
 2. /commit
-3. 更新 CLAUDE.md 的进度
+3. 更新 PROGRESS.md 的模块状态和下次入口
 4. → 下一个模块（回到路径选择）或 → Phase 3 集成收尾
 ```
 
@@ -263,7 +266,9 @@ flowchart TD
 
 ### 模块开始前检查清单
 
-- [ ] `CLAUDE.md` 已包含完整的架构信息
+- [ ] `CLAUDE.md` 已包含技术选型和模块清单
+- [ ] `PROGRESS.md` 已包含模块进度表
+- [ ] 详细架构方案已写入 `docs/`（如 `docs/architecture.md`、`docs/plan.md`）
 - [ ] 模块拆分明确，每个模块有清晰的职责边界
 - [ ] 技术选型已确定并记录理由
 - [ ] 数据模型已设计（至少是草案）
@@ -297,7 +302,7 @@ flowchart TD
     CR --> Fix{"有问题?"}
     Fix -->|"是"| FixIt["修复"] --> CR
     Fix -->|"否"| Commit["/commit"]
-    Commit --> Update["更新 CLAUDE.md 进度"]
+    Commit --> Update["更新 PROGRESS.md"]
     Update -->|"下一个模块"| A
 ```
 
@@ -317,10 +322,11 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 `/plan` 可以作为**可选的起点**——如果你不确定从哪里开始讨论，先用 `/plan "模块描述"` 让 Claude 输出一份结构化方案，然后在 Plan 模式下针对这份方案逐项讨论修改。
 
 > **注意**: Plan 模式下的讨论和 `/plan` 的输出都只存在于当前会话中，不会自动保存到项目文件。
-> 方案确认后，让 Claude 把关键决策写入 CLAUDE.md：
+> 方案确认后，持久化到项目文件：
 >
 > ```
-> 把刚才确认的实施方案要点更新到 CLAUDE.md 的"当前进度"部分
+> 把刚才确认的实施方案写入 docs/plan.md（详细版），
+> 然后更新 PROGRESS.md：标记当前模块为"方案已确认"，记录下次入口
 > ```
 
 #### 第二步：执行开发
@@ -371,10 +377,10 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 /commit
 ```
 
-然后更新 `CLAUDE.md`：
+然后更新 `PROGRESS.md`：
 
 ```
-帮我更新 CLAUDE.md 的进度，标记订单模块的 CRUD API 已完成
+帮我更新 PROGRESS.md，标记订单模块 CRUD API 已完成，更新"下次继续的入口"
 ```
 
 ### 5.3 模块间的衔接
@@ -385,7 +391,7 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 |:---|:---|:---|
 | < 50% | 继续当前会话 | 直接开始下一个模块 |
 | 50-70% | `/compact` 后继续 | 压缩上下文，保留关键信息再继续 |
-| > 70%，或下个模块复杂 | 开新会话 | `/commit` → 更新 CLAUDE.md → 开新会话 |
+| > 70%，或下个模块复杂 | 开新会话 | `/commit` → 更新 PROGRESS.md → 开新会话 |
 | 刚跑完 `/feature-dev` | 开新会话 | 7-9 个 subagent 报告已填满上下文 |
 
 > **如何查看上下文用量？** 观察 Claude Code 状态栏的 token 计数。
@@ -400,9 +406,9 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 **开新会话时**：
 
 ```bash
-# 确保当前会话已 /commit 并更新了 CLAUDE.md
+# 确保当前会话已 /commit 并更新了 PROGRESS.md
 claude                        # 开新会话
-请阅读 CLAUDE.md，从支付模块开始
+请阅读 CLAUDE.md 和 PROGRESS.md，从支付模块开始
 ```
 
 ### 5.4 复杂模块：使用 `/feature-dev`
@@ -443,7 +449,7 @@ claude                        # 开新会话
 Plan Mode 讨论可能消耗 20-30% 上下文。讨论完毕后：
 
 ```
-1. 让 Claude 把方案写入 CLAUDE.md
+1. 让 Claude 把详细方案写入 docs/plan.md，更新 PROGRESS.md
 2. /compact               ← 方案已持久化，可以安全压缩
 3. Shift+Tab → Auto-accept 模式开始执行
 ```
@@ -521,12 +527,12 @@ Claude Code 的每次会话是独立的。通过固定的"仪式"保证跨会话
 flowchart TD
     Start["开始工作"] --> Q{"有之前的会话?"}
     Q -->|"是"| Resume["claude -c 或 --resume\n恢复会话上下文"]
-    Q -->|"否"| New["新会话\n请阅读 CLAUDE.md"]
+    Q -->|"否"| New["新会话\n请阅读 CLAUDE.md + PROGRESS.md"]
     Resume --> Dev["正常开发循环\nPlan → 执行 → 验证 → /code-review → /commit"]
     New --> Dev
     Dev --> End["准备结束会话"]
     End --> C1["/commit\n确保代码已提交"]
-    C1 --> C2["更新 CLAUDE.md\n进度 + 下次入口"]
+    C1 --> C2["更新 PROGRESS.md\n进度 + 下次入口"]
     C2 --> C3["(可选) /update-docs\n(可选) /learn"]
 ```
 
@@ -547,10 +553,10 @@ claude --resume abc123       # 恢复指定 ID 的会话
 如果是全新会话：
 
 ```
-请阅读 CLAUDE.md，告诉我当前项目进度和下一步应该做什么
+请阅读 CLAUDE.md 和 PROGRESS.md，告诉我当前项目进度和下一步应该做什么
 ```
 
-Claude 会自动加载 `CLAUDE.md`，但显式要求它总结一遍可以确保理解一致。
+Claude 会自动加载 `CLAUDE.md`，但 `PROGRESS.md` 需要显式要求读取。两者结合才能恢复完整上下文。
 
 ### 会话结束仪式
 
@@ -558,37 +564,38 @@ Claude 会自动加载 `CLAUDE.md`，但显式要求它总结一遍可以确保�
 
 ```
 必做: /commit                        ← 确保代码已提交
-必做: 更新 CLAUDE.md 的进度和下次入口   ← 为下次会话留交接信息
+必做: 更新 PROGRESS.md               ← 模块状态 + 下次继续的入口
+可选: 更新 CLAUDE.md                 ← 仅当发现新的编码约定或常见错误时
 可选: /update-docs                   ← 有较多文件变更时更新代码地图
 可选: /learn                         ← 踩到坑或发现重要经验时提取教训
 ```
 
-更新 CLAUDE.md 的示例：
+更新 PROGRESS.md 的示例：
 
 ```
-帮我更新 CLAUDE.md：
+帮我更新 PROGRESS.md：
 - 标记模块 B 已完成
 - 在"下次继续的入口"写上：从模块 C（支付集成）开始，先设计 Webhook 处理流程
-- 记录本次发现的注意事项（如果有）
 ```
+
+> **CLAUDE.md 什么时候需要更新？** 只有发现新的编码约定（如 "日期库统一用 date-fns"）或 Claude 常犯的错误时才更新 CLAUDE.md。模块进度的变化只更新 PROGRESS.md。
 
 ### 会话仪式速查卡
 
 ```
-┌──────────────────────────────────────────────────┐
-│             恢复会话（优先）                       │
-│  claude -c  或  claude --resume                   │
-├──────────────────────────────────────────────────┤
-│             新会话开始                            │
-│  "请阅读 CLAUDE.md，总结进度和下一步"              │
-├──────────────────────────────────────────────────┤
-│             正常开发                              │
-│  Plan模式讨论 → 执行 → 验证 → /code-review        │
-│  → /commit                                       │
-├──────────────────────────────────────────────────┤
-│             会话结束                              │
-│  /commit → 更新CLAUDE.md → (可选)/update-docs/learn│
-└──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│             恢复会话（优先）                           │
+│  claude -c  或  claude --resume                       │
+├──────────────────────────────────────────────────────┤
+│             新会话开始                                │
+│  "请阅读 CLAUDE.md 和 PROGRESS.md，总结进度和下一步"   │
+├──────────────────────────────────────────────────────┤
+│             正常开发                                  │
+│  Plan模式讨论 → 执行 → 验证 → /code-review → /commit  │
+├──────────────────────────────────────────────────────┤
+│             会话结束                                  │
+│  /commit → 更新 PROGRESS.md → (可选)/update-docs/learn │
+└──────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -597,46 +604,84 @@ Claude 会自动加载 `CLAUDE.md`，但显式要求它总结一遍可以确保�
 
 ### 8.1 持久化层级
 
-项目的"记忆"分三层，从自动到手动：
+项目的"记忆"分为**静态配置**和**动态进度**两类，再按加载可靠性分层：
 
-| 层级 | 载体 | 加载方式 | 内容 |
-|:---|:---|:---|:---|
-| **L1 自动** | `CLAUDE.md` | 每次会话自动加载 | 项目概况、架构、进度、下次入口 |
-| **L2 半自动** | `/learn` 产出 | 持久化到 `~/.claude/` | 经验教训、踩坑记录 |
-| **L3 手动** | `docs/` 目录下的文档 | 需要时手动让 Claude 读取 | 架构图、API 文档、设计决策记录 |
+| 层级 | 载体 | 性质 | 加载方式 | 内容 | 行数建议 |
+|:---|:---|:---|:---|:---|:---|
+| **L1 自动** | 根目录 `CLAUDE.md` | 静态 | 每次会话自动加载 | 项目简介、技术选型、编码约定、常见错误 | **100-300 行** |
+| **L2 按需自动** | `src/xxx/CLAUDE.md` | 静态 | Claude 读取该目录文件时自动加载 | 模块级上下文：接口契约、数据模型、注意事项 | 每个 50-150 行 |
+| **L3 显式读取** | `PROGRESS.md` | 动态 | 会话开始时显式要求读取 | 模块进度表、下次继续的入口 | 不限 |
+| **L3 显式读取** | `docs/plan.md` 等 | 静态 | 需要时显式要求读取 | 详细方案、架构图、ADR | 不限 |
+| **L4 全局经验** | `/learn` 产出 | 静态 | 持久化到 `~/.claude/`，自动生效 | 经验教训、踩坑记录 | — |
 
-### 8.2 CLAUDE.md 的维护原则
+> **核心分离原则**：静态配置（CLAUDE.md）与动态进度（PROGRESS.md）分开存放。
+> - **CLAUDE.md** = 宪法（constitution）：技术选型、编码约定、常见错误。项目生命周期内很少改动。
+> - **PROGRESS.md** = 工作日志（logbook）：模块状态、当前入口。每次会话都可能更新。
+>
+> **为什么不把进度放 CLAUDE.md？**
+> 1. Claude Code 在加载 CLAUDE.md 时注入 *"this context may or may not be relevant"*——频繁变化的进度信息会稀释稳定的编码指令
+> 2. Boris Cherny 的 CLAUDE.md 仅约 100 行（~2.5k tokens），只放 conventions 和 mistakes，不放进度
+> 3. Anthropic 官方长周期 Agent 指南明确分离：`CLAUDE.md`（静态）+ `claude-progress.txt`（动态）
 
-1. **保持精简**: 控制在 500 行以内，过长会稀释关键信息（附录模板约 60 行，留足业务内容空间）
-2. **结构稳定**: 使用固定的 section 结构，每次只更新变化的部分
-3. **指令明确**: "下次继续的入口"要写得像交接文档——下一个人（或下一次的你）能直接上手
-4. **定期清理**: 已完成的模块细节可以精简为一行记录，不需要保留完整的步骤
+### 8.2 CLAUDE.md 与 PROGRESS.md 的维护原则
+
+**CLAUDE.md（静态配置，< 300 行）**：
+1. **保持精简**: 控制在 **300 行以内**。超出说明有内容应该外移
+2. **很少改动**: 只在发现新的编码约定或 Claude 常犯的错误时更新
+3. **不放进度**: 模块状态、当前入口等动态信息全部放 PROGRESS.md
+
+适合放入 CLAUDE.md 的内容：
+- 项目简介（一段话）
+- 技术选型表（框架、数据库、认证等）
+- 模块清单（只列名称和职责，不含状态）
+- 编码约定（如 "日期库统一用 date-fns，不用 moment"）
+- Claude 常犯的错误（如 "不要在 Server Component 中用 useState"）
+- 参考文档指针（docs/plan.md、docs/architecture.md 等）
+
+不适合放入 CLAUDE.md 的内容（应外移）：
+- 模块进度和状态 → `PROGRESS.md`
+- 详细的实施方案 → `docs/plan.md`
+- 架构决策记录 (ADR) → `docs/adr/` 目录
+- 模块接口契约 → `src/xxx/CLAUDE.md`
+- 架构图 → `docs/architecture.md`
+
+**PROGRESS.md（动态进度，每次会话更新）**：
+1. **每次会话结束时更新**: 标记完成的模块，更新下次入口
+2. **入口要具体**: "下次继续的入口"写得像交接文档——下一个人（或下一次的你）能直接上手
+3. **定期清理**: 已完成的模块细节精简为一行记录，不保留完整步骤
+4. **会话开始时显式读取**: 新会话需要用 `请阅读 PROGRESS.md` 显式加载（不会自动加载）
 
 ### 8.3 大型项目的分级策略
 
-当项目超过 5 个模块时，考虑分级管理：
+当项目超过 5 个模块时，使用子目录 CLAUDE.md 分散上下文：
 
 ```
 项目根目录/
-├── CLAUDE.md              ← 全局：架构、模块清单、总进度
+├── CLAUDE.md              ← 静态配置：项目简介、技术选型、编码约定（< 300 行）
+├── PROGRESS.md            ← 动态进度：模块状态表、下次继续的入口
 ├── src/
 │   ├── auth/
-│   │   └── CLAUDE.md      ← 模块级：认证模块的细节上下文
+│   │   └── CLAUDE.md      ← 模块级：认证模块的接口契约、数据模型、注意事项
 │   ├── orders/
-│   │   └── CLAUDE.md      ← 模块级：订单模块的细节上下文
+│   │   └── CLAUDE.md      ← 模块级：订单模块的接口契约、数据模型、注意事项
 │   └── payments/
-│       └── CLAUDE.md      ← 模块级：支付模块的细节上下文
+│       └── CLAUDE.md      ← 模块级：支付模块的接口契约、数据模型、注意事项
 └── docs/
-    └── architecture.md    ← 架构图（Mermaid）
+    ├── plan.md            ← 当前迭代的详细实施方案
+    ├── architecture.md    ← 架构图（Mermaid）
+    └── adr/               ← 架构决策记录
 ```
 
-根目录的 `CLAUDE.md` 保持全局视角，模块级的 `CLAUDE.md` 放该模块的详细上下文。
+> **为什么用子目录 CLAUDE.md 而不是在根 CLAUDE.md 中写指针？**
+> Claude Code 内置了**子目录自动加载机制**——当 Claude 读取某个目录下的文件时，该目录的 CLAUDE.md 会自动加载到上下文中。这是**确定性的**（由系统保证），比在根 CLAUDE.md 中写 "需要时请读取 xxx" 更可靠（后者依赖 Claude 自行判断，Vercel 的测试数据显示仅约 56% 的情况会被执行）。
 
-开发某个模块时：
+开发某个模块时，只需让 Claude 进入对应目录工作，模块级 CLAUDE.md 会自动生效：
 
 ```
-请阅读根目录 CLAUDE.md 了解全局，然后阅读 src/payments/CLAUDE.md 了解支付模块详情
+开始开发支付模块，请先阅读 src/payments/ 下的代码了解当前状态
 ```
+
+根目录 CLAUDE.md 始终自动加载提供全局视角，`src/payments/CLAUDE.md` 在 Claude 进入该目录时自动加载提供模块细节。
 
 ---
 
@@ -711,15 +756,17 @@ Shift+Tab → 切回 Plan 模式
 | 陷阱 | 症状 | 对策 |
 |:---|:---|:---|
 | **One-shotting** | 试图一次做完所有模块，上下文耗尽，留下半成品 | 每次只做一个功能，做完提交再做下一个 |
-| **Premature Completion** | Claude 看到已有部分功能就宣布完成，实际还有很多没做 | 在 CLAUDE.md 中维护明确的功能清单和状态标记 |
-| **Context Exhaustion** | 项目后期 Claude 要读太多文件，上下文不够用 | 及时 `/compact`；保持 CLAUDE.md 精简；用模块级 CLAUDE.md 分散上下文（详见 5.5） |
+| **Premature Completion** | Claude 看到已有部分功能就宣布完成，实际还有很多没做 | 在 PROGRESS.md 中维护明确的功能清单和状态标记 |
+| **Context Exhaustion** | 项目后期 Claude 要读太多文件，上下文不够用 | 及时 `/compact`；保持 CLAUDE.md 精简；用模块级 CLAUDE.md 分散上下文（详见 8.3） |
 | **MCP 上下文挤占** | 启用过多 MCP 后，200k 上下文缩减到 70k | 在项目配置中用 `disabledMcpServers` 禁用不需要的 MCP |
 
 ---
 
-## 11. 附录：CLAUDE.md 模板
+## 11. 附录：项目模板
 
-新项目初始化时推荐的 `CLAUDE.md` 结构：
+新项目初始化时需要创建两个文件。
+
+### CLAUDE.md 模板（静态配置，目标 < 300 行）
 
 ```markdown
 # [项目名称]
@@ -728,57 +775,69 @@ Shift+Tab → 切回 Plan 模式
 一句话描述项目目标。
 
 ## 功能范围
-### 包含 (In Scope)
-- 功能 A
-- 功能 B
-
-### 不包含 (Out of Scope)
-- 功能 X（计划 v2）
-- 功能 Y（不做）
+- 包含：功能 A、功能 B、功能 C
+- 不包含：功能 X（计划 v2）、功能 Y（不做）
 
 ## 技术选型
 | 类别 | 选择 | 理由 |
 |:---|:---|:---|
-| 框架 | | |
-| 数据库 | | |
-| 认证 | | |
-| 部署 | | |
+| 框架 | Next.js 15 | 团队熟悉 React 生态 |
+| 数据库 | Supabase | MVP 优先开发速度 |
+| 认证 | Supabase Auth | 与数据库一体化 |
+| 部署 | Vercel | 与 Next.js 无缝集成 |
 
 ## 架构概览
-（简要描述，可引用 docs/architecture.md 中的 Mermaid 图）
+前后端分离，Next.js API Routes + Supabase。详见 `docs/architecture.md`。
 
-## 模块拆分与进度
-| 模块 | 状态 | 会话 | 备注 |
-|:---|:---|:---|:---|
-| 数据库 Schema | 已完成 | Session 1 | |
-| 用户认证 | 已完成 | Session 2 | |
-| 订单系统 | 进行中 | Session 3 | CRUD 已完成，缺分页 |
-| 支付集成 | 未开始 | - | |
-| 管理后台 | 未开始 | - | |
+## 模块清单
+- auth/ — 用户认证（注册、登录、Token 刷新）
+- orders/ — 订单系统（CRUD、分页、状态流转）
+- payments/ — 支付集成（Stripe 一次性支付、订阅、Webhook）
+- admin/ — 管理后台（用户管理、订单管理）
 
-## 当前进度
-### 已完成
-- 数据库 Schema 设计与迁移
-- 用户注册/登录 API
-
-### 进行中
-- 订单系统：CRUD API 已完成，正在实现分页查询
-
-## 下次继续的入口
-从订单模块的分页查询开始。参考 src/orders/CLAUDE.md 中的 API 契约。
-注意：分页使用 cursor-based 而非 offset-based（见 ADR-3）。
-
-## 架构决策记录 (ADR)
-### ADR-1: 选择 Next.js 而非 Nuxt
-原因：团队更熟悉 React 生态...
-
-### ADR-2: 使用 Supabase 而非自建 PostgreSQL
-原因：MVP 阶段优先开发速度...
-
-### ADR-3: 分页使用 cursor-based
-原因：数据量大时 offset 性能差...
+## 编码约定
+- 日期库统一用 date-fns，不用 moment
+- 分页统一用 cursor-based，不用 offset
+- API 响应统一用 { success, data, error } 格式
+- 环境变量清单见 .env.example
 
 ## 注意事项
 - Stripe Webhook 需要配置公网 URL（开发时用 ngrok）
-- 环境变量清单见 .env.example
+- Supabase RLS 策略必须在 Schema 迁移中一并创建
+- 不要在 Server Component 中使用 useState/useEffect
+
+## 参考文档
+- `PROGRESS.md` — 模块进度和当前入口
+- `docs/plan.md` — 当前迭代的详细实施方案
+- `docs/architecture.md` — 系统架构图
+- `docs/adr/` — 架构决策记录
 ```
+
+### PROGRESS.md 模板（动态进度，每次会话更新）
+
+```markdown
+# 项目进度
+
+## 模块状态
+| 模块 | 状态 | 备注 |
+|:---|:---|:---|
+| 数据库 Schema | 已完成 | |
+| 用户认证 | 已完成 | |
+| 订单系统 | 进行中 | CRUD 完成，缺分页 |
+| 支付集成 | 未开始 | |
+| 管理后台 | 未开始 | |
+
+## 下次继续的入口
+从订单模块的分页查询开始。参考 `src/orders/CLAUDE.md` 中的接口契约。
+分页使用 cursor-based（见 `docs/adr/003-cursor-pagination.md`）。
+
+## 已完成的里程碑
+- 2024-01-15: 数据库 Schema 设计与迁移
+- 2024-01-16: 用户注册/登录 API + JWT
+- 2024-01-17: 订单 CRUD API
+```
+
+> **两个文件的分工**：
+> - `CLAUDE.md`（~40 行模板）：每次会话自动加载，放不常变的配置和约定
+> - `PROGRESS.md`（~20 行模板）：每次会话开始时显式读取，放频繁变化的进度
+> - 合计约 60 行模板，留足业务内容空间

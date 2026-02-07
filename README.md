@@ -345,10 +345,9 @@ cp -r skills/* ~/.agents/skills/
 cd ~ && rm -rf /tmp/install_skills
 ```
 
-### 第四步：安装 Anthropic 官方技能 (11 个)
+### 第四步：安装 Anthropic 官方技能 (8 个) + 官方插件 (3 个)
 
-来源: [anthropics/skills](https://github.com/anthropics/skills)
-安装: canvas-design, docx, frontend-design, mcp-builder, pdf, pptx, xlsx, skill-creator, feature-dev, pr-review-toolkit, commit-commands
+**技能 (Skills)** — 来源: [anthropics/skills](https://github.com/anthropics/skills)
 
 ```bash
 # 文档处理套件
@@ -364,14 +363,16 @@ npx skills add anthropics/skills --skill frontend-design -g -y
 # 开发工具
 npx skills add anthropics/skills --skill mcp-builder -g -y
 npx skills add anthropics/skills --skill skill-creator -g -y
+```
 
-# 工作流插件 (feature-dev, pr-review-toolkit, commit-commands)
-# 这三个插件使用 commands/ 和 agents/ 结构，可能需要通过
-# Claude Code 插件市场安装: /plugin marketplace add anthropics/skills
-# 如果市场方式失败，尝试:
-npx skills add anthropics/skills --skill feature-dev -g -y
-npx skills add anthropics/skills --skill pr-review-toolkit -g -y
-npx skills add anthropics/skills --skill commit-commands -g -y
+**插件 (Plugins)** — 来源: [anthropics/claude-code](https://github.com/anthropics/claude-code/tree/main/plugins)
+
+这三个是 Claude Code 插件（不是 Skills），需要用 `claude plugin install` 安装：
+
+```bash
+claude plugin install feature-dev
+claude plugin install pr-review-toolkit
+claude plugin install commit-commands
 ```
 
 ### 第五步：安装厂商最佳实践 (5 个)

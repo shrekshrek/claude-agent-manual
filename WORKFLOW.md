@@ -10,8 +10,8 @@
 1. [项目生命周期总览](#1-项目生命周期总览)
 2. [Plan Mode 与 /plan 命令](#2-plan-mode-与-plan-命令)
 3. [Phase 0：立项与规划](#3-phase-0立项与规划)
-4. [Phase 1：架构设计](#4-phase-1架构设计)
-5. [Phase 2：模块开发（核心循环）](#5-phase-2模块开发核心循环)
+4. [路径选择与架构设计](#4-路径选择与架构设计)
+5. [模块开发详解（Plan Mode 工作流）](#5-模块开发详解plan-mode-工作流)
 6. [Phase 3：集成与收尾](#6-phase-3集成与收尾)
 7. [会话管理：开始与结束仪式](#7-会话管理开始与结束仪式)
 8. [跨会话持续性策略](#8-跨会话持续性策略)
@@ -23,19 +23,53 @@
 
 ## 1. 项目生命周期总览
 
-```
-Phase 0          Phase 1          Phase 2              Phase 3
-立项与规划  →  架构设计  →  模块开发(循环)  →  集成与收尾
-                                ↑       |
-                                +-------+
-                              (每个模块迭代)
+```mermaid
+flowchart TD
+    %% Phase 0
+    subgraph P0["Phase 0: 立项与规划"]
+        direction TB
+        Brainstorm["头脑风暴\nBrainstorming"] --> InitClaude["初始化 CLAUDE.md"]
+        InitClaude --> Research["技术调研 (可选)\nContext7 / Crawl4AI"]
+    end
+
+    %% Phase 1+2: 模块开发循环
+    subgraph DevLoop["Phase 1-2: 模块开发 (每个模块独立选择路径)"]
+        direction TB
+        ModuleStart{"选择开发方式"}
+
+        ModuleStart -->|"常规模块\n新项目 / 小改动"| PlanMode["Plan Mode 讨论方案"]
+        PlanMode --> Execute["执行开发\n直接执行 或 /tdd"]
+        Execute --> Verify1["验证功能"]
+        Verify1 --> CodeReview["/code-review"]
+        CodeReview --> Commit1["/commit"]
+
+        ModuleStart -->|"复杂模块\n大量现有代码"| FD["/feature-dev\n7 阶段: 探索→架构→实现→审查"]
+        FD --> Verify2["验证功能"]
+        Verify2 --> Commit2["/commit"]
+
+        Commit1 --> Update["更新 CLAUDE.md 进度"]
+        Commit2 --> Update
+        Update -->|"还有模块"| ModuleStart
+    end
+
+    %% Phase 3
+    subgraph P3["Phase 3: 集成与收尾"]
+        direction TB
+        E2E["/e2e 端到端测试"] --> PRReview["/review-pr 深度审查"]
+        PRReview --> Security["安全审查"]
+        Security --> Ship["/commit-push-pr"]
+    end
+
+    %% 连接各阶段
+    Research --> ModuleStart
+    Update -->|"所有模块完成"| E2E
 ```
 
 | 阶段 | 目标 | 核心指令 | 产出物 |
 |:---|:---|:---|:---|
 | Phase 0 | 明确做什么、不做什么 | Brainstorming | 需求清单、CLAUDE.md 初版 |
-| Phase 1 | 确定技术方案与模块拆分 | `/feature-dev` 或 `/plan` + Mermaid | 架构图、模块清单、CLAUDE.md 完善版 |
-| Phase 2 | 逐模块实现 | Plan 模式讨论 → 执行 → 验证 → `/code-review` → `/commit` | 可运行的代码 + 测试 |
+| Phase 1-2 | 逐模块设计与实现 | **路径 A**: Plan Mode → 执行 → 验证 → `/code-review` → `/commit` | 可运行的代码 + 测试 |
+|  |  | **路径 B**: `/feature-dev`（7 阶段一体化）→ 验证 → `/commit` |  |
 | Phase 3 | 全局验证与上线 | `/e2e` → `/review-pr` → `/commit-push-pr` | PR、部署产物 |
 
 ---
@@ -95,9 +129,15 @@ Shift+Tab 循环：Normal → Plan → Auto-accept → Normal → ...
 1. Shift+Tab → 进入 Plan 模式
 2. 多轮对话讨论方案，反复打磨直到满意
 3. 让 Claude 把讨论结论整理成结构化文档并写入 CLAUDE.md
-4. Shift+Tab → 切到 Auto-accept 模式
-5. Claude 按方案执行
+4. (可选) 用其他模型审查方案 ← 复杂功能建议做
+5. Shift+Tab → 切到 Auto-accept 模式
+6. Claude 按方案执行
 ```
+
+> **可选：用独立模型审查方案**
+> 复杂功能建议在执行前，将 CLAUDE.md 中的方案交给另一个 AI（Gemini、Codex 等）以 Staff Engineer 角色审查。
+> 同一个模型讨论出的方案容易有确认偏误，独立模型能从不同角度发现盲点。
+> 简单功能无需此步骤。
 
 > **为什么不用 `/plan` 整理讨论结论？**
 > `/plan` 会启动独立的 planner 子 agent 重新生成方案，而不是整理你们的讨论结论，内容可能与讨论结果有出入。
@@ -155,39 +195,66 @@ Brainstorming 技能会引导你思考：
 
 ---
 
-## 4. Phase 1：架构设计
+## 4. 路径选择与架构设计
 
 **目标**: 确定技术方案、模块边界、数据模型。
 
-### 路径选择
+```mermaid
+flowchart TD
+    Start["开始开发一个模块"] --> Q{"需要深度理解\n现有代码?"}
+    Q -->|"否 (新项目/小改动)"| PM["Plan Mode 讨论方案\n→ 执行 → 验证 → /code-review"]
+    Q -->|"是 (大量现有代码)"| FD["/feature-dev 7 阶段\n探索 → 架构 → 实现 → 审查"]
+    PM --> Commit["/commit → 更新 CLAUDE.md"]
+    FD --> Verify["验证功能"] --> Commit
+    Commit -->|"还有模块"| Start
+    Commit -->|"全部完成"| P3["Phase 3: 集成与收尾"]
+```
 
-| 项目规模 | 推荐方式 | 说明 |
+### 两条路径
+
+| 场景 | 推荐路径 | 说明 |
 |:---|:---|:---|
-| 小型 (3-5 个文件) | `/plan "项目描述"` | 轻量，直接输出步骤 |
-| 中大型 (5+ 个文件) | `/feature-dev "项目描述"` | 重量级，7 阶段自动流程 |
+| 新项目、或小型功能（3-5 个文件） | **Plan Mode 工作流** | 多轮讨论方案 → 执行 → 验证 → 审查 → 提交 |
+| 已有代码库上的大功能（5+ 个文件） | **`/feature-dev` 工作流** | 7 阶段一体化：代码探索 → 架构 → 实现 → 审查 |
 
-### 使用 `/feature-dev` 做架构
+**选择关键**：`/feature-dev` 的独有价值在**代码探索**——它会派 2-3 个 agent 并行深入分析现有代码，发现可复用的模式和架构层次。如果项目已有大量代码需要理解，用 `/feature-dev`；如果是新项目或代码量不大，Plan Mode 讨论更灵活高效。
 
-```
-/feature-dev "实现一个 SaaS 订阅管理平台，支持 Stripe 支付、多租户、RBAC 权限"
-```
+### 路径 A：Plan Mode 工作流
 
-**你需要介入的节点**：
-- Phase 1 (Discovery): AI 追问时如实回答需求细节
-- Phase 3 (Clarifying Questions): 确认关键歧义
-- Phase 4 (Architecture): **在 2-3 种方案中选择一种**
+用 Plan Mode 讨论方案（参见第 2 节），确认后写入 CLAUDE.md，然后按第 5 节的流程执行开发。
 
-**关键动作**：方案确认后，让 Claude 把架构决策写回 `CLAUDE.md`：
+### 路径 B：`/feature-dev` 工作流
 
 ```
-把刚才确认的架构方案更新到 CLAUDE.md 中，包含：
-- 技术选型及理由
-- 模块拆分与依赖关系
-- 数据库 Schema 概要
-- API 路由规划
+/feature-dev "实现 Stripe 支付集成，支持一次性支付和订阅，包含 Webhook 处理"
+```
+
+**`/feature-dev` 的 7 个阶段**：
+
+| 阶段 | 做什么 | 你需要做什么 |
+|:---|:---|:---|
+| Phase 1 Discovery | 确认需求 | 回答追问 |
+| Phase 2 Exploration | 2-3 个 agent 并行扫描代码库 | 等待（这是独有价值） |
+| Phase 3 Clarifying | 列出所有歧义 | 逐一确认 |
+| Phase 4 Architecture | 2-3 个 architect agent 出方案 | **选择一种方案** |
+| Phase 5 Implementation | 按方案实现 | 等待或介入 |
+| Phase 6 Quality Review | 3 个 reviewer agent 并行审查 | 决定修复哪些问题 |
+| Phase 7 Summary | 总结产出物 | 确认 |
+
+**`/feature-dev` 完成后**：
+
+`/feature-dev` 已包含实现和审查，但不包含验证、提交和进度持久化。完成后手动补充，然后直接进入下一个模块或 Phase 3：
+
+```
+1. 验证：运行 dev server / 测试套件，确认功能正常工作
+2. /commit
+3. 更新 CLAUDE.md 的进度
+4. → 下一个模块（回到路径选择）或 → Phase 3 集成收尾
 ```
 
 ### 生成架构图（推荐）
+
+无论走哪条路径，确认架构后建议生成可视化图：
 
 ```
 用 mermaid-diagrams 画出系统架构图和模块依赖关系图
@@ -195,7 +262,7 @@ Brainstorming 技能会引导你思考：
 
 将生成的 Mermaid 代码保存在项目中（如 `docs/architecture.md`），方便后续查阅。
 
-### Phase 1 结束检查清单
+### 模块开始前检查清单
 
 - [ ] `CLAUDE.md` 已包含完整的架构信息
 - [ ] 模块拆分明确，每个模块有清晰的职责边界
@@ -205,9 +272,9 @@ Brainstorming 技能会引导你思考：
 
 ---
 
-## 5. Phase 2：模块开发（核心循环）
+## 5. 模块开发详解（Plan Mode 工作流）
 
-**目标**: 按模块逐个实现，每个模块走完整的开发-测试-审查流程。
+**目标**: 按模块逐个实现，每个模块走完整的开发-测试-审查流程。本节详解路径 A（Plan Mode）的具体操作。路径 B（`/feature-dev`）的操作详见第 4 节。
 
 ### 5.1 核心原则
 
@@ -220,20 +287,19 @@ Brainstorming 技能会引导你思考：
 
 每个模块按以下顺序执行：
 
-```
-┌─────────────────────────────────────────────────┐
-│  Plan 模式讨论方案          ← 规划（不动代码）    │
-│       ↓                                         │
-│  Auto-accept 模式执行       ← 实现 + 测试        │
-│       ↓                                         │
-│  验证功能正确               ← 运行、测试、确认     │
-│       ↓                                         │
-│  /code-review              ← 质量检查            │
-│       ↓                                         │
-│  /commit                   ← 提交                │
-│       ↓                                         │
-│  更新 CLAUDE.md 进度        ← 持久化状态          │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Plan 模式讨论方案\n(Shift+Tab, 不动代码)"] -->|"方案确认, Shift+Tab"| B{"核心业务逻辑?"}
+    B -->|"支付/权限/精度等"| TDD["/tdd 测试驱动开发"]
+    B -->|"CRUD/页面/配置等"| Direct["Auto-accept 直接执行"]
+    TDD --> V["验证功能正确\n(dev server / 测试套件)"]
+    Direct --> V
+    V --> CR["/code-review"]
+    CR --> Fix{"有问题?"}
+    Fix -->|"是"| FixIt["修复"] --> CR
+    Fix -->|"否"| Commit["/commit"]
+    Commit --> Update["更新 CLAUDE.md 进度"]
+    Update -->|"下一个模块"| A
 ```
 
 #### 第一步：Plan 模式讨论方案
@@ -262,7 +328,13 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 
 方案确认后，`Shift+Tab` 切到 Auto-accept 模式，让 Claude 按讨论好的方案实现并编写测试。
 
-**核心业务逻辑建议用 `/tdd` 替代直接执行**：支付计算、权限判断、数据转换等边界多且出错代价高的功能，用 `/tdd` 能迫使 Claude 先定义接口契约和边界条件，再写实现。
+大多数功能直接执行即可。以下场景建议用 `/tdd` 替代：
+
+| 场景 | 选择 | 原因 |
+|:---|:---|:---|
+| CRUD、页面、配置等常规功能 | 直接执行 | 逻辑清晰，计划中已包含测试策略 |
+| 支付计算、权限判断、数据转换等核心逻辑 | `/tdd` | 边界多、出错代价高，先写测试能定义清楚接口契约 |
+| 涉及精度、并发、状态机等容易出错的逻辑 | `/tdd` | 先定义期望行为，再写实现去满足 |
 
 ```
 /tdd "订单金额计算：商品单价×数量，满减优惠，运费阶梯计算，精度到分"
@@ -308,16 +380,18 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 
 ```
 我已完成订单模块，现在开始开发支付模块。
-请先阅读 CLAUDE.md 了解整体架构，然后 /plan "实现支付模块"
+请先阅读 CLAUDE.md 了解整体架构，然后我们讨论支付模块的实现方案。
 ```
 
-### 5.4 复杂模块的处理
+### 5.4 复杂模块：使用 `/feature-dev`
 
-如果单个模块本身很复杂（如支付集成），可以对该模块使用 `/feature-dev` 而不是 `/plan`：
+如果某个模块涉及大量现有代码需要理解（如在已有系统上集成支付），可以用 `/feature-dev` 替代 Plan Mode 工作流来处理该模块。`/feature-dev` 的代码探索阶段（Exploration）能派 2-3 个 agent 并行分析现有代码中可复用的模式，这是 Plan Mode 做不到的。`/feature-dev` 完成后直接进入下一个模块，无需再走 5.2 的流程。
 
 ```
 /feature-dev "实现 Stripe 支付集成，支持一次性支付和订阅，包含 Webhook 处理"
 ```
+
+完成后补充验证、提交和更新进度（详见第 4 节"路径 B"）。
 
 ---
 
@@ -367,6 +441,19 @@ Security Reviewer 会在涉及认证、用户输入时自动触发。
 ## 7. 会话管理：开始与结束仪式
 
 Claude Code 的每次会话是独立的。通过固定的"仪式"保证跨会话的连续性。
+
+```mermaid
+flowchart TD
+    Start["开始工作"] --> Q{"有之前的会话?"}
+    Q -->|"是"| Resume["claude -c 或 --resume\n恢复会话上下文"]
+    Q -->|"否"| New["新会话\n请阅读 CLAUDE.md"]
+    Resume --> Dev["正常开发循环\nPlan → 执行 → 验证 → /code-review → /commit"]
+    New --> Dev
+    Dev --> End["准备结束会话"]
+    End --> C1["/commit\n确保代码已提交"]
+    C1 --> C2["更新 CLAUDE.md\n进度 + 下次入口"]
+    C2 --> C3["(可选) /update-docs\n(可选) /learn"]
+```
 
 ### 恢复已有会话
 
@@ -421,7 +508,7 @@ Claude 会自动加载 `CLAUDE.md`，但显式要求它总结一遍可以确保�
 │  "请阅读 CLAUDE.md，总结进度和下一步"              │
 ├──────────────────────────────────────────────────┤
 │             正常开发                              │
-│  Plan模式 → /plan → /tdd → 验证 → /code-review   │
+│  Plan模式讨论 → 执行 → 验证 → /code-review        │
 │  → /commit                                       │
 ├──────────────────────────────────────────────────┤
 │             会话结束                              │

@@ -5,7 +5,6 @@
   "author": {
     "name": "shrekwang"
   },
-  "commands": ["./commands/"],
   "agents": [
     "./agents/system-architect.md",
     "./agents/tech-researcher.md",

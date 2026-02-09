@@ -1,0 +1,22 @@
+{
+  "name": "project-workflow",
+  "owner": {
+    "name": "shrekwang"
+  },
+  "metadata": {
+    "description": "Structured project workflow for module-by-module development with Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "project-workflow",
+      "source": "./",
+      "description": "Provides /project-plan, /module-plan, /module-done commands with specialized agents for planning, exploration, and architecture design.",
+      "author": {
+        "name": "shrekwang"
+      },
+      "repository": "https://github.com/shrekshrek/project-workflow",
+      "keywords": ["workflow", "planning", "architecture", "modules"],
+      "category": "workflow"
+    }
+  ]
+}

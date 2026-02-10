@@ -27,17 +27,17 @@
 flowchart TD
     %% Phase 0
     subgraph P0["Phase 0: 立项与规划 (/project-plan)"]
-        Brainstorm["头脑风暴\nBrainstorming"] --> InitClaude["初始化项目文件\nCLAUDE.md + PROGRESS.md"]
-        InitClaude --> Research["技术调研 (可选)\nContext7 / Crawl4AI"]
-        Research --> Arch["架构设计\ndocs/architecture.md"]
-        Arch --> PlanReview0["/plan-review project\n(推荐) 审查架构完整性"]
+        Brainstorm["头脑风暴<br>Brainstorming"] --> InitClaude["初始化项目文件<br>CLAUDE.md + PROGRESS.md"]
+        InitClaude --> Research["技术调研 (可选)<br>Context7 / Crawl4AI"]
+        Research --> Arch["架构设计<br>docs/architecture.md"]
+        Arch --> PlanReview0["/plan-review project<br>(推荐) 审查架构完整性"]
     end
 
     %% Phase 1+2: 模块开发循环
     subgraph DevLoop["Phase 1-2: 模块开发"]
-        PlanMode["/module-plan\n讨论并持久化方案"] --> PlanReviewM["/plan-review\n(可选) 审查方案可行性"]
-        PlanReviewM --> Execute["/module-dev\n按方案逐步实现 + 验收"]
-        Execute --> CR1["/code-review\n(可选) 代码审查"]
+        PlanMode["/module-plan<br>讨论并持久化方案"] --> PlanReviewM["/plan-review<br>(可选) 审查方案可行性"]
+        PlanReviewM --> Execute["/module-dev<br>按方案逐步实现 + 验收"]
+        Execute --> CR1["/code-review<br>(可选) 代码审查"]
         CR1 --> Commit["/commit"]
         Commit --> Update["/module-done"]
         Update -->|"还有模块"| PlanMode
@@ -45,7 +45,7 @@ flowchart TD
 
     %% Phase 3
     subgraph P3["Phase 3: 集成与收尾"]
-        PlanReviewFinal["/plan-review project\n(推荐) 最终方案审查"] --> TechVerify["/verify 技术检查"]
+        PlanReviewFinal["/plan-review project<br>(推荐) 最终方案审查"] --> TechVerify["/verify 技术检查"]
         TechVerify --> E2E["/e2e 端到端测试"]
         E2E --> PRReview["/review-pr 深度审查"]
         PRReview --> Security["安全审查"]
@@ -257,9 +257,9 @@ Step 4 产出的 `docs/architecture.md` 是**全局设计**——解决"系统�
 
 ```mermaid
 flowchart TD
-    Start["/module-plan\n讨论并持久化方案"] --> Review["/plan-review\n(可选) 审查方案可行性"]
-    Review --> Dev["/module-dev\n按方案逐步实现 + 验收"]
-    Dev --> CR2["/code-review\n(可选) 代码审查"]
+    Start["/module-plan<br>讨论并持久化方案"] --> Review["/plan-review<br>(可选) 审查方案可行性"]
+    Review --> Dev["/module-dev<br>按方案逐步实现 + 验收"]
+    Dev --> CR2["/code-review<br>(可选) 代码审查"]
     CR2 --> Commit["/commit"]
     Commit --> Done["/module-done"]
     Done -->|"还有模块"| Start
@@ -293,14 +293,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["/module-plan\n讨论并持久化方案"] -->|"方案确认"| PR["/plan-review\n(可选) 审查方案可行性"]
-    PR --> Dev["/module-dev\n逐步实现 + 关键行为测试"]
-    Dev --> Verify["Phase 4 验收\nbuild + 测试 + 对照 plan"]
+    A["/module-plan<br>讨论并持久化方案"] -->|"方案确认"| PR["/plan-review<br>(可选) 审查方案可行性"]
+    PR --> Dev["/module-dev<br>逐步实现 + 关键行为测试"]
+    Dev --> Verify["Phase 4 验收<br>build + 测试 + 对照 plan"]
     Verify --> Fix{"有问题?"}
     Fix -->|"是"| FixIt["修复"] --> Verify
-    Fix -->|"否"| CR["/code-review\n(可选) 代码审查"]
+    Fix -->|"否"| CR["/code-review<br>(可选) 代码审查"]
     CR --> Commit["/commit"]
-    Commit --> Update["/module-done\n含 Code Review Gate"]
+    Commit --> Update["/module-done<br>含 Code Review Gate"]
     Update -->|"下一个模块"| A
 ```
 
@@ -534,14 +534,14 @@ Claude Code 的每次会话是独立的。通过固定的"仪式"保证跨会话
 ```mermaid
 flowchart TD
     Start["开始工作"] --> Q{"有之前的会话?"}
-    Q -->|"是"| Resume["claude -c 或 --resume\n恢复会话上下文"]
-    Q -->|"否"| New["新会话\n请阅读 CLAUDE.md + PROGRESS.md"]
-    Resume --> Dev["正常开发循环\nPlan → 执行 → 验证 → /code-review → /commit"]
+    Q -->|"是"| Resume["claude -c 或 --resume<br>恢复会话上下文"]
+    Q -->|"否"| New["新会话<br>请阅读 CLAUDE.md + PROGRESS.md"]
+    Resume --> Dev["正常开发循环<br>Plan → 执行 → 验证 → /code-review → /commit"]
     New --> Dev
     Dev --> End["准备结束会话"]
-    End --> C1["/commit\n确保代码已提交"]
-    C1 --> C2["/module-done\n更新 PROGRESS.md\n(含 Code Review Gate)"]
-    C2 --> C3["(可选) /update-docs\n(可选) /learn"]
+    End --> C1["/commit<br>确保代码已提交"]
+    C1 --> C2["/module-done<br>更新 PROGRESS.md<br>(含 Code Review Gate)"]
+    C2 --> C3["(可选) /update-docs<br>(可选) /learn"]
 ```
 
 ### 恢复已有会话

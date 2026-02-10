@@ -2,7 +2,7 @@
 
 > Claude Code 插件：按模块推进的项目工作流管理。
 
-四个命令覆盖项目生命周期：`/project-plan` → `/module-plan` → `/module-dev` → `/module-done`。
+五个命令覆盖项目生命周期：`/project-plan` → `/module-plan` → `/module-dev` → `/module-done`，外加 `/plan-review` 进行方案质量审查。
 
 ---
 
@@ -12,7 +12,7 @@
 claude plugin install /path/to/project-workflow
 ```
 
-安装后可用 `/project-plan`、`/module-plan`、`/module-dev`、`/module-done` 四个斜杠命令。
+安装后可用 `/project-plan`、`/module-plan`、`/module-dev`、`/module-done`、`/plan-review` 五个斜杠命令。
 
 ---
 
@@ -20,7 +20,7 @@ claude plugin install /path/to/project-workflow
 
 | 组件 | 内容 |
 |:---|:---|
-| **Commands** (4) | `/project-plan`、`/module-plan`、`/module-dev`、`/module-done` |
+| **Commands** (5) | `/project-plan`、`/module-plan`、`/module-dev`、`/module-done`、`/plan-review` |
 | **Agents** (3) | system-architect、tech-researcher、codebase-explorer |
 | **Rules** (1) | 状态生命周期、文件职责约定（自动加载） |
 
@@ -84,6 +84,24 @@ claude plugin install /path/to/project-workflow
 - 设置下一个模块为入口
 - 按需创建模块级 `CLAUDE.md`（记录该模块的约定与常见错误）
 
+### `/plan-review "project 或模块名"`
+
+方案质量审查，适用于架构确认后、模块规划后、或多个模块完成后的阶段性检查。
+
+**特点**: 纯只读，不修改任何文件，输出结构化审查报告。
+
+**流程**: 范围检测 → 文档分析（需求覆盖 + 依赖完整性）→ 代码对照（架构偏移 + 接口一致性）→ 方案可行性 → 总评报告
+
+**审查维度**:
+- **需求覆盖** — 所有需求是否有模块承接
+- **依赖完整性** — 是否有循环依赖，上游模块是否就绪
+- **架构偏移** — `docs/architecture.md` 与实际代码的差异（仅有已实现模块时检查）
+- **接口一致性** — 模块间接口定义与实际调用是否匹配（仅有已实现模块时检查）
+- **方案可行性** — `docs/plan.md` 的步骤是否内部一致、外部对齐（仅 plan 存在时检查）
+
+**调用的 Agent**:
+- **codebase-explorer** (0-3 个) — 仅在有已实现模块时启动，扫描代码与文档的偏差
+
 ---
 
 ## 状态生命周期
@@ -140,7 +158,7 @@ claude plugin install /path/to/project-workflow
 **适用**: 全新功能、复杂模块重构、涉及多文件的大任务。
 
 ```
-/module-plan → /module-dev → /commit → /module-done
+/module-plan → (/plan-review 可选) → /module-dev → /commit → /module-done
 ```
 
 ### 选择速查
@@ -160,6 +178,7 @@ claude plugin install /path/to/project-workflow
 | 阶段 | 推荐工具 | 说明 |
 |:---|:---|:---|
 | 规划 | `/project-plan`, `/module-plan` | 本插件提供 |
+| 方案审查 | `/plan-review` | 本插件提供（只读，不修改文件） |
 | 实现 | `/module-dev` | 本插件提供（含测试 + 验收） |
 | 代码审查 | `/code-review`, `/review-pr` | ECC / PR Review Toolkit（可选） |
 | 提交 | `/commit`, `/commit-push-pr` | Commit Commands 插件 |

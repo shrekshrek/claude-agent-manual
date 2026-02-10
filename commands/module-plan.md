@@ -1,6 +1,6 @@
 ---
-description: "Guided module implementation planning: load context → explore dependencies → design → persist to docs/plan.md."
-argument-hint: Module name (or omit to use PROGRESS.md entry point)
+description: "模块实施规划：加载上下文 → 探索依赖 → 讨论设计 → 持久化到 docs/plan.md"
+argument-hint: "模块名（留空则使用 PROGRESS.md 中的入口）"
 ---
 
 # Module Planning

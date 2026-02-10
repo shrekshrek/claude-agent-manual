@@ -1,6 +1,6 @@
 ---
-description: "Multi-phase guided project planning: requirements → research → clarification → architecture → persist to project files."
-argument-hint: Project idea or description
+description: "多阶段项目规划：需求梳理 → 技术调研 → 澄清歧义 → 架构设计 → 持久化到项目文件"
+argument-hint: "项目想法或描述"
 ---
 
 # Project Planning

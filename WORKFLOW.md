@@ -30,11 +30,13 @@ flowchart TD
         Brainstorm["头脑风暴\nBrainstorming"] --> InitClaude["初始化项目文件\nCLAUDE.md + PROGRESS.md"]
         InitClaude --> Research["技术调研 (可选)\nContext7 / Crawl4AI"]
         Research --> Arch["架构设计\ndocs/architecture.md"]
+        Arch --> PlanReview0["/plan-review project\n(推荐) 审查架构完整性"]
     end
 
     %% Phase 1+2: 模块开发循环
     subgraph DevLoop["Phase 1-2: 模块开发"]
-        PlanMode["/module-plan\n讨论并持久化方案"] --> Execute["/module-dev\n按方案逐步实现 + 验收"]
+        PlanMode["/module-plan\n讨论并持久化方案"] --> PlanReviewM["/plan-review\n(可选) 审查方案可行性"]
+        PlanReviewM --> Execute["/module-dev\n按方案逐步实现 + 验收"]
         Execute --> Commit["/commit"]
         Commit --> Update["/module-done"]
         Update -->|"还有模块"| PlanMode
@@ -42,22 +44,23 @@ flowchart TD
 
     %% Phase 3
     subgraph P3["Phase 3: 集成与收尾"]
-        TechVerify["/verify 技术检查"] --> E2E["/e2e 端到端测试"]
+        PlanReviewFinal["/plan-review project\n(推荐) 最终方案审查"] --> TechVerify["/verify 技术检查"]
+        TechVerify --> E2E["/e2e 端到端测试"]
         E2E --> PRReview["/review-pr 深度审查"]
         PRReview --> Security["安全审查"]
         Security --> Ship["/commit-push-pr"]
     end
 
     %% 连接各阶段
-    Arch --> PlanMode
-    Update -->|"所有模块完成"| TechVerify
+    PlanReview0 --> PlanMode
+    Update -->|"所有模块完成"| PlanReviewFinal
 ```
 
 | 阶段 | 目标 | 核心指令 | 产出物 |
 |:---|:---|:---|:---|
-| Phase 0 | 明确做什么、怎么做 | `/project-plan`（或手动 Brainstorming → 架构设计） | CLAUDE.md + PROGRESS.md + docs/architecture.md |
-| Phase 1-2 | 逐模块设计与实现 | `/module-plan` → 执行 → 验证 → `/code-review` → `/commit` → `/module-done` | 可运行的代码 + 测试 |
-| Phase 3 | 全局验证与上线 | `/verify` → `/e2e` → `/review-pr` → 安全审查 → `/commit-push-pr` | PR、部署产物 |
+| Phase 0 | 明确做什么、怎么做 | `/project-plan` → `/plan-review project`（推荐） | CLAUDE.md + PROGRESS.md + docs/architecture.md |
+| Phase 1-2 | 逐模块设计与实现 | `/module-plan` → `/plan-review`（可选）→ `/module-dev` → `/commit` → `/module-done` | 可运行的代码 + 测试 |
+| Phase 3 | 全局验证与上线 | `/plan-review project`（推荐）→ `/verify` → `/e2e` → `/review-pr` → `/commit-push-pr` | PR、部署产物 |
 
 ---
 
@@ -242,6 +245,7 @@ Step 4 产出的 `docs/architecture.md` 是**全局设计**——解决"系统�
 - [ ] `CLAUDE.md` 已创建（项目简介、技术选型、模块清单、编码约定，< 300 行）
 - [ ] `PROGRESS.md` 已创建（模块进度表、下次继续的入口）
 - [ ] `docs/architecture.md` 已创建（架构图、数据模型、模块边界、设计决策）
+- [ ] (推荐) `/plan-review project` 审查架构完整性（需求覆盖、依赖完整性）
 - [ ] `/commit` 提交当前状态
 
 ---
@@ -252,7 +256,8 @@ Step 4 产出的 `docs/architecture.md` 是**全局设计**——解决"系统�
 
 ```mermaid
 flowchart TD
-    Start["/module-plan\n讨论并持久化方案"] --> Dev["/module-dev\n按方案逐步实现 + 验收"]
+    Start["/module-plan\n讨论并持久化方案"] --> Review["/plan-review\n(可选) 审查方案可行性"]
+    Review --> Dev["/module-dev\n按方案逐步实现 + 验收"]
     Dev --> Commit["/commit"]
     Commit --> Done["/module-done"]
     Done -->|"还有模块"| Start
@@ -286,7 +291,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["/module-plan\n讨论并持久化方案"] -->|"方案确认"| Dev["/module-dev\n逐步实现 + 关键行为测试"]
+    A["/module-plan\n讨论并持久化方案"] -->|"方案确认"| PR["/plan-review\n(可选) 审查方案可行性"]
+    PR --> Dev["/module-dev\n逐步实现 + 关键行为测试"]
     Dev --> Verify["Phase 4 验收\nbuild + 测试 + 对照 plan"]
     Verify --> Fix{"有问题?"}
     Fix -->|"是"| FixIt["修复"] --> Verify
@@ -314,6 +320,7 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 
 > **注意**: Plan 模式下的讨论和 `/plan` 的输出都只存在于当前会话中，不会自动保存到项目文件。
 > 方案确认后，用 `/module-plan` 持久化到项目文件（它会写入 `docs/plan.md` 并更新 `PROGRESS.md`）。
+> 复杂模块建议在持久化后运行 `/plan-review` 审查方案可行性，再进入 `/module-dev`。
 > 也可以手动完成：
 >
 > ```
@@ -461,6 +468,14 @@ Subagent 在独立上下文中工作，只向主 agent 返回摘要。这避免�
 ## 6. Phase 3：集成与收尾
 
 **目标**: 所有模块完成后的全局验证、优化和上线准备。
+
+### 6.0 方案终审（推荐）
+
+```
+/plan-review project
+```
+
+在进入代码级质量关卡前，先做一次项目级方案审查：检查需求覆盖、架构偏移、跨模块接口一致性。此时所有模块已实现，五个审查维度均可执行，能发现积累的规划偏差。
 
 ### 6.1 技术验证
 
@@ -683,6 +698,8 @@ Claude 会自动加载 `CLAUDE.md`，但 `PROGRESS.md` 需要显式要求读取�
 
 | 时机 | 触发动作 | 说明 |
 |:---|:---|:---|
+| 架构规划完成后 | `/plan-review project` | 需求覆盖、依赖完整性审查（推荐） |
+| 模块方案确认后 | `/plan-review 模块名` | 方案可行性、接口一致性审查（可选） |
 | 写完一段代码 | `/code-review` | 日常轻量检查（简单模块可跳过，见 5.2） |
 | 构建失败 | `/fix` | 自动诊断修复 |
 | 模块实现时 | `/module-dev` | 按 plan 逐步实现，关键行为先写测试，Phase 4 验收 |

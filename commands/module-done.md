@@ -1,6 +1,6 @@
 ---
-description: "Mark a module as complete: update PROGRESS.md, create module CLAUDE.md if needed."
-argument-hint: Module name (or omit to detect from recent work)
+description: "标记模块完成：更新 PROGRESS.md，按需创建模块 CLAUDE.md"
+argument-hint: "模块名（留空则从近期工作推断）"
 ---
 
 # Module Done

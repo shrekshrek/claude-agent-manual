@@ -1,6 +1,6 @@
 ---
-description: "Guided module implementation: load context → confirm scope → implement with tests → verify against plan."
-argument-hint: Module name (or omit to use PROGRESS.md entry point)
+description: "模块开发：加载上下文 → 确认范围 → 逐步实现 + 测试 → 对照 plan 验收"
+argument-hint: "模块名（留空则使用 PROGRESS.md 中的入口）"
 ---
 
 # Module Development

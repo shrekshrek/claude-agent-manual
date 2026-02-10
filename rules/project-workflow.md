@@ -42,3 +42,4 @@ Do NOT use other status values (e.g., "进行中", "开发中", "待测试").
 - `/module-plan` — Module planning: load context, explore code, design, persist to docs/plan.md
 - `/module-dev` — Module implementation: load context, follow plan step by step, test key behaviors, verify against plan
 - `/module-done` — Mark module complete: update PROGRESS.md, optionally create module CLAUDE.md
+- `/plan-review` — Read-only plan quality review: requirements coverage, architecture drift, interface consistency, dependency integrity

@@ -80,6 +80,7 @@ claude plugin install /path/to/project-workflow
 标记模块完成，更新进度并准备下一个模块。
 
 **操作**:
+- **Code Review Gate** — 检查未提交变更，提醒运行 `code-review`（可跳过）
 - 更新 `PROGRESS.md` 中该模块状态为 `已完成`
 - 设置下一个模块为入口
 - 按需创建模块级 `CLAUDE.md`（记录该模块的约定与常见错误）
@@ -158,7 +159,7 @@ claude plugin install /path/to/project-workflow
 **适用**: 全新功能、复杂模块重构、涉及多文件的大任务。
 
 ```
-/module-plan → (/plan-review 可选) → /module-dev → /commit → /module-done
+/module-plan → (/plan-review 可选) → /module-dev → (/code-review 可选) → /commit → /module-done
 ```
 
 ### 选择速查

@@ -37,7 +37,8 @@ flowchart TD
     subgraph DevLoop["Phase 1-2: 模块开发"]
         PlanMode["/module-plan\n讨论并持久化方案"] --> PlanReviewM["/plan-review\n(可选) 审查方案可行性"]
         PlanReviewM --> Execute["/module-dev\n按方案逐步实现 + 验收"]
-        Execute --> Commit["/commit"]
+        Execute --> CR1["/code-review\n(可选) 代码审查"]
+        CR1 --> Commit["/commit"]
         Commit --> Update["/module-done"]
         Update -->|"还有模块"| PlanMode
     end
@@ -59,7 +60,7 @@ flowchart TD
 | 阶段 | 目标 | 核心指令 | 产出物 |
 |:---|:---|:---|:---|
 | Phase 0 | 明确做什么、怎么做 | `/project-plan` → `/plan-review project`（推荐） | CLAUDE.md + PROGRESS.md + docs/architecture.md |
-| Phase 1-2 | 逐模块设计与实现 | `/module-plan` → `/plan-review`（可选）→ `/module-dev` → `/commit` → `/module-done` | 可运行的代码 + 测试 |
+| Phase 1-2 | 逐模块设计与实现 | `/module-plan` → `/plan-review`（可选）→ `/module-dev` → `/code-review`（可选）→ `/commit` → `/module-done` | 可运行的代码 + 测试 |
 | Phase 3 | 全局验证与上线 | `/plan-review project`（推荐）→ `/verify` → `/e2e` → `/review-pr` → `/commit-push-pr` | PR、部署产物 |
 
 ---
@@ -258,7 +259,8 @@ Step 4 产出的 `docs/architecture.md` 是**全局设计**——解决"系统�
 flowchart TD
     Start["/module-plan\n讨论并持久化方案"] --> Review["/plan-review\n(可选) 审查方案可行性"]
     Review --> Dev["/module-dev\n按方案逐步实现 + 验收"]
-    Dev --> Commit["/commit"]
+    Dev --> CR2["/code-review\n(可选) 代码审查"]
+    CR2 --> Commit["/commit"]
     Commit --> Done["/module-done"]
     Done -->|"还有模块"| Start
     Done -->|"全部完成"| P3["Phase 3: 集成与收尾"]
@@ -296,8 +298,9 @@ flowchart TD
     Dev --> Verify["Phase 4 验收\nbuild + 测试 + 对照 plan"]
     Verify --> Fix{"有问题?"}
     Fix -->|"是"| FixIt["修复"] --> Verify
-    Fix -->|"否"| Commit["/commit"]
-    Commit --> Update["/module-done"]
+    Fix -->|"否"| CR["/code-review\n(可选) 代码审查"]
+    CR --> Commit["/commit"]
+    Commit --> Update["/module-done\n含 Code Review Gate"]
     Update -->|"下一个模块"| A
 ```
 
@@ -378,7 +381,7 @@ Plan 模式的核心是**多轮对话**——你可以质疑方案、提出约�
 /module-done
 ```
 
-`/module-done` 会标记模块为"已完成"、更新 PROGRESS.md 的下次入口、并在需要时创建模块级 CLAUDE.md。也可以手动更新：
+`/module-done` 会先检查是否有未提交的变更——如果有，会提醒你先运行 code review 再提交（Code Review Gate，可跳过）。然后标记模块为"已完成"、更新 PROGRESS.md 的下次入口、并在需要时创建模块级 CLAUDE.md。也可以手动更新：
 
 ```
 帮我更新 PROGRESS.md，标记订单模块 CRUD API 已完成，更新"下次继续的入口"
@@ -537,7 +540,7 @@ flowchart TD
     New --> Dev
     Dev --> End["准备结束会话"]
     End --> C1["/commit\n确保代码已提交"]
-    C1 --> C2["/module-done\n更新 PROGRESS.md"]
+    C1 --> C2["/module-done\n更新 PROGRESS.md\n(含 Code Review Gate)"]
     C2 --> C3["(可选) /update-docs\n(可选) /learn"]
 ```
 
@@ -701,6 +704,7 @@ Claude 会自动加载 `CLAUDE.md`，但 `PROGRESS.md` 需要显式要求读取�
 | 架构规划完成后 | `/plan-review project` | 需求覆盖、依赖完整性审查（推荐） |
 | 模块方案确认后 | `/plan-review 模块名` | 方案可行性、接口一致性审查（可选） |
 | 写完一段代码 | `/code-review` | 日常轻量检查（简单模块可跳过，见 5.2） |
+| 标记模块完成时 | `/module-done` | Code Review Gate：检查未提交变更，提醒运行 code-review |
 | 构建失败 | `/fix` | 自动诊断修复 |
 | 模块实现时 | `/module-dev` | 按 plan 逐步实现，关键行为先写测试，Phase 4 验收 |
 | 涉及数据库改动 | Database Reviewer 自动触发 | Schema、索引、RLS 检查 |

@@ -19,6 +19,19 @@ Read `PROGRESS.md` to confirm module identity and current status.
 - "Fix the next entry point" → Go to Step 2, only update "下次继续的入口"
 - "Re-mark as complete" → Proceed normally (idempotent)
 
+## Step 1.5: Code Review Gate
+
+Before marking the module complete, check whether the implementation has been reviewed:
+
+1. Run `git diff --stat` and `git diff --cached --stat` to detect uncommitted changes
+2. **If uncommitted changes exist** (implementation not yet committed):
+   - Ask the user: "This module has uncommitted changes. Would you like to run a code review before marking it done?"
+   - **If yes** → Use the Task tool to launch the `pr-review-toolkit:code-reviewer` agent to review the changes. After the review completes and any Critical issues are addressed, return here to continue.
+   - **If skip** → Proceed to Step 2. Note in the summary that code review was skipped.
+3. **If all changes are committed** (no diff):
+   - Remind: "If you haven't run a code review yet, consider `/review-pr` before creating a PR."
+   - Proceed to Step 2.
+
 ## Step 2: Update PROGRESS.md
 
 1. Mark this module's status as "已完成" (condense to one line — do not preserve detailed implementation steps)

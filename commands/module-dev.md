@@ -56,11 +56,11 @@ All plan steps appear complete. This is a re-run to check quality and fix issues
 **Goal**: Ensure Claude has the full picture before writing any code
 
 **Actions**:
-1. Read `CLAUDE.md` (coding conventions, tech stack)
+1. Read `CLAUDE.md` (coding conventions, tech stack). If CLAUDE.md declares a tier structure and this module belongs to a tier, also read the tier-level CLAUDE.md (e.g., `backend/CLAUDE.md`). Tier conventions take precedence over root conventions in Phase 4.
 2. Read `docs/plan.md` (implementation plan — this is the primary guide)
 3. Read `docs/architecture.md` (system design, module boundaries)
 4. Read `PROGRESS.md` (confirm module status is "方案已确认")
-5. If the module depends on completed modules, read their module CLAUDE.md files (e.g., `src/[dep]/CLAUDE.md`) for public interfaces
+5. If the module depends on completed modules, read their module CLAUDE.md files (e.g., `src/[dep]/CLAUDE.md` or `[tier]/src/[dep]/CLAUDE.md`) for public interfaces
 
 **Present to user**:
 - Module name and current status
@@ -128,6 +128,8 @@ All plan steps appear complete. This is a re-run to check quality and fix issues
 **Goal**: Confirm the implementation meets the plan before declaring done
 
 **Run this phase when all steps are complete** (or when the user asks to verify current state).
+
+**Tier note**: For modules in a multi-tier project, use build/test/lint commands from the tier-level CLAUDE.md (e.g., `cd backend && npm run build`) rather than root-level commands. Check conventions against both root and tier CLAUDE.md, with tier conventions taking precedence on conflicts.
 
 ### 4.1 Build Check
 - Run the project's build / type check command

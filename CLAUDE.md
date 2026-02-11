@@ -33,6 +33,7 @@ Claude Code 插件，提供按模块推进的项目工作流管理。五个命�
 - PROGRESS.md = 动态进度（模块状态、下次入口），每次会话更新
 - docs/architecture.md = 全局设计详情
 - docs/plan.md = 当前模块的实施方案（临时，每模块覆盖更新）
+- [tier]/CLAUDE.md = Tier 级静态配置（仅声明了 tier 的项目），50-100 行。Tier 目录由用户在 `/project-plan` 中确认（常见如 `frontend/`、`backend/`）。
 
 ## 注意事项
 - 修改 WORKFLOW.md 后须检查内部一致性（flowchart、表格、正文、交叉引用）

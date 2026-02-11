@@ -42,6 +42,7 @@
 - `CLAUDE.md` — 项目概览、技术选型、模块列表、编码约定
 - `PROGRESS.md` — 模块状态表、下次入口
 - `docs/architecture.md` — 系统架构、数据模型、模块边界
+- `[tier]/CLAUDE.md`（如 `frontend/CLAUDE.md`、`backend/CLAUDE.md`）— Tier 级技术栈与构建命令（仅声明了 tier 的项目）
 
 **调用的 Agent**:
 - **tech-researcher** — 并行调研技术方案（新项目）
@@ -133,6 +134,7 @@
 | `PROGRESS.md` | 动态进度 | 模块状态表、下次入口、里程碑 | 每次会话结束 |
 | `docs/architecture.md` | 持久设计 | 系统架构图、数据模型、模块边界 | 架构变更时 |
 | `docs/plan.md` | 临时方案 | 当前模块的实施计划 | 每次 `/module-plan` |
+| `[tier]/CLAUDE.md` | 静态配置 (tier) | Tier 技术栈、构建/测试命令、编码约定（仅声明了 tier 的项目） | 极少 |
 
 **核心原则**: 静态与动态分离 — 不要在 CLAUDE.md 中放进度信息，不要在 PROGRESS.md 中放编码约定。
 

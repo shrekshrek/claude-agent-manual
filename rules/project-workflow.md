@@ -26,8 +26,11 @@ Do NOT use other status values (e.g., "进行中", "开发中", "待测试").
 | `PROGRESS.md` | Dynamic progress | Module status table, next entry point, milestones | Every session end |
 | `docs/architecture.md` | Persistent design | System diagrams, data models, module boundaries, design decisions | When architecture changes |
 | `docs/plan.md` | Temporary plan | Current module's implementation plan (overwritten per module) | Each `/module-plan` run |
+| `[tier]/CLAUDE.md` | Static config (tier) | Tier-specific tech stack, build/test commands, coding conventions (multi-tier projects only) | Rarely |
 
 **Key rule**: Never put progress/status info into `CLAUDE.md`. Never put coding conventions into `PROGRESS.md`. Keep static and dynamic separate.
+
+**Tier-level CLAUDE.md (multi-tier projects only)**: When the root `CLAUDE.md` declares a "项目类型" section with a tier table, each listed tier directory contains its own `CLAUDE.md` (e.g., `backend/CLAUDE.md`, `frontend/CLAUDE.md`). These are L2 auto-loaded files — Claude loads them automatically when reading files in that tier directory. Tier-specific conventions (build commands, coding style, test commands) take precedence over root-level conventions when working within that tier. The tier table in root CLAUDE.md is the **single source of truth** for detecting whether the project is multi-tier and what the tier directories are.
 
 ## CLAUDE.md Constraints
 

@@ -15,11 +15,11 @@ Mark a module as complete and prepare the project for the next module.
 Read `PROGRESS.md` to confirm module identity and current status.
 
 **If the module is already marked "已完成"**: Ask the user what they want to update:
-- "Update module CLAUDE.md" → Go to Step 3
-- "Fix the next entry point" → Go to Step 2, only update "下次继续的入口"
+- "Update module CLAUDE.md" → Go to Step 4
+- "Fix the next entry point" → Go to Step 3, only update "下次继续的入口"
 - "Re-mark as complete" → Proceed normally (idempotent)
 
-## Step 1.5: Code Review Gate
+## Step 2: Code Review Gate
 
 Before marking the module complete, check whether the implementation has been reviewed:
 
@@ -27,12 +27,12 @@ Before marking the module complete, check whether the implementation has been re
 2. **If uncommitted changes exist** (implementation not yet committed):
    - Ask the user: "This module has uncommitted changes. Would you like to run a code review before marking it done?"
    - **If yes** → Use the Task tool to launch the `pr-review-toolkit:code-reviewer` agent to review the changes. After the review completes and any Critical issues are addressed, return here to continue.
-   - **If skip** → Proceed to Step 2. Note in the summary that code review was skipped.
+   - **If skip** → Proceed to Step 3. Note in the summary that code review was skipped.
 3. **If all changes are committed** (no diff):
    - Remind: "If you haven't run a code review yet, consider `/review-pr` before creating a PR."
-   - Proceed to Step 2.
+   - Proceed to Step 3.
 
-## Step 2: Update PROGRESS.md
+## Step 3: Update PROGRESS.md
 
 1. Mark this module's status as "已完成" (condense to one line — do not preserve detailed implementation steps)
 2. Update "下次继续的入口":
@@ -41,9 +41,13 @@ Before marking the module complete, check whether the implementation has been re
    - Good example: "从支付模块的 Webhook 处理开始，先设计幂等性方案，参考 docs/architecture.md 第 3 节的时序图"
 3. Add an entry to "已完成的里程碑" if appropriate
 
-## Step 3: Module CLAUDE.md (Conditional)
+## Step 4: Module CLAUDE.md (Conditional)
 
-**Evaluate whether this module needs its own CLAUDE.md.** Create `src/[module]/CLAUDE.md` if ANY of the following apply:
+**Path convention**:
+- Single-stack projects: `src/[module]/CLAUDE.md`
+- Full-stack projects: `[tier]/src/[module]/CLAUDE.md` (e.g., `backend/src/orders/CLAUDE.md`, `frontend/src/orders/CLAUDE.md`)
+
+**Evaluate whether this module needs its own CLAUDE.md.** Create the module CLAUDE.md at the appropriate path if ANY of the following apply:
 
 - The module exposes interfaces that other modules will consume
 - The data model has non-obvious constraints (e.g., soft deletes, optimistic locking, enum mappings)
@@ -69,7 +73,7 @@ Before marking the module complete, check whether the implementation has been re
 
 Target: 50-150 lines. Do NOT duplicate what's already in `docs/architecture.md` — reference it instead.
 
-## Step 4: Summary
+## Step 5: Summary
 
 After writing:
 - List each modified/created file with line count

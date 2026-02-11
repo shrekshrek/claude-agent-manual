@@ -49,7 +49,7 @@ This is a re-run to adjust an existing module plan. Read `docs/plan.md`, then:
 **Goal**: Understand the module scope and project context
 
 **Actions**:
-1. Read `CLAUDE.md`, `PROGRESS.md`, `docs/architecture.md`
+1. Read `CLAUDE.md`, `PROGRESS.md`, `docs/architecture.md`. If CLAUDE.md declares a tier structure and the module belongs to a tier (e.g., `订单/后端`), also read the tier-level CLAUDE.md (e.g., `backend/CLAUDE.md`). For frontend modules, additionally read the API contracts section in `docs/architecture.md` and the backend counterpart's module CLAUDE.md if it exists.
 2. Determine which module to plan:
    - If $ARGUMENTS specifies a module → use that
    - If $ARGUMENTS is empty → use PROGRESS.md "下次继续的入口"
@@ -58,7 +58,7 @@ This is a re-run to adjust an existing module plan. Read `docs/plan.md`, then:
    - Public interface (what other modules call)
    - Dependencies (what it calls)
    - Data owned (which entities/tables it manages)
-4. Check PROGRESS.md for dependency status — are all upstream modules completed?
+4. Check PROGRESS.md for dependency status — are all upstream modules completed? (For frontend modules in full-stack projects, check the backend counterpart's status specifically.)
 5. Present a brief summary to the user:
    - Module name and responsibility
    - Dependencies and their current status
@@ -96,6 +96,8 @@ This is a re-run to adjust an existing module plan. Read `docs/plan.md`, then:
 
 1. **Data Model**: Specific table schemas, columns, types, indexes, constraints. If extending existing models, show what changes.
 2. **API / Interface Design**: Routes or function signatures, request/response shapes, error responses. Follow patterns established in completed modules.
+   - (Full-stack projects) Backend modules: design endpoints according to the API contracts in `docs/architecture.md`. Flag any deviations from the contract with justification.
+   - (Full-stack projects) Frontend modules: reference the API already implemented by the backend counterpart. Focus on data fetching patterns (e.g., React Query, SWR), state management, and UI interaction design rather than re-specifying the API.
 3. **Implementation Steps**: Ordered list of concrete steps. Each step should be small enough to implement and test independently. Include:
    - What to create (files, functions, classes)
    - What to modify (existing files, configurations)

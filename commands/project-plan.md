@@ -138,6 +138,7 @@ Execute both Path A and Path B in parallel.
    - Non-functional requirements: performance, security, scalability targets
    - Integration points: third-party APIs, external services
    - Deployment and infrastructure preferences
+   - Project structure: based on Phase 1-2 findings, **propose** whether the project should be single-stack or multi-tier. If multi-tier, propose tier directories and roles (e.g., `backend/` + `frontend/` + `shared/`). This decision drives module naming and build command organization downstream.
 3. **Present all questions in a clear, organized list**
 4. **Wait for answers before proceeding**
 
@@ -160,6 +161,7 @@ If user says "whatever you think is best", provide your recommendation and get e
    - Module boundaries (responsibilities, interfaces, dependencies)
    - Key scenario flows (Mermaid sequence diagrams)
    - Design decisions with trade-off reasoning
+   - API contracts (full-stack projects only): endpoint list with URL patterns, HTTP methods, request/response shapes, error format, authentication requirements
 3. Review all approaches and form your recommendation
 4. Present to user:
    - Brief summary of each approach
@@ -179,6 +181,16 @@ After user confirms architecture choice, create/update these files:
 ### 1. CLAUDE.md (target < 300 lines)
 - Project overview (one paragraph)
 - Feature scope (included / excluded)
+- Project type and tier structure (if the project has multiple tiers such as frontend/backend, declare them explicitly — see format below). This is the **single source of truth** for whether the project is multi-tier and what the tier directories are. All other commands read this field to decide whether to activate tier-specific logic.
+  ```
+  ## 项目类型
+  类型：多 tier
+  | Tier | 目录 | 角色 |
+  |:---|:---|:---|
+  | 后端 | backend/ | Express + Prisma |
+  | 前端 | frontend/ | Next.js |
+  ```
+  For single-tier projects, omit this section entirely.
 - Tech stack table (category | choice | rationale)
 - Architecture overview (one paragraph + pointer to docs/architecture.md)
 - Module list (name + one-line responsibility, no status)
@@ -188,6 +200,7 @@ After user confirms architecture choice, create/update these files:
 
 ### 2. PROGRESS.md
 - Module status table (all modules "未开始", with dependency notes)
+  - Full-stack projects: list each feature as two tier modules using slash notation (e.g., `订单/后端` + `订单/前端`). Backend modules come first; frontend modules note their dependency on the corresponding backend module.
 - "下次继续的入口": which module to start with and why
 - Empty "已完成的里程碑" section
 
@@ -197,10 +210,24 @@ After user confirms architecture choice, create/update these files:
 - Module boundaries (responsibilities, interfaces, dependencies between modules)
 - Key scenario flows (Mermaid sequence diagrams for 2-3 core user journeys)
 - Design decisions log (trade-off analysis from Phase 4, chosen approach and rationale)
+- API contracts (full-stack projects only): HTTP endpoint list (URL pattern, method, request/response shape, error format) for all tier boundaries
+
+### 4. Tier-level CLAUDE.md (multi-tier projects only)
+
+When the project has separate tiers, create a `CLAUDE.md` in each tier directory listed in the root CLAUDE.md tier table (e.g., `backend/CLAUDE.md`, `frontend/CLAUDE.md`).
+
+Each tier-level CLAUDE.md should include (target 50-100 lines):
+- Tech stack (frameworks, key libraries, runtime versions)
+- Build commands (dev, build, lint, typecheck)
+- Test commands (unit, integration, how to run)
+- Tier-specific coding conventions (naming, patterns, file structure)
+- Common mistakes and gotchas specific to this tier
+
+These files serve as L2 auto-loaded context — Claude loads them automatically when working within the tier directory. Tier conventions take precedence over root-level conventions.
 
 **After writing all files**:
 - List each file path and line count
-- Summarize the project plan in 3-5 bullet points
+- Summarize the project plan in 3-5 bullet points (for multi-tier projects, include the tier structure in the summary)
 - **Wait for user to confirm before considering planning complete**
 
 ---

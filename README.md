@@ -190,7 +190,7 @@ claude plugin install project-workflow@project-workflow
 | 插件 | 安装命令 | 提供的关键命令 |
 |:---|:---|:---|
 | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `claude plugin marketplace add affaan-m/everything-claude-code` | `/code-review`, `/build-fix`, `/verify`, `/e2e`, `/plan`, `/tdd` |
-| [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | 内置 marketplace | `/commit`, `/commit-push-pr`, `/review-pr`, Brainstorming, Context7 |
+| [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | 内置 marketplace | `/commit`, `/commit-push-pr`, `/review-pr`, Context7 |
 
 > **与 ECC 的兼容说明**: ECC 的 PreToolUse hook 会拦截 `.md` 文件写入，导致 `/project-plan`、`/module-plan` 无法创建 `PROGRESS.md` 和 `docs/*.md`。安装 ECC 后需在其 `hooks.json` 的 matcher 白名单中加入 `PROGRESS.md` 和 `docs/`，路径为 `~/.claude/plugins/cache/everything-claude-code/everything-claude-code/<version>/hooks/hooks.json`。
 
@@ -198,8 +198,8 @@ claude plugin install project-workflow@project-workflow
 
 | 阶段 | 推荐工具 | 说明 |
 |:---|:---|:---|
-| 头脑风暴 | Brainstorming 技能 | claude-plugins-official（可选，`/project-plan` 内置引导） |
-| 技术调研 | Context7 插件, Crawl4AI 技能 | claude-plugins-official / brettdavies（可选） |
+| 头脑风暴 | Brainstorming 技能 | 独立技能（可选，`/project-plan` 内置引导） |
+| 技术调研 | Context7 插件, Crawl4AI 技能 | claude-plugins-official / 独立技能（可选） |
 | 规划 | `/project-plan`, `/module-plan` | 本插件提供 |
 | 架构辅助 | Backend Architect, Mermaid Diagrams, Architect Review | 独立技能，讨论时自动触发（可选） |
 | 方案审查 | `/plan-review` | 本插件提供（只读，不修改文件） |

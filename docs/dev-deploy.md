@@ -6,7 +6,7 @@
 >
 > 实证基础:
 > - [`shrekshrek/full-stack-scaffolding-fastapi-nuxt4`](https://github.com/shrekshrek/full-stack-scaffolding-fastapi-nuxt4)(Nuxt 4 版,生产实证)
-> - [`scaffold-v2/`](../scaffold-v2/)(Vue 3 + Element Plus 版,blueprint 验证)
+> - Vue 3 + Element Plus + FastAPI scaffold(blueprint 验证用,另一仓库待发布)
 >
 > **配套**:具体的工程踩坑清单见 [`gotchas.md`](gotchas.md) —— Docker / pnpm / Pydantic / 测试基建 共 10 条。
 

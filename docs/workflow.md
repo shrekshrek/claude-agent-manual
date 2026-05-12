@@ -176,7 +176,7 @@ P0 产出物分**两层**(职责严格不重叠):
 └── .gitignore                      # 预防性含 CLAUDE.local.md、.env*
 ```
 
-**B. 工程化层**(栈相关,参考 [`scaffold-v2/`](../scaffold-v2/) 直接 fork 或参照写)
+**B. 工程化层**(栈相关,参考独立的 full-stack scaffold 仓库 —— 待发布,届时 README 会贴链接)
 
 ```
 项目根/
@@ -935,9 +935,9 @@ LLM 的 attention 是 quadratic 或 sub-linear cost over context length。当 co
 
 > **栈适配层** —— 本节是把 P0-P4 落到具体工具命令的映射。**换栈只需重写本节**,前面的方法论(§0-7、§9、§10)不变。
 >
-> **参考实现**:[`scaffold-v2/`](../scaffold-v2/)(Vue 3 + Element Plus + FastAPI 全栈,可直接 `pnpm bootstrap && pnpm dev`)。
+> **参考实现**:Vue 3 + Element Plus + FastAPI 全栈(`pnpm bootstrap && pnpm dev` 即可起,18 个测试已绿)—— 另一仓库,待发布。
 >
-> **栈级陷阱**:[`docs/gotchas.md`](gotchas.md) —— 10 条 scaffold-v2 验证过程中沉淀的具体踩坑(Docker / asyncpg / Pydantic extras / 测试基建)。
+> **栈级陷阱**:[`docs/gotchas.md`](gotchas.md) —— 10 条从真实验证过程中沉淀的具体踩坑(Docker / asyncpg / Pydantic extras / 测试基建)。
 
 ### 8.1 Vue 3 / Nuxt 4 前端
 

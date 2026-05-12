@@ -7,11 +7,12 @@
 
 **project-workflow v2** —— spec-driven feature development blueprint + Claude Code plugin。
 
-四件套:
+三件套(本仓库):
 1. `docs/` —— 方法论文档(5 阶段、4 支柱、spec 三件套、10 工程陷阱)
 2. `template/` —— 纯方法论 starter(语言中立)
-3. `examples/full-stack-vue-fastapi/` —— Vue 3 + FastAPI 工程参考实现
-4. `.claude-plugin/` + `skills/` —— Claude Code 插件资产
+3. `.claude-plugin/` + `skills/` —— Claude Code 插件资产
+
+**工程参考实现**(Vue 3 + Element Plus + FastAPI 全栈、Docker、Alembic、18 个测试)在另一个仓库(待发布,目前在私有 dev playground 中)。
 
 **v1 → v2**:完全重写。v1 是 5 个 process-owning slash command,v2 是文档主导 + 可选辅助命令。v1 保留在 git tag `v1.1.0`。
 
@@ -33,15 +34,12 @@ docs/                  方法论文档
 ├── backlog.md         待办
 └── proposals/         详细提案
 template/              方法论 starter
-examples/
-└── full-stack-vue-fastapi/   Vue 3 + Element + FastAPI 参考实现
 ```
 
 ## 修改纪律
 
-- **方法论 vs 工程化分层**:`docs/` + `template/` 是方法论(语言中立);`examples/` 是工程化(栈具体)
-- **不在方法论里塞栈细节**(workflow.md / gotchas.md 通用,具体命令在 examples/ 里展示)
-- **不在工程化里写方法论**(examples/ AGENTS.md 是栈约定,不是方法论本身)
+- **方法论 vs 工程化分层**:本仓库**只放方法论**(`docs/` + `template/` + plugin)。工程化样例(具体栈代码)放在另一个仓库,不进本仓库
+- **不在方法论里塞栈细节**(workflow.md / gotchas.md 通用,具体命令样例引用外部仓库)
 - **plugin skill 简洁**:每个 SKILL.md < 200 行,职责单一
 - **skill description 写好**:Claude 据此判断何时自动调用
 

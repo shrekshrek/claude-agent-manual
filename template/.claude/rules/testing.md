@@ -7,8 +7,8 @@
 # Testing Conventions
 
 > **方法论占位模板** —— 各栈自填测试框架、命令、覆盖率门槛。
-> 实例参考:[scaffold-v2/.claude/rules/testing.md](../../scaffold-v2/.claude/rules/testing.md)(pytest + vitest)。
-> 后端测试模式踩坑见 [docs/gotchas.md #9-#10](../../docs/gotchas.md)(每请求独立 session、NullPool 等)。
+> pytest + vitest 已填好的实例:工程参考仓库(待发布)。
+> 后端测试模式踩坑见 [`docs/gotchas.md`](../../docs/gotchas.md) #9-#10(每请求独立 session、NullPool 等)。
 
 ## 测试框架
 

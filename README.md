@@ -13,8 +13,9 @@
 |---|---|---|
 | 📘 **Methodology docs** | 5-phase blueprint (P0 Project Setup / P2 Feature / P3 Maintenance / P4 Drift Refresh) + 4 pillars + spec-driven 3-file template + 10 工程陷阱 | [`docs/`](docs/) |
 | 🧰 **Starter template** | Pure methodology scaffolding (`AGENTS.md`, spec/plan/tasks, ADR, Issue/PR templates, hook skeleton) — language/framework-agnostic | [`template/`](template/) |
-| 🏗 **Reference implementation** | Vue 3 + Element Plus + FastAPI full-stack scaffold, Docker + Postgres + Alembic + 18 passing tests | [`examples/full-stack-vue-fastapi/`](examples/full-stack-vue-fastapi/) |
 | 🤖 **Claude Code plugin** | Slash commands automating high-ROI workflow actions | [`.claude-plugin/`](.claude-plugin/) + [`skills/`](skills/) |
+
+> **Reference implementation**: methodology is validated against a Vue 3 + Element Plus + FastAPI full-stack scaffold (Docker + Postgres + Alembic + 18 passing tests, end-to-end). The scaffold lives in a separate repo (TBD; currently maintained in a private dev playground while the plugin stabilizes). Once published, it'll be referenced from `docs/dev-deploy.md`.
 
 ## Install (Claude Code plugin)
 
@@ -45,7 +46,6 @@ Then in any project:
 - [`docs/gotchas.md`](docs/gotchas.md) — ⭐ 10 engineering pitfalls (from real validation)
 - [`docs/spec-driven.md`](docs/spec-driven.md) — spec/plan/tasks pattern detail
 - [`docs/dev-deploy.md`](docs/dev-deploy.md) — local dev + sync deploy pattern
-- [`examples/full-stack-vue-fastapi/`](examples/full-stack-vue-fastapi/) — see the methodology in actual working code
 
 ## Migration from v1
 
@@ -62,7 +62,7 @@ v1 source preserved at git tag [`v1.1.0`](../../tree/v1.1.0). Install via `git c
 
 ## Status
 
-v2.0.0 is **early** — 1 skill (`/spec-init`) shipped, 5 more in progress. The full methodology docs (workflow.md / gotchas.md / spec-driven.md) and reference implementation (full-stack-vue-fastapi) are complete and validated end-to-end.
+v2.0.0 is **early** — 1 skill (`/spec-init`) shipped, 5 more in progress. The full methodology docs (workflow.md / gotchas.md / spec-driven.md) are complete and have been validated end-to-end against a working Vue 3 + FastAPI scaffold (kept in a private dev playground until publish).
 
 ## License
 

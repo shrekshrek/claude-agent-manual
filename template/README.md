@@ -4,9 +4,9 @@
 >
 > **What this is NOT**:不是工程脚手架,**不包含**:Dockerfile / docker-compose / package.json scripts / 后端模块结构 / 前端框架代码 等。
 >
-> **想要 Vue 3 + Element Plus + FastAPI 全栈实例(真能跑、含 Docker / Postgres / Alembic / 18 个测试已绿、统一 CLI):看 [`scaffold-v2/`](../scaffold-v2/)**。
+> **想要 Vue 3 + Element Plus + FastAPI 全栈实例**(真能跑、含 Docker / Postgres / Alembic / 18 个测试已绿、统一 CLI):在另一个仓库,待发布。
 >
-> **想避免"AI 第一次搭项目踩的坑"**:看 [`docs/gotchas.md`](../docs/gotchas.md)(10 条,scaffold-v2 实测产出)。
+> **想避免"AI 第一次搭项目踩的坑"**:看 [`docs/gotchas.md`](../docs/gotchas.md)(10 条,从真实验证沉淀)。
 
 ## 怎么用
 
@@ -20,10 +20,10 @@ cp -r <path-to-template>/. .
 
 然后:
 1. 编辑 `AGENTS.md`,把 `{{PLACEHOLDER}}` 替换为你的项目信息
-2. 编辑 `.claude/rules/*.md`,按你的栈调整规则(Vue+Python 栈直接抄 [scaffold-v2/.claude/rules/](../scaffold-v2/.claude/rules/))
-3. 编辑 `.claude/hooks/lint-on-edit.js`,**取消注释**对应栈的 lint 命令(Vue+Python 栈直接抄 [scaffold-v2 那份完整版](../scaffold-v2/.claude/hooks/lint-on-edit.js))
+2. 编辑 `.claude/rules/*.md`,按你的栈调整规则
+3. 编辑 `.claude/hooks/lint-on-edit.js`,**取消注释**对应栈的 lint 命令(eslint / ruff / gofmt 等)
 4. 编辑 `.gitignore`,加你栈特定的 ignore 项(node_modules / __pycache__ 等)
-5. **(新项目)还要补工程化骨架** —— Dockerfile / docker-compose / 包管理 / 测试基建。直接照搬 scaffold-v2 / 或参照 [gotchas.md](../docs/gotchas.md) 自己写
+5. **(新项目)还要补工程化骨架** —— Dockerfile / docker-compose / 包管理 / 测试基建。参照 [`gotchas.md`](../docs/gotchas.md) 自己写
 6. `git add` + 第一次 commit("setup: 接入 project-workflow v2 starter kit")
 
 ### 方式 B:选择性复制(按需接入)

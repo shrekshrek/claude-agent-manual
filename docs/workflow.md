@@ -958,6 +958,20 @@ LLM 的 attention 是 quadratic 或 sub-linear cost over context length。当 co
 
 **组合在调用处**:proof bundle 是 L2 + L3 组合点,不是 skill 层组合。skill 保持小而锐,workflow 调用时拼装。
 
+#### L2 / L3 Reviewer 承诺
+
+调用 [`agents-md-reviewer`](../agents/agents-md-reviewer.md) / [`spec-reviewer`](../agents/spec-reviewer.md) 时,reviewer 遵守以下契约——这些不是建议,是 reviewer 给 caller 的硬承诺:
+
+| 承诺 | 含义 | 对应命题([§0.1](#01-这本手册解决什么)) |
+|---|---|---|
+| **Cite-or-skip** | 每条 finding 必须引用规则原文(`AGENTS.md §X` / `spec.md §X` + ≤ 1 行原文)。不允许新增"通用最佳实践"建议 | Verification(输出可追溯)|
+| **Fresh-read mandate** | 每次调用必须重读规则文件(不依赖对话上下文),保证 reviewer 不被会话漂移影响 | Drift 时间维度(同代码两次结果可重现)|
+| **4-phase methodology** | Extract checklist → Verify(distributed rule 禁止 spot-check)→ Per-element matrix(失败时)→ Calibrated confidence | Verification(机械流程减少漏检)|
+| **Coverage 指标** | 输出 `coverage = fully_verified / total × 100%`;high confidence 需 ≥ 95% **且**无 skipped | Verification(覆盖率可量化)|
+| **Ambiguity feedback** | 发现规则模糊或矛盾时主动 flag 给 caller(`📝 ambiguities` 段) | Drift 演进维度(规则瑕疵闭环到 P4)|
+
+**workflow 调用方不必背契约**,但**知道这些保证**有助于判断 review 结果可信度,以及解释"为什么 reviewer 不给某条它做不到的建议"。完整契约定义见 reviewer skill 文件本身。
+
 #### 失效情形
 
 通用情形见 [§9 何时偏离](#9-何时偏离手册)。本原则特有的:

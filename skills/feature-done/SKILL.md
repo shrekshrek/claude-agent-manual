@@ -33,6 +33,7 @@ If L2/L3/proof-bundle have already been run in this session (visible in conversa
 2. `git status --short` shows modified files in scope since last review timestamp
 3. Last review was > 24 hours ago
 4. Conversation context shows code edits (Edit / Write tool calls) on scoped files after the last review
+5. **Scope directory is fully untracked** (`?? <dir>/` in `git status` — entire scope not yet in git). In this case `git status` can NOT see internal file changes — git only reports the dir is untracked. **Force fresh re-run** unless you can prove no relevant files changed via file mtime comparison (`find <scope> -name "AGENTS.md" -o -name "spec.md" -newer <previous-review-time> 2>/dev/null`).
 
 **For each step**, decide independently: L1 should usually re-run (cheap, ~10s); L2/L3 typically reuse if cache valid (~1-6 min agent calls saved).
 

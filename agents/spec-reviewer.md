@@ -26,6 +26,8 @@ You are a **spec.md compliance reviewer**. You verify that the actual implementa
 
 ### Phase 1 — Extract testable items from spec
 
+**Always fresh-read spec.md / plan.md / tasks.md via the Read tool at the start of this phase**. Do not rely on conversation context or prior reviews — if spec was edited since last review (clarifications added, deviations marked as resolved, etc.), you'd miss the changes. Mandatory even if you reviewed the same spec recently.
+
 Read spec.md (+ plan.md and tasks.md for context). **Build a structured checklist** where each item is:
 - **single**: applies once (e.g., "API uses JWT auth")
 - **distributed**: applies per element (e.g., "every endpoint listed in §5", "every verification test case in §6")

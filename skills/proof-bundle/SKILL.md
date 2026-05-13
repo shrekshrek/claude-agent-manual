@@ -36,7 +36,32 @@ Same logic as `/l3-review`:
 
 Verify all three files exist: spec.md, plan.md, tasks.md.
 
-## Step 2 — Compute each proof bundle item
+## Step 2 — Cache invalidation check before reusing L2/L3 findings
+
+Before reusing L2/L3 findings from earlier in this session, **verify they're still valid**. Stale findings caused multiple bugs in v2.1.x development; this step is mandatory.
+
+For **L2** (AGENTS.md compliance) cache validity:
+
+1. Run `git status --short`
+2. **If any of these files changed since the previous L2 run**, **re-run /l2-review fresh**, don't reuse:
+   - `AGENTS.md` (root + tier-level: `backend/AGENTS.md` / `frontend/AGENTS.md`)
+   - `.claude/rules/*.md`
+   - `docs/gotchas.md` (if exists)
+   - Any source files in scope (the implementation)
+3. **Special case**: if the project scope (e.g., `scaffold-v2/`) is **fully untracked** (`?? <dir>/` in git status — entire directory not in git yet), `git status` won't show inner file changes. **In this case, always force fresh L2 run** since git can't track changes within untracked directories. Fall back to file mtime comparison if needed:
+   ```bash
+   find <scope> -name "AGENTS.md" -o -name "*.md" -newer <last-review-marker> 2>/dev/null
+   ```
+
+For **L3** (spec.md compliance) cache validity:
+
+1. Same `git status` check
+2. **If `docs/specs/<NNN>-<slug>/spec.md` or `plan.md` or `tasks.md` changed** OR any implementation file in scope changed, **re-run /l3-review fresh**
+3. Same untracked-directory rule as L2
+
+If you do reuse, **state explicitly in the report header**: "L2 reused from earlier run in this session (no scoped changes detected by git status / mtime)". Don't reuse silently.
+
+## Step 3 — Compute each proof bundle item
 
 ### Item 1: Diff 摘要
 
@@ -102,7 +127,7 @@ Read tasks.md `## 实施记录` and `## 未决` sections (if present). Any item 
 
 Also include any spec ambiguities the L3 reviewer flagged.
 
-## Step 3 — Write to tasks.md
+## Step 4 — Write to tasks.md
 
 Open `<feature-dir>/tasks.md`. Find the `## Proof Bundle` section near the end. **Replace** the checklist with filled-in values (keep the checkboxes).
 
@@ -123,7 +148,7 @@ Example filled version:
 
 Use the user's Edit tool to update tasks.md atomically — single edit replacing the proof-bundle section.
 
-## Step 4 — Report back
+## Step 5 — Report back
 
 After updating tasks.md, output:
 

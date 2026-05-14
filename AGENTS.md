@@ -24,20 +24,23 @@ README.md              v2 总览 + 安装 + skill 清单
 ├── plugin.json        manifest
 └── marketplace.json   marketplace 注册
 skills/                Claude Code skills
-├── project-init/      /project-workflow:project-init       (P0 greenfield)
-├── project-personalize/ /project-workflow:project-personalize (P0 scaffold-cloned/retrofit)
-├── feature-init/      /project-workflow:feature-init       (P2 起 feature spec/plan/tasks)
-├── l1-review/         /project-workflow:l1-review
-├── l2-review/         /project-workflow:l2-review
-├── l3-review/         /project-workflow:l3-review
-├── proof-bundle/      /project-workflow:proof-bundle
-└── feature-done/      /project-workflow:feature-done
+├── project-init/         /project-workflow:project-init        (P0 greenfield)
+├── project-personalize/  /project-workflow:project-personalize (P0 scaffold-cloned/retrofit)
+├── feature-init/         /project-workflow:feature-init        (P2 起 feature spec/plan/tasks)
+├── spec-quality-check/   /project-workflow:spec-quality-check  (P2 pre-impl gate,§3.7 7 问)
+├── spec-revise/          /project-workflow:spec-revise         (P2 mid-impl 修订,§3.5/§2.6)
+├── l1-review/            /project-workflow:l1-review
+├── l2-review/            /project-workflow:l2-review
+├── l3-review/            /project-workflow:l3-review
+├── proof-bundle/         /project-workflow:proof-bundle
+└── feature-done/         /project-workflow:feature-done
 
 agents/                Sub-agents(被 skills dispatch)
-├── agents-md-reviewer.md  L2 AGENTS.md 合规 review(by /l2-review)
-├── spec-reviewer.md       L3 spec.md 合规 review(by /l3-review)
-├── tech-researcher.md     技术选型调研(by /project-init Q&A,opt-in)
-└── codebase-explorer.md   既有 codebase 结构扫描(by /project-personalize Path C)
+├── agents-md-reviewer.md      L2 AGENTS.md 合规 review(by /l2-review)
+├── spec-reviewer.md           L3 spec.md 合规 review(by /l3-review)
+├── spec-quality-reviewer.md   spec 自身质量主观二审(by /spec-quality-check)
+├── tech-researcher.md         技术选型调研(by /project-init Q&A,opt-in)
+└── codebase-explorer.md       既有 codebase 结构扫描(by /project-personalize Path C)
 docs/                  方法论文档
 ├── workflow.md        ⭐ 5 阶段 + 4 支柱(核心)
 ├── gotchas.md         ⭐ 10 工程陷阱

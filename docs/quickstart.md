@@ -110,6 +110,8 @@
 
 工具(可选):
 - `/project-workflow:feature-init <slug>` 起骨架
+- `/project-workflow:spec-quality-check` pre-implementation gate(7 问验质量)
+- `/project-workflow:spec-revise` mid-implementation 修订(spec/plan/module 真错时)
 - `/project-workflow:feature-done` 一键跑 L1+L2+L3+proof-bundle
 - 或分开:`/l1-review` / `/l2-review` / `/l3-review` / `/proof-bundle`
 
@@ -150,7 +152,7 @@
 | 阶段 | 触发时机 | 核心产物 | 工具(可选) | 主要文档 |
 |---|---|---|---|---|
 | P0 | 新项目 | AGENTS.md + hooks + specs/_template | `/feature-init` | [§1](workflow.md#1-p0project-setup项目第一天) |
-| P2 | 每 feature | spec+plan+tasks+proof-bundle | `/feature-init` / `/feature-done` | [§3](workflow.md#3-p2feature-development每个功能) |
+| P2 | 每 feature | spec+plan+tasks+proof-bundle | `/feature-init` → `/spec-quality-check` → impl(`/spec-revise` 必要时) → `/feature-done` | [§3](workflow.md#3-p2feature-development每个功能) |
 | Module Setup | P2 内嵌(需新模块时)| `<module>/` 骨架 + 极少时模块 CLAUDE.md | (无独立工具) | [§2](workflow.md#2-module-setupp2-内的-sub-flow非独立-phase) |
 | P3 | 自动 | hook 日志 + LSP | hooks | [§4](workflow.md#4-p3continuous-maintenance开发期间持续) |
 | P4 | 每 2 周 / drift | AGENTS.md diff | `/refresh-agents-md` | [§5](workflow.md#5-p4drift-refresh主动修正) |

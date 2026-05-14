@@ -578,6 +578,8 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 - 大量代码迁移但不起 ADR → 决策失忆
 - 拖到 feature 完成才合并改动 → spec/plan 跟现实漂移
 
+**工具**:[`/project-workflow:spec-revise`](../skills/spec-revise/SKILL.md) 自动化本 SOP——`--module` 模式覆盖本节流程(ADR 编号 + 跨文件一致性 + 修订记录格式)。
+
 ---
 
 ## 3. P2:Feature Development(每个功能)
@@ -704,6 +706,8 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 - 既改 spec 又改代码 → 不清楚哪个先决定
 
 **预防比修订便宜**:写完 spec 后跑 [`spec-driven.md §3.7 质量自检 7 问`](spec-driven.md#37-specplan-写完后的质量自检7-问-checklist),实施开始前过一遍。
+
+**工具**:[`/project-workflow:spec-revise`](../skills/spec-revise/SKILL.md) 自动化本 SOP——orchestrate ADR 起草 + spec.md `## 修订记录` 格式化追加 + plan.md prior decisions + tasks.md 重排。**不强制起 ADR**:用户判断"不必修(只是模糊)"时,引导写 plan.md prior decisions 即可。
 
 ---
 

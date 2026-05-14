@@ -11,10 +11,10 @@
 | # | 提案 | 提出日期 | 详细方案 |
 |---|---|---|---|
 | 1 | AGENTS.md 维护机制(3 阶段渐进推进) | 2026-05-08 提出,2026-05-11 大幅修订 | [`proposals/agents-md-maintenance-skill.md`](proposals/agents-md-maintenance-skill.md) |
-| 2 | Spec/Plan 质量自检 + 中途修订 SOP(workflow.md + spec-driven.md + template plan.md 文档化,**先 SOP 后工具**)| 2026-05-14 | 见下"提案 2 概要" |
-| 3 | (条件性)`system-architect` sub-agent —— P0 多方案架构探索 + ADR draft 辅助。**前置依赖**:提案 2 多方案探索 SOP 先文档化(§0.6 文档先于工具)| 2026-05-14,**等提案 2 + 真实使用反馈** | — |
-| 4 | (条件性)`spec-quality-reviewer` sub-agent —— `/feature-init` 后自动 review spec.md 质量。**前置依赖**:提案 2 质量自检 SOP 跑过几次 | 2026-05-14 | — |
-| 5 | (条件性)`spec-revision-helper` sub-agent —— 开发中 spec 出错时辅助起 ADR + 改 spec/plan。**前置依赖**:提案 2 修订 SOP 落地 | 2026-05-14 | — |
+| 2 | Spec/Plan 质量自检 + 中途修订 SOP(workflow.md + spec-driven.md + template plan.md 文档化)| 2026-05-14 提出,**v2.3.1 ✅ 已落地** | (workflow.md §2.6 / §3.5 + spec-driven.md §3.7 + spec.md template `## 修订记录`)|
+| 3 | (条件性)`system-architect` sub-agent —— P0 多方案架构探索 + ADR draft 辅助。**前置依赖**:多方案探索 SOP 先文档化(§0.6)| 2026-05-14,**等真实使用反馈** | — |
+| 4 | `spec-quality-reviewer` sub-agent —— spec.md 主观质量二审(Outcomes 具体度 / Constraints 真假 / tasks verifiable)| 2026-05-14 提出,**v2.3.2 ✅ 已落地** | `agents/spec-quality-reviewer.md` + `skills/spec-quality-check/` |
+| 5 | `spec-revision-helper` sub-agent → 改名 `/spec-revise` skill —— 开发中 spec 出错时辅助起 ADR + 改 spec/plan/tasks/module CLAUDE.md | 2026-05-14 提出,**v2.3.2 ✅ 已落地** | `skills/spec-revise/` |
 
 ### 提案 2 概要(Spec/Plan 质量 + 修订 SOP)
 

@@ -1,6 +1,6 @@
 ---
 name: feature-init
-description: Start a new feature spec — create docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md from project template. Auto-detect if a new module is needed and add module setup to plan/tasks (per workflow §2 Module Setup sub-flow).
+description: Start a new feature spec — create docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md from project template. Auto-detect if a new module is needed and add module setup to plan/tasks (per workflow §2 Module Setup sub-flow). Optional Step 7 walks user through Q&A fill of §3-5 TODOs with §3.7 quality criteria internalized (can dispatch tech-researcher sub-agent for stack-unsure choices).
 ---
 
 > **Response language**: Match the user's prompt language (中文 / English / etc.) in all natural-language output — headers, summaries, questions, progress messages. Code, commands, file paths, and `$ARGUMENTS` stay as-is.
@@ -177,10 +177,108 @@ After creating, output:
    - Needs user clarification: <which option>
 
 Next steps:
-1. Open spec.md → flesh out §3-5
-2. Implement following tasks.md
-3. When done: `/project-workflow:feature-done` (runs L1+L2+L3+proof-bundle) — *coming soon*
+1. (推荐)立刻进 Step 7 Q&A 走完 §3-5 fill(本 skill 内置)
+2. 或选 n 跳过 → 后续自己跟 AI 在主会话填(参考 [`spec-driven.md §3.6.5`](../../docs/spec-driven.md#365-phase-a-填-todos-的-ai-协作-sop))
+3. 填完跑 `/project-workflow:spec-quality-check` — pre-implementation gate
+4. Implement following tasks.md
+5. 实施中真发现 spec/plan 错时:`/project-workflow:spec-revise`(走 [workflow.md §3.5](../../docs/workflow.md#35-开发中发现-specplan-错怎么办))
+6. 完成时:`/project-workflow:feature-done`(L1+L2+L3+proof-bundle)
 ```
+
+## Step 7 — (Optional)Q&A 填 §3-5 TODOs
+
+After Step 6 报告完成,**询问用户是否立即进 Q&A fill 阶段**:
+
+```
+spec.md §3-5 还有 TODOs。要我现在 Q&A 走完吗?
+  (y)es      → 我按 §3.6.5 SOP 走 §3 → §4 → §5 → §2 末轮补"不做"
+  (n)o       → 你后续自由填(我退出)
+  (s)kip §X  → 只填指定节(如 'skip §3' 跳过 user scenarios)
+```
+
+若用户答 (n) → exit。若 (y) 或 (s),按下面顺序执行 7.1-7.5。
+
+**贯穿 Step 7 的纪律**(对应 [`spec-driven.md §3.7`](../../docs/spec-driven.md#37-specplan-写完后的质量自检7-问-checklist) 7 问):
+
+- §3.7 Q1(六要素齐)— Step 7 强制走完保证齐
+- §3.7 Q2(必有"不做")— Step 7.4 末轮补
+- §3.7 Q3(Verification 可机械化)— Step 7.3 API Contract 出错码 + Step 6 verification 模板已有 L1/L2/L3
+- §3.7 Q4(Outcomes 具体)— Step 7.1 引导问"具体动作 + 边界"
+- §3.7 Q5(Constraints 真假)— Step 7.3 API Contract 阶段问硬数字 / 法规
+- §3.7 Q6(Sibling Alignment)— 已在 plan.md template §1.1(用户 review 即可)
+- §3.7 Q7(tasks verifiable)— Step 6 输出 tasks.md 时已经 verifiable;Step 7 不重复
+
+### Step 7.1 — §3 User Scenarios(~3-5 个引导问题)
+
+按顺序问用户(每问后等回答再下一问):
+
+```
+1. "这个 feature 的核心用户场景是什么?用具体动作描述,不要 'as a user I want'。"
+2. "有什么边界 case?(异常输入 / 时序问题 / 权限边缘 / etc.)"
+3. (按需)"这个场景跟现有 features 有 overlap 吗?"
+```
+
+收齐答案 → 用 Edit 工具写进 spec.md §3。完成后 1 行确认:
+
+> "✅ §3 已填:<总结>。OK 进 §4 Data Model 吗?"
+
+### Step 7.2 — §4 Data Model(~3-5 个引导问题)
+
+```
+1. "这个 feature 涉及哪些核心实体?(用户/订单/邀请/...)"
+2. "实体间的关系?(1-1 / 1-N / N-N + 谁拥有谁)"
+3. "每个实体的关键字段?(只列关键 3-5 个,不必详尽)"
+4. (按需,若用户对 ORM / 序列化方式不确定)"用 X 还是 Y?要我调研吗?"
+   → 用户 yes → dispatch tech-researcher sub-agent
+5. (按需)"需要 migration 吗?(若用 SQL DB)"
+```
+
+写进 spec.md §4。确认。
+
+### Step 7.3 — §5 API Contract(~3-5 个引导问题)
+
+```
+1. "暴露哪些 HTTP endpoint?(列 method + path)"
+2. "每个 endpoint 的 request payload + response shape?"
+3. "错误路径有哪些?(401 / 404 / 422 / 409 / 500 ...)"
+   → 主动追问 "401 / 404 case 覆盖了吗?"(对应 §3.7 Q3 可测验证)
+4. (若有硬性能 / 时延约束)"P95 / 并发限制?"(→ §3 Constraints)
+```
+
+写进 spec.md §5。**同时把性能/合规约束回填 §3 Constraints**。确认。
+
+### Step 7.4 — §2 Scope 末轮补"不做"(最关键的一步)
+
+**为什么单独最后做**:用户走完 §3-5 后才知道 scope 真实边界,**这时问"什么不做"答得最准**。
+
+```
+"现在你看了 §3-5,有哪些**显式不做**的事?
+ (例:'本版只支持 email 邀请,不发短信'/ '不做 race condition 处理,假设单点写'/ etc.)
+ 
+ 至少列 2-3 条 —— 这是 scope creep 防御。"
+```
+
+写进 spec.md §2 `**Exclude(不做)**:` 清单。
+
+### Step 7.5 — 报告 + 提示下一步
+
+```
+✅ Spec §3-5 + §2 Exclude 已 Q&A 填完。
+
+下一步建议:
+1. 跑 `/project-workflow:spec-quality-check` 验最后那 5%(检 plan.md §1.1 Sibling Alignment + 主观二审)
+2. 通过后 `git commit` spec.md → 进 implementation
+3. 实施中发现 spec 错 → `/project-workflow:spec-revise`
+```
+
+### Step 7 Failure modes
+
+| 错误 | 应对 |
+|---|---|
+| 用户 Q&A 中途想退出 | 保存已填部分,告诉用户 "已写到 §X,后续可以自己续填" |
+| 用户对某节业务概念完全没想清 | 跳过该节(填 `{{TODO — pending business decision: <topic>}}`),提示用户后续 quality-check 前要填 |
+| Step 7.2 dispatch tech-researcher 失败 | 退回 user 自答,不阻塞 fill 流程 |
+| 用户回答跟前面 §自相矛盾 | 提示 "§3 你说 X,§5 这里说 Y,是 X 还是 Y?",请求澄清 |
 
 ## Notes
 

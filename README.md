@@ -49,7 +49,9 @@ Then in any project:
 |---|---|---|
 | `/project-workflow:project-init` | v2.3.0 | P0 greenfield initialization — Q&A walks through stack and conventions, generates 10+ files (AGENTS.md / .claude/ / docs/specs/_template/ / etc.). "不确定" answers trigger `tech-researcher` sub-agent for parallel research. Auto-handles fullstack tier structure. |
 | `/project-workflow:project-personalize` | v2.3.0 | P0 scaffold-cloned / retrofit — adapts existing v2-shaped project to user's values. Replaces scaffold defaults, completes tier-level AGENTS.md (中庸 scheme), dispatches `codebase-explorer` sub-agent to scan existing structure. |
-| `/project-workflow:feature-init` | v2.0.0 | Start a new feature spec — creates `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` with module-setup auto-detection (per workflow §2) |
+| `/project-workflow:feature-init` | v2.3.2 | Start a new feature spec — creates `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` with module-setup auto-detection (per workflow §2). **Step 7 (optional Q&A fill)** walks through §3-5 TODOs with §3.7 quality criteria inline; dispatches `tech-researcher` for stack-unsure choices. |
+| `/project-workflow:spec-quality-check` | v2.3.2 | **Pre-implementation gate** — verify spec/plan/tasks quality per spec-driven.md §3.7 7-q checklist. Mechanical checks + dispatches `spec-quality-reviewer` sub-agent for subjective items. |
+| `/project-workflow:spec-revise` | v2.3.2 | **Mid-implementation revision** — orchestrate spec/plan/module change SOP per workflow.md §3.5 / §2.6 (ADR + spec.md 修订记录 + plan.md prior decisions + tasks.md rebalance). |
 | `/project-workflow:l1-review` | v2.1.0 | Run project's `check` command (lint/typecheck/test) and report pass/fail with concise summary |
 | `/project-workflow:l2-review` | v2.1.0 | AGENTS.md compliance review via `agents-md-reviewer` sub-agent — finds rule violations on changed files |
 | `/project-workflow:l3-review` | v2.1.0 | spec.md compliance review via `spec-reviewer` sub-agent — finds missing items, deviations, scope creep |
@@ -64,6 +66,7 @@ Then in any project:
 | `spec-reviewer` | `/l3-review` | Reads feature's spec.md, checks implementation matches §1 Outcomes / §2 Scope / §3 Constraints / §4 Verification |
 | `tech-researcher` | `/project-init` Q&A | Researches stack/library choices (2-3 candidates + pros/cons + recommendation). Read-only. Triggers when user answers "不确定" / "帮我选" in Q&A. |
 | `codebase-explorer` | `/project-personalize` Path C | Surveys existing codebase structure → recommends `## Project Structure` content. Read-only, no edits. |
+| `spec-quality-reviewer` | `/spec-quality-check` | Subjective spec quality assessment (Outcomes specificity / Constraints真假 / tasks verifiable). 4-phase methodology, cite-or-skip discipline. Read-only. |
 
 ## Read this first
 

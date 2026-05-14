@@ -308,6 +308,55 @@ docs/specs/
 
 ---
 
+### 3.6.5 Phase A:填 TODOs 的 AI 协作 SOP(主会话用)
+
+**何时用本节**:`/feature-init` 退出后,如果用户选择**不**走 Step 7 自动 Q&A 填(或后续单独跟 AI 在主会话填),AI 应**读本节后按规则引导**——保证 quality 标准 inline 内化,**不依赖事后 quality-check 才发现问题**。
+
+> **若用户跑 /feature-init Step 7,本 SOP 已被 skill 内化**,不需另外引用。
+> 本节只在 **主会话非-skill context** 下生效。
+
+#### 顺序:按节依次填,不跳
+
+```
+§3 User Scenarios → §4 Data Model → §5 API Contract → §6 Verification → §2 Scope 末轮补"不做"
+```
+
+**为什么 §2 末轮补**:用户走完 §3-5 才知道 scope 真实边界,**此时问"什么不做"答得最准**。
+
+#### 每节用 §3.7 quality 标准作引导问题
+
+| 填的节 | AI 引导问题(对应 §3.7 哪条质量标准)|
+|---|---|
+| §3 User Scenarios | "具体场景是什么?边界 case?"(→ §3.7 Q4 具体度)|
+| §4 Data Model | "核心实体 + 关系?关键字段?"|
+| §5 API Contract | "endpoint method + path + payload?**错误路径** 401/404/422?"(→ §3.7 Q3 可测)|
+| §2 Scope(末轮)| "现在你知道边界了——**显式不做**哪些?至少列 2-3 条"(→ §3.7 Q2 必有"不做")|
+| §3 Constraints | "这是真约束还是希望?如'希望快'→量化成'P95 < 200ms'"(→ §3.7 Q5 真假)|
+
+#### 每节填完做 1 行确认
+
+"§N 已填:<总结>。OK 进下一节?"
+
+#### 用户不确定某节技术选型时
+
+→ AI 主动建议 dispatch `tech-researcher` sub-agent 调研,而不是替用户决定。
+
+#### 末尾提示
+
+"全部填完。建议跑 `/project-workflow:spec-quality-check` 做 pre-impl gate 验证。"
+
+#### 这跟 /spec-revise 的区别
+
+| 维度 | Phase A AI 协作填 | /spec-revise(State 4 修订)|
+|---|---|---|
+| Spec 状态 | Draft → Filled(见 [§3.8](#38-spec-生命周期状态钉死编辑规则)) | Frozen |
+| ADR | ❌ 无需 | ✅ 必须 |
+| `## 修订记录` | ❌ 无需 | ✅ 必须 |
+| 跨文件同步 | 自然(初次写 plan/tasks 一并) | ✅ 必须 orchestrate |
+| Skill? | ❌ 主会话 AI 读本节直接做(或走 /feature-init Step 7 内化版)| ✅ /spec-revise |
+
+---
+
 ### 3.7 Spec/Plan 写完后的质量自检(7 问 checklist)
 
 **何时跑**:`/feature-init` 生成骨架 + 你填完 spec.md / plan.md 后,**开始实施前**主动跑一遍。
@@ -327,6 +376,39 @@ docs/specs/
 **没全通过别开始实施**——开始后才发现要回炒成本高 5-10x。
 
 **跟 [workflow.md §3.5](workflow.md#35-开发中发现-specplan-错怎么办) 的关系**:本节是 **pre-implementation 自检**(便宜阶段),§3.5 是 **mid-implementation 修订**(贵阶段)。两者都不可省。
+
+**工具**:[`/project-workflow:spec-quality-check`](../skills/spec-quality-check/SKILL.md) 自动化本 7 问 checklist——机械检查(M1-M5)+ dispatch [`spec-quality-reviewer`](../agents/spec-quality-reviewer.md) sub-agent 做主观二审(Q4 Outcomes / Q5 Constraints / Q7 verifiable)。**实施前 gate**——pass / borderline / fail 三档 verdict + 修法建议。
+
+---
+
+### 3.8 Spec 编辑边界(只有 1 条线)
+
+spec.md 编辑规则**只看 1 个问题**:**是否已 git commit 到仓库 + 实施开始?**
+
+| 状态 | 编辑规则 | 工具 |
+|---|---|---|
+| **未 commit** 或 **未开始 impl** | **自由编辑**(用户 + AI 主会话 iterate) | [`/feature-init`](../skills/feature-init/SKILL.md) Step 7 / [§3.6.5 Phase A SOP](#365-phase-a填-todos-的-ai-协作-sop)/ [`/spec-quality-check`](../skills/spec-quality-check/SKILL.md) |
+| **已 commit 且开始 impl** | **必走 SOP**(ADR + `## 修订记录` 节追加 + 跨文件同步)| [`/spec-revise`](../skills/spec-revise/SKILL.md) |
+
+**为什么这条边界**:spec 是契约。没人基于它写代码时,改是无成本的;基于它写过代码后,改 = 撕毁契约 → 需要决策审计(ADR)+ 变更记录(`## 修订记录`)+ 跨文件同步(plan / tasks / 可能 module CLAUDE.md)。
+
+**反模式**:把 commit 前的 iteration 改动当 frozen 后修订处理(起 ADR + `## 修订记录`)→ ceremony 过度,spec 反而难起步。**没 commit 前就是 draft,改它不算修订**。
+
+**关于 spec.md frontmatter 状态字段**(`> 状态: 草稿 / 评审中 / 已确认 / 已实现 / 已上线`,template 默认有):是**业务流程标签**,跟本节编辑边界**正交**——可同时存在,不必映射。
+
+<details>
+<summary>(细化命名,仅作工程参考——操作只看上面 1 条边界)</summary>
+
+| 细化状态 | 何时 |
+|---|---|
+| Draft | `/feature-init` 刚生成,有 `{{TODO}}` |
+| Filled | TODOs 填完,未 quality-check |
+| Validated | `/spec-quality-check` 7 问通过 |
+| Frozen | git commit + impl 开始 |
+| Revised | 经过至少一次 `/spec-revise` |
+
+Draft / Filled / Validated **本质同档**(自由编辑);Frozen / Revised **本质同档**(走 SOP)。
+</details>
 
 ---
 

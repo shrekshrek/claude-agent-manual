@@ -81,6 +81,7 @@ Invoke L3 skill (which calls `spec-reviewer` agent):
 Invoke proof-bundle skill:
 - Compute diff summary
 - Aggregate L1/L2/L3 results from above (don't re-run)
+- **Compute AGENTS.md audit**(per proof-bundle Item 5a, see proof-bundle SKILL):列出本 feature 实际改动的 AGENTS.md / CLAUDE.md 文件,按 root / tier / module 三档分类,标注 Align/Deviate/Codify(若 plan.md §1.1 有声明)
 - Write to tasks.md
 
 ## Step 7 — Aggregate report
@@ -114,7 +115,8 @@ Single consolidated report (not 4 separate ones):
 ### Proof Bundle written to <tasks.md path>
 - Tests: X/Y passed, coverage Z%
 - Diff: <N> files, +<X>/-<Y>
-- Drift suggestions: <count>
+- **AGENTS.md 触动**: <K> 份(root: <0/1> / tier: <0-N> / module: <0-N>)—— 详见 tasks.md proof bundle Item 5a
+- Drift suggestions (未应用): <count>
 - Open questions: <count>
 
 ---

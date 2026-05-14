@@ -16,11 +16,14 @@ The template (from `template/docs/specs/_template/tasks.md` § Proof Bundle):
 - [ ] Tests:<X>/<Y> passed, coverage <Z>%
 - [ ] L2 合规(reviewer 提供 AGENTS.md 作 context 跑过):
 - [ ] L3 合规(reviewer 提供 spec.md 作 context 跑过):
-- [ ] AGENTS.md drift 建议(如有):
+- [ ] AGENTS.md 触动汇总(本 feature 实际改了哪几份):
+- [ ] AGENTS.md drift 建议(L2 提议但未应用,如有):
 - [ ] 开放问题(如有):
 ```
 
 This skill **verifies** these items and **fills them in** at the bottom of `tasks.md`.
+
+> **Item 5a vs 5b 的区分**:5a 是 audit(已发生改动),5b 是 backlog(待处理建议)。早期版本把两者混成单条 "AGENTS.md drift 建议",用户无法区分 "我已改了什么" vs "还需改什么" —— v2.3.6 起拆开。
 
 User input: `$ARGUMENTS` — feature slug or "current"
 
@@ -111,7 +114,44 @@ Same pattern, invoking `spec-reviewer` agent (or `/project-workflow:l3-review <s
 - ✅ "Spec match — N items verified, 0 missing/deviation"
 - ⚠️ "N deviations from spec.md (list each as 1 line)"
 
-### Item 5: AGENTS.md drift 建议
+### Item 5a: AGENTS.md 触动汇总(本 feature 实际改了哪几份)
+
+**Why this section exists**:feature 实施期常顺手改 AGENTS.md(Boundaries / 模块结构 / 框架约定),但用户改完代码后**容易忘记自己改了哪几份**。本节给出显式 audit,让 reviewer / 自己复盘时能一眼看到。
+
+**How to compute**:
+
+```bash
+# 找出本 feature 触动的 AGENTS.md / CLAUDE.md 文件
+git diff --name-only <base>...HEAD 2>/dev/null | grep -E "(^|/)(AGENTS|CLAUDE)\.md$"
+# 或对未 commit 的 scope:
+git status --short | awk '{print $2}' | grep -E "(^|/)(AGENTS|CLAUDE)\.md$"
+```
+
+**按三档分类**:
+
+| 档 | 路径模式 | 例 |
+|---|---|---|
+| **root** | `./AGENTS.md` 或 `./CLAUDE.md` | 项目根 |
+| **tier** | `<tier>/AGENTS.md`(deep 2) | `backend/AGENTS.md` / `frontend/AGENTS.md` |
+| **module** | `<tier>/<...>/<module>/CLAUDE.md`(deep ≥ 3) | `backend/src/email/CLAUDE.md` |
+
+**每份标注分类**(Align / Deviate / Codify):
+- 若 `plan.md §1.1 Sibling Alignment` 节里**显式声明了**该 module 的决策 → 用那个
+- 否则 → "未声明",建议用户后续在 plan.md 补声明或解释
+
+**输出格式**(0-N 行):
+
+```markdown
+- **scaffold-v2/backend/AGENTS.md** (tier) — Codify: 加 "业务 vs infra module" 区分(本 feature 002 引入 `email/` infra,plan.md §1.1 声明 Codify)
+- **scaffold-v2/AGENTS.md** (root) — 未声明:工程坑指针修复(死链),建议补 plan.md §1.1 标 Align
+- **(无 module CLAUDE.md 触动)**
+```
+
+若**完全没有 AGENTS.md 改动**(纯实施 feature 不动规则):写 "无 (none) — 本 feature 完全在现有 AGENTS.md 框架内,未触动任何规则文件"。
+
+### Item 5b: AGENTS.md drift 建议(L2 提议但未应用)
+
+L2 review 跑完会有"建议加规则但未落地"的 finding。这里抽出来跟 Item 5a(已应用)区分。
 
 Compare project's AGENTS.md against actual implementation. Look for:
 
@@ -119,7 +159,9 @@ Compare project's AGENTS.md against actual implementation. Look for:
 - Things in code that AGENTS.md **doesn't mention but should** (e.g., new module pattern not documented) → drift suggestion
 - Commands changed in `package.json` but not reflected in AGENTS.md `Commands` section → drift
 
-Output: 0-3 bullets. If nothing, write "无 (none)".
+Output: 0-3 bullets. If nothing, write "无 (none)"。
+
+**跟 Item 5a 的区分**:5a = 已经改了的,5b = 还没改但建议改的。Item 5a 是 audit(已发生),Item 5b 是 backlog(待处理)。
 
 ### Item 6: 开放问题
 
@@ -142,7 +184,11 @@ Example filled version:
 - [x] **Tests**: 25/25 passed, coverage 84% (auth: 89%, email: 78%)
 - [x] **L2 合规**: ✅ Clean — 0 violations across 21 files (checked against backend/AGENTS.md, frontend/AGENTS.md, docs/gotchas.md)
 - [x] **L3 合规**: ⚠️ 1 deviation — spec §3 says "token URL-safe ≥ 32 bytes" but actual is `secrets.token_urlsafe(24)` → 32 chars output but 24 bytes entropy. Action: either bump to `(32)` or update spec to "≥ 24 bytes / ≥ 32 chars".
-- [x] **AGENTS.md drift 建议**: 后端 AGENTS.md 应该提一句 "新 module 的 templates/ 目录(如有)放 jinja2 模板,不要混进 schemas/"。
+- [x] **AGENTS.md 触动汇总(Item 5a)**:
+  - **backend/AGENTS.md** (tier) — Codify: 加 "业务 vs infra module" 区分(plan.md §1.1 已声明 Codify)
+  - **AGENTS.md** (root) — 未声明:工程坑指针修复
+  - (无 module CLAUDE.md 触动)
+- [x] **AGENTS.md drift 建议(Item 5b,未应用)**: 后端 AGENTS.md 应该提一句 "新 module 的 templates/ 目录(如有)放 jinja2 模板,不要混进 schemas/"。
 - [x] **开放问题**: SMTP 限速(slowapi)上线前要补,见 plan.md §4 风险 + backlog
 ```
 
@@ -163,7 +209,8 @@ After updating tasks.md, output:
 | Tests | ✅ <X>/<Y> passed, coverage <Z>% |
 | L2 合规 | <status> |
 | L3 合规 | <status> |
-| AGENTS.md drift | <0/N suggestions> |
+| AGENTS.md 触动(5a,已改) | <K> 份(root/tier/module) |
+| AGENTS.md drift(5b,待改) | <0/N suggestions> |
 | 开放问题 | <0/N> |
 
 Overall: **<🟢 READY / 🟡 NEEDS WORK / 🔴 BLOCKED>**

@@ -63,8 +63,6 @@ cd "$TARGET_DIR"
 
 **后续所有 Step 的 `ls -la` / `cp` / Edit / Write 都对此 target 目录操作**(Bash cwd 已切换;Edit/Write 用绝对路径或相对此 cwd)。
 
-> **为什么这个 Step 存在**:lab 仓 / monorepo / "我有 5 个 sub-project,只想 init 其中一个" 场景需要从父目录的 session 里指定子目录。省略 `$ARGUMENTS` 完全 backward-compatible。
-
 ## Step 1 — 检测 target 状态
 
 ```bash
@@ -120,10 +118,6 @@ Task tool 调用:
 
 sub-agent 返回结构化报告(2-3 candidates + recommendation + 理由)→ project-init 把 recommendation 回填进 Q&A 答案,跟用户确认后继续下一问。
 
-**为什么 sub-agent 而不是 inline 处理**:
-- 调研涉及 WebSearch / WebFetch / context7 MCP 等可能多轮工具调用,**独立 context** 避免污染 project-init 主会话
-- 跟 v1 `tech-researcher` 哲学一致(独立调研 agent),但只在用户**主动求建议**时触发(opt-in)
-
 **例(用户视角)**:
 
 > 用户: "ORM 用什么不确定"
@@ -164,7 +158,7 @@ sub-agent 返回结构化报告(2-3 candidates + recommendation + 理由)→ pro
 
 - 主语言?(若多语言列 2-3 个)
 
-**Fullstack 项目本轮只问跨 tier 共性**(如全栈都用 TS / 后端 Python + 前端 TS)。**具体框架(FastAPI / Vue / React 等)在 Step 7.1 per-tier mini-Q&A 问**,本轮不重复。
+**Fullstack 项目本轮只问跨 tier 共性**(如全栈都用 TS / 后端 Python + 前端 TS)。**具体框架(FastAPI / Vue / React 等)在 Step 6.1 per-tier mini-Q&A 问**,本轮不重复。
 
 ### 轮 3:测试 + Lint + 包管理
 
@@ -212,7 +206,7 @@ cp -r "$TEMP_DIR/pw/template/." .
 mkdir -p docs
 cp "$TEMP_DIR/pw/docs/gotchas.md" docs/gotchas.md
 
-# 多 tier example 暂留在 _multi_tier_examples/,Step 7 处理
+# 多 tier example 暂留在 _multi_tier_examples/,Step 6 处理
 # 单 tier 项目可以删:
 # rm -rf _multi_tier_examples/
 
@@ -229,31 +223,45 @@ rm -rf "$TEMP_DIR"
 - `docs/gotchas.md`
 - `.github/...`
 - `.gitignore`
-- `_multi_tier_examples/`(仅 fullstack 用,见 Step 7)
+- `_multi_tier_examples/`(仅 fullstack 用,见 Step 6)
 
-## Step 5 — 填根 `AGENTS.md` placeholder
+## Step 5 — 填 placeholder(根 AGENTS.md + `.claude/rules/`)
 
-用 Edit 工具逐个替换:
+用 Edit 工具逐文件填齐 placeholder。**填齐或删行,不允许留** `{{...}}`(符合 Addy Osmani "no aspirational" 原则)。
+
+### 5.1 根 `AGENTS.md`
 
 | Placeholder | 据什么填 |
 |---|---|
-| `{{DEV_COMMAND}}` | Q&A 轮 4 起服务 |
-| `{{TEST_COMMAND}}` | Q&A 轮 4 跑测试 |
-| `{{LINT_COMMAND}}` | Q&A 轮 4 lint |
-| `{{DEPLOY_COMMAND}}` | Q&A 轮 4 部署(若没有写 "(项目演化中补)") |
-| `{{TEST_FRAMEWORK}}` | Q&A 轮 3 测试框架 |
+| `{{DEV_COMMAND}}` / `{{TEST_COMMAND}}` / `{{LINT_COMMAND}}` / `{{DEPLOY_COMMAND}}` | Q&A 轮 4(部署若没写"(项目演化中补)") |
+| `{{TEST_FRAMEWORK}}` | Q&A 轮 3 |
 | `{{TEST_LOCATION}}` | 默认 `tests/`(可改) |
-| `{{COVERAGE_THRESHOLD}}` | 默认 80,可改 |
-| `{{SRC_DIR}}` | **单 tier**:`src`(或对应语言惯例,如 Python: `<project>/`,Go: `cmd/` + `internal/`)<br>**多 tier**:**根 AGENTS.md 不填具体路径**,改成指针 `(见各 <tier>/AGENTS.md)`,避免跟 tier-level 重复 |
-| `{{TEST_DIR}}` | 同上规则:单 tier 直接填,多 tier 改指针 |
+| `{{COVERAGE_THRESHOLD}}` | 默认 80 |
+| `{{SRC_DIR}}` | **单 tier**:`src`(语言惯例:Python `<project>/`,Go `cmd/`+`internal/`)<br>**多 tier**:根 AGENTS.md **不填具体路径**,改成指针 `(见各 <tier>/AGENTS.md)`——避免跟 tier-level 重复 |
+| `{{TEST_DIR}}` | 同上 SRC_DIR 规则 |
 | `{{BRANCH_PATTERN}}` | Q&A 轮 5 |
 | `{{COMMIT_FORMAT}}` | 默认 conventional commits |
 | `{{LINT_CONFIG_PATH}}` | 据 Q&A 轮 3 lint 工具推断(如 `.eslintrc.cjs` / `pyproject.toml`)|
-| `{{STYLE_HIGHLIGHT_1/2/3}}` | 据栈推 1-3 条**真正特殊**的风格点(见下) |
+| `{{STYLE_HIGHLIGHT_1/2/3}}` | 据栈推 1-3 条**真正特殊**的风格点(见 5.3)|
 
-### STYLE_HIGHLIGHT 推断规则
+### 5.2 `.claude/rules/`
 
-不要写栈通用 default(如"2 空格缩进"——这是工具 default,不算特殊)。要写**项目级别真正会出错的**:
+| 文件 | Placeholder | 据什么填 |
+|---|---|---|
+| `code-style.md` | `{{NAMING_CONVENTION}}` | 据语言:Python snake_case / JS-TS camelCase + PascalCase classes |
+| `code-style.md` | `{{INDENT}}` | 据语言:Python 4 / JS-TS-Go 2 / Rust 4 |
+| `code-style.md` | `{{LINE_LIMIT}}` | 默认 100(Python 可 88) |
+| `testing.md` | `{{UNIT_TEST_FRAMEWORK}}` / `{{INTEGRATION_TEST_FRAMEWORK}}` | Q&A 轮 3 |
+| `testing.md` | `{{E2E_FRAMEWORK}}` | 询问 / 默认 Playwright |
+| `testing.md` | `{{TEST_FILE_LAYOUT}}` | 推断(Python tests/ 镜像 src/ / JS `*.test.ts` 同目录) |
+| `testing.md` | `{{TEST_NAME_PATTERN}}` | 据框架推 |
+| `testing.md` | `{{TEST_RUN_COMMAND}}` / `{{COVERAGE_COMMAND}}` / `{{E2E_RUN_COMMAND}}` | Q&A 轮 4 + 据框架推 |
+| `testing.md` | `{{COVERAGE_THRESHOLD}}` | 默认 80(跟根 AGENTS.md 一致) |
+| `security.md` | (主要固定文本,placeholder 极少) | 通常不需大改 |
+
+### 5.3 STYLE_HIGHLIGHT 推断规则
+
+**不要写栈通用 default**(如"2 空格缩进"——工具 default,不算特殊)。**要写项目级别真正会出错的**:
 
 | 栈 | HIGHLIGHT 例 |
 |---|---|
@@ -262,50 +270,18 @@ rm -rf "$TEMP_DIR"
 | Vue 3 | "Composition API only;`<script setup>` 必用" |
 | FastAPI | "Pydantic v2 strict mode;SQLAlchemy 2.0 select() 风格" |
 
-只填 Q&A 信息能推出来的;栈没特殊点就只填 1-2 个,留第三个为空(把 `- {{STYLE_HIGHLIGHT_3}}` 那行删掉)。
+只填 Q&A 信息能推出来的;栈没特殊点就只填 1-2 个,把 `- {{STYLE_HIGHLIGHT_3}}` 那行删掉。
 
-**不允许留 placeholder**——填齐或删行(符合 Addy Osmani "no aspirational" 原则)。
-
-## Step 6 — 填 `.claude/rules/` placeholder
-
-类似 Step 5,逐文件填:
-
-### `.claude/rules/code-style.md`
-
-| Placeholder | 据什么填 |
-|---|---|
-| `{{NAMING_CONVENTION}}` | 据语言推(Python: snake_case;JS/TS: camelCase + PascalCase classes) |
-| `{{INDENT}}` | 据语言推(Python: 4;JS/TS/Go: 2;Rust: 4) |
-| `{{LINE_LIMIT}}` | 默认 100(Python 可 88,Rust 可 100) |
-
-### `.claude/rules/testing.md`
-
-| Placeholder | 据什么填 |
-|---|---|
-| `{{UNIT_TEST_FRAMEWORK}}` | Q&A 轮 3 |
-| `{{INTEGRATION_TEST_FRAMEWORK}}` | 同上(可同) |
-| `{{E2E_FRAMEWORK}}` | 询问用户(可默认 Playwright)|
-| `{{TEST_FILE_LAYOUT}}` | 推断(Python: tests/ 镜像 src/;JS: \*.test.ts 同目录) |
-| `{{TEST_NAME_PATTERN}}` | 据框架推 |
-| `{{TEST_RUN_COMMAND}}` | Q&A 轮 4 |
-| `{{COVERAGE_COMMAND}}` | 据测试框架推 |
-| `{{E2E_RUN_COMMAND}}` | 推断 / 询问 |
-| `{{COVERAGE_THRESHOLD}}` | 默认 80(跟根 AGENTS.md 一致) |
-
-### `.claude/rules/security.md`
-
-主要是固定文本,placeholder 少 / 无 —— 不需要大改。
-
-## Step 7 — Fullstack:per-tier AGENTS.md + CLAUDE.md
+## Step 6 — Fullstack:per-tier AGENTS.md + CLAUDE.md
 
 **仅当 Q&A 轮 1 答 (a) Fullstack 时执行**。其他项目类型跳过本 Step。
 
-### Step 7.0:清理 `_multi_tier_examples/`(非 fullstack 即删)
+### Step 6.0:清理 `_multi_tier_examples/`(非 fullstack 即删)
 
 - **非 fullstack 项目**:`rm -rf _multi_tier_examples/`(用不到,删干净)
-- **Fullstack 项目**:暂保留,Step 7.4 用完后删
+- **Fullstack 项目**:暂保留,Step 6.4 用完后删
 
-### Step 7.1:对每个 tier 分类 + 跑 per-tier mini-Q&A
+### Step 6.1:对每个 tier 分类 + 跑 per-tier mini-Q&A
 
 For each tier in [Q&A 轮 1.5 tier list]:
 
@@ -342,13 +318,13 @@ For each tier in [Q&A 轮 1.5 tier list]:
 7. 起开发 / build / test / lint 命令?
 ```
 
-### Step 7.2:据类别选模板,复制到 `<tier>/`
+### Step 6.2:据类别选模板,复制到 `<tier>/`
 
 模板按**类别**(不是 tier 名),覆盖任意 tier 名:
 
 ```bash
 TIER_NAME=<from Q&A 轮 1.5>     # 用户自定的 tier 名(如 backend / worker / api / mobile / web ...)
-TIER_CATEGORY=<service-tier 或 ui-tier>  # 据 Step 7.1 分类
+TIER_CATEGORY=<service-tier 或 ui-tier>  # 据 Step 6.1 分类
 
 mkdir -p "$TIER_NAME"
 cp "_multi_tier_examples/${TIER_CATEGORY}.AGENTS.md.example" "$TIER_NAME/AGENTS.md"
@@ -361,7 +337,7 @@ cp "_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.example" "$TIER_NAME/CLAUDE.
 - 用户的 `frontend/` tier(UI) → `ui-tier.example` → `frontend/AGENTS.md`
 - 用户的 `mobile/` tier(UI) → `ui-tier.example` → `mobile/AGENTS.md`
 
-### Step 7.3:填 tier-level AGENTS.md placeholder
+### Step 6.3:填 tier-level AGENTS.md placeholder
 
 逐个替换 `{{TIER_NAME}}` / `{{TIER_DEV_COMMAND}}` / `{{TIER_FRAMEWORK}}` 等(详见 [_multi_tier_examples/README.md](../template/_multi_tier_examples/README.md))。
 
@@ -371,7 +347,7 @@ cp "_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.example" "$TIER_NAME/CLAUDE.
 
 **关键 3:删除不适用的整个章节**:某 tier 用不到的章节(如 service-tier 不用 ORM 时 `### {{TIER_ORM}}` 整节删)直接整段删,**不留空章节**。
 
-### Step 7.4:删除残留 example
+### Step 6.4:删除残留 example
 
 所有 tier 处理完后:
 
@@ -379,7 +355,7 @@ cp "_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.example" "$TIER_NAME/CLAUDE.
 rm -rf _multi_tier_examples/
 ```
 
-## Step 8 — 裁剪 `.claude/hooks/lint-on-edit.js`
+## Step 7 — 裁剪 `.claude/hooks/lint-on-edit.js`
 
 template 的 lint-on-edit.js 是骨架(if-else by extension)。
 
@@ -390,7 +366,7 @@ template 的 lint-on-edit.js 是骨架(if-else by extension)。
 
 用 Edit 工具裁剪。
 
-## Step 9 — 总结 + 下一步建议
+## Step 8 — 总结 + 下一步建议
 
 报告生成的文件 + 提示下一步:
 
@@ -452,7 +428,4 @@ template 的 lint-on-edit.js 是骨架(if-else by extension)。
 ## Notes
 
 - **跟 feature-init 区别**:feature-init 在 P2 启动 feature(每个 feature 跑一次);project-init 在 P0 起整个项目骨架(once)。
-- **Claude Code-native**:本 skill 用 Task tool dispatch `tech-researcher` sub-agent 做"不确定"答案的研究——独立 context、可调 WebSearch/WebFetch/context7 MCP,不污染 project-init 主会话。
-- **不覆盖既有 P0 SOP**:[`docs/workflow.md §1 P0`](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#1-p0project-setup项目第一天) 是方法论本体,本 skill 是自动化辅助。**不装 plugin 也能纯手工跑 P0**。
-- **goal-driven**:本 skill 服务 [§0.1 命题 3 Drift](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#01-这本手册解决什么) —— P0 锚定基线,统一项目标准。
-- **phase 名 vs skill 名**:§1 phase 仍叫 "P0 Project Setup"(workflow.md 的 phase 命名);本 skill 叫 `project-init`(动词 init 跟 feature-init 对齐)。两者**有意分离**,不要在 docs 里混用。
+- **方法论本体**:[`docs/workflow.md §1 P0`](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#1-p0project-setup项目第一天) —— 不装 plugin 也能纯手工跑 P0。

@@ -134,10 +134,32 @@ AGENTS.md coverage: <X>% (<fully_verified>/<total> rules; <sampled> sampled; <sk
 - **Why ambiguous**: <e.g., "rule says X but contradicts §Y"; "rule has no operational definition">
 - **Suggested clarification**: <what the rule could say more precisely>
 
+### 🗂 Findings grouped by AGENTS.md file (action map)
+
+> **Why this view exists**:above the findings are grouped by severity (triage view). This second grouping reorganizes the **same findings** by **which AGENTS.md/CLAUDE.md file they cite**, so the user/reviewer can see "to update `<file X>`, address these N items" at a glance.
+>
+> **Output convention**:list every AGENTS.md / CLAUDE.md file you consulted, even if it had 0 findings (proves coverage). Sort: root → tier → module. Cross-reference findings by their above ID (V-#, P-#, A-#) without re-stating the full body.
+
+```markdown
+- **`AGENTS.md`** (root) — <N> finding(s):
+  - V-2: <one-line title>
+  - A-3: <one-line title>
+- **`backend/AGENTS.md`** (tier) — <N> finding(s):
+  - V-1: <one-line title>
+  - P-1: <one-line title>
+  - A-1: <one-line title>
+- **`frontend/AGENTS.md`** (tier) — 0 finding(s) ✅
+- **`backend/src/<module>/CLAUDE.md`** (module, reversed module) — <N>:
+  - V-3: <one-line title>
+```
+
+If finding doesn't cite a specific AGENTS.md file (e.g., a generic Phase-4 ambiguity about your own methodology) → list under "**(not file-scoped)**" at the end.
+
 ### Summary
 
 - **Findings**: <N> violations, <M> partial, <K> spot-checked OK
 - **AGENTS.md coverage**: <X>% (<fully_verified>/<total>)
+- **AGENTS.md files reviewed**: <list root + tier + any module CLAUDE.md actually read>
 - **Confidence**: <high / medium / low> — <one-line justification>
 - **Time spent**: <minutes>
 - **Most impactful finding**: <V-# or P-#>

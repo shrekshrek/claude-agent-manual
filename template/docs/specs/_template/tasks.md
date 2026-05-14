@@ -50,5 +50,6 @@
 - [ ] **Tests**:`<X>/<Y>` passed,coverage `<Z>%`
 - [ ] **L2 合规**(reviewer 提供 AGENTS.md 作 context 跑过):
 - [ ] **L3 合规**(reviewer 提供 spec.md 作 context 跑过):
-- [ ] **AGENTS.md drift 建议**(如有):
+- [ ] **AGENTS.md 触动汇总**(本 feature 实际改了哪几份 root / tier / module):
+- [ ] **AGENTS.md drift 建议**(L2 提议但未应用,如有):
 - [ ] **开放问题**(如有):

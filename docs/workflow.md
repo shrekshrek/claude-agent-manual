@@ -554,6 +554,30 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 
 **v2 不强制 DDD**,只是给 opinionated default。**重型 DDD ceremony**(entity / value object / aggregate / repository 四层、Domain Event、Anti-Corruption Layer 等)是另一个 layer 的决策,**不在 v2 强制范围**——你按需取。
 
+### 2.6 Module 中途变更(feature 实施中发现边界要调整)
+
+**触发**:plan.md §1.1 Sibling Alignment 当时没料到的情况——实施中发现:
+
+- 一个 module 该拆成两个(职责混杂,namespace 难命名)
+- 两个 module 该合并(过度切分,共享逻辑重复)
+- 现有 module 边界错(代码自然属于 A 但放在 B,反复跨调)
+- spec 没涵盖的新 module 突然必要(实际写代码才发现)
+
+**SOP**:
+
+1. **停**正在写的代码 —— 不要边迁移代码边重新认知边界
+2. **起 ADR**(`docs/adr/NNNN-<topic>.md`)记 module 边界调整决策 + 原因
+3. **重审 plan.md §1.1 Sibling Alignment** —— 这次往往"Codify"选项触发(把新发现的边界规则提升到 AGENTS.md / tier-level AGENTS.md)
+4. **若反常**(参见 [§2.3](#23-反常判定何时该写模块-claudemd) 判定)→ 写 / 改对应 `<module>/CLAUDE.md`
+5. **改 spec.md "模块影响范围" 节** + 末尾"修订记录"加一行(走 [§3.5 修订 SOP](#35-开发中发现-specplan-错怎么办))
+6. **改 plan.md §1 模块影响范围**:列实际边界变更
+7. **回到实施**
+
+**反模式**:
+- 边写代码边偷偷拆 module 不记录 → 半年后没人记得为什么 `backend/foo` 在那里
+- 大量代码迁移但不起 ADR → 决策失忆
+- 拖到 feature 完成才合并改动 → spec/plan 跟现实漂移
+
 ---
 
 ## 3. P2:Feature Development(每个功能)
@@ -643,6 +667,43 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 | 交付 | PR 描述用 `.github/PULL_REQUEST_TEMPLATE.md`,proof bundle 项是 checklist |
 | review | PR 评论;reviewer agent 结果可贴到 PR |
 | 合并 | spec/plan/tasks 目录归档(不删),Issue 关闭引用 PR |
+
+### 3.5 开发中发现 spec/plan 错怎么办
+
+**前提**(再次强调 [§6.1](#61-规约先于代码spec-driven)):`spec.md` 默认**冻结**,中途修订是**例外**,要走流程不是随便改。
+
+**触发**:implementation 阶段意识到 spec 假设错 / verification 不可测 / Scope 漏写 / Outcomes 跟实际需求不符。
+
+**判断要不要修订**(每条独立评估):
+
+| 发现 | 是不是真错 | 怎么处理 |
+|---|---|---|
+| Scope 漏写"不做" → AI 多做了 | ✅ 真错 | 必修 spec.md §2 |
+| Outcomes 措辞模糊 | ⚠️ 看影响 | 已写错方向 → 必修;只是措辞模糊但实施方向对 → plan.md prior decisions 加澄清,spec 不动 |
+| Verification 不可机械化("人眼判断") | ✅ 真错 | 必修 spec.md §4 改成可测断言 |
+| 数据模型 / API 契约跟实际写时冲突 | ⚠️ 检查 | 模型错改 spec.md;代码错改代码;契约升级起 ADR |
+| 发现需要拆 / 合 / 改 module | ✅ 真错 | 走 [§2.6 Module 中途变更 SOP](#26-module-中途变更feature-实施中发现边界要调整) |
+| Constraints 太死(实施才发现不必要)| ⚠️ 看 | 真不必要 → 改 spec.md §3 + ADR 记原因;只是难做 → 别动 spec |
+
+**修订 SOP**(任何"必修"决策都走这个流程):
+
+1. **停**实施 —— 不要边改 spec 边写代码,会再漂
+2. **起 ADR**(`docs/adr/NNNN-<topic>.md`)记决策 + 原因 + 影响范围(`NNNN` = 现有 ADR 最大编号 +1)
+3. **改 spec.md** + 在文件末尾加 `## 修订记录` 节,每条:
+   ```
+   YYYY-MM-DD: 改了 §<N> <节名>;原因见 ADR-NNNN
+   ```
+4. **改 plan.md**:`Prior decisions` 加一条引用 ADR;`§1 模块影响范围` / `§2 架构决策` 按需更新
+5. **改 tasks.md**:若任务列表 / 验收点变化,重排
+6. **回到实施**
+
+**反模式**:
+- 偷偷改 spec.md 不留修订记录 → spec 漂移 source
+- 改 spec 不起 ADR → 决策失忆(三个月后看 spec 不知道为啥这么写)
+- 拖到 feature 完成时一次性"合并所有修订" → 失去回溯能力
+- 既改 spec 又改代码 → 不清楚哪个先决定
+
+**预防比修订便宜**:写完 spec 后跑 [`spec-driven.md §3.7 质量自检 7 问`](spec-driven.md#37-specplan-写完后的质量自检7-问-checklist),实施开始前过一遍。
 
 ---
 

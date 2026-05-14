@@ -308,6 +308,28 @@ docs/specs/
 
 ---
 
+### 3.7 Spec/Plan 写完后的质量自检(7 问 checklist)
+
+**何时跑**:`/feature-init` 生成骨架 + 你填完 spec.md / plan.md 后,**开始实施前**主动跑一遍。
+
+**为什么必跑**:实施开始后才发现"输入不清晰" → 回炒成本是 spec 阶段修的 5-10 倍。这 7 个问题是 v2 实证里**最常出错的 7 个位置**。
+
+| # | 问题 | 不通过的修法 |
+|---|---|---|
+| 1 | spec.md 六要素是否齐?(Outcomes / Scope / Constraints / Verification + plan.md 的 Prior decisions / 模块影响)| 缺的回去补 —— 这 6 节是 spec 契约的最小集 |
+| 2 | spec.md §2 Scope 是否显式写了 **`Include` 清单 + `Exclude / 不做` 清单两份**?| **必写"不做"** —— 不写 AI 会自动加,scope creep 最大单一来源(见 [workflow.md §7.5](workflow.md#75-不要让-specmd-和-planmd-内容混淆)) |
+| 3 | spec.md §4 Verification 是否能**机械化**(写出 test 能覆盖 / API 能 curl 测 / 数据可断言)?| 不可测的改成可测;留"人眼判断"等于没 verification |
+| 4 | spec.md §1 Outcomes 是不是**具体场景**而不是模糊愿望?| "提升用户体验"→模糊;"用户邀请流 < 3 次点击完成"→具体 |
+| 5 | spec.md §3 Constraints 是**真约束**还是 wish list?| "必须 Vue 3"→真约束;"希望响应快"→wish(扔掉或具体化:"P95 < 200ms")|
+| 6 | plan.md §1.1 Sibling Alignment 是否填(涉及多模块时)?| 必填 Align/Deviate/Codify 三选一;空着是 [§0.1 命题 3 Drift](workflow.md#01-这本手册解决什么) 空间维度漂移的源头 |
+| 7 | tasks.md 是否拆到 **verifiable step**(每个 task 完成时有明确产物 / test 通过 / API 能调)?| 笼统的"实施 X 模块"→拆成"建 X/router.py + 写 happy-path test + 跑 curl 通"等可断言步骤 |
+
+**没全通过别开始实施**——开始后才发现要回炒成本高 5-10x。
+
+**跟 [workflow.md §3.5](workflow.md#35-开发中发现-specplan-错怎么办) 的关系**:本节是 **pre-implementation 自检**(便宜阶段),§3.5 是 **mid-implementation 修订**(贵阶段)。两者都不可省。
+
+---
+
 ## 4. AI 协作中的 spec 用法
 
 ### 4.1 怎么把 spec 喂给 AI

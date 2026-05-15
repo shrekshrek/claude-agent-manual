@@ -75,7 +75,7 @@ CLAUDE.md                  thin pointer: @AGENTS.md
 
 - 分支命名:`{{BRANCH_PATTERN}}`(如 `feat/<scope>` / `fix/<scope>`)
 - Commit 格式:{{COMMIT_FORMAT}}(如 conventional commits)
-- PR 描述用 `.github/PULL_REQUEST_TEMPLATE.md`(含 proof bundle 检查项)
+- Proof bundle:填入 `docs/specs/<NNN>-<slug>/tasks.md` 末尾 `## Proof Bundle` 节;走 PR 时复制该节到 PR 描述
 
 ## 工程坑清单(P0 必扫)
 

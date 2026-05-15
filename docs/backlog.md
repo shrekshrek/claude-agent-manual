@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 1 | AGENTS.md 维护机制(3 阶段渐进推进) | 2026-05-08 提出,2026-05-11 大幅修订 | [`proposals/agents-md-maintenance-skill.md`](proposals/agents-md-maintenance-skill.md) |
 | 2 | Spec/Plan 质量自检 + 中途修订 SOP(workflow.md + spec-driven.md + template plan.md 文档化)| 2026-05-14 提出,**v2.3.1 ✅ 已落地** | (workflow.md §2.6 / §3.5 + spec-driven.md §3.7 + spec.md template `## 修订记录`)|
-| 3 | (条件性)`system-architect` sub-agent —— P0 多方案架构探索 + ADR draft 辅助。**前置依赖**:多方案探索 SOP 先文档化(§0.6)| 2026-05-14,**等真实使用反馈** | — |
+| 3 | (条件性)`system-architect` sub-agent —— P0 多方案架构探索 + ADR draft 辅助。**前置依赖**:多方案探索 SOP 先文档化(per [AGENTS.md 文档先于工具](../AGENTS.md))| 2026-05-14,**等真实使用反馈** | — |
 | 4 | `spec-quality-reviewer` sub-agent —— spec.md 主观质量二审(Outcomes 具体度 / Constraints 真假 / tasks verifiable)| 2026-05-14 提出,**v2.3.2 ✅ 已落地** | `agents/spec-quality-reviewer.md` + `skills/spec-quality-check/` |
 | 5 | `spec-revision-helper` sub-agent → 改名 `/spec-revise` skill —— 开发中 spec 出错时辅助起 ADR + 改 spec/plan/tasks/module CLAUDE.md | 2026-05-14 提出,**v2.3.2 ✅ 已落地** | `skills/spec-revise/` |
 
@@ -24,7 +24,7 @@
 - 开发中发现 **spec/plan 错时的修订流程**(spec.md 默认冻结,真错怎么改、怎么记)
 - 开发中发现 **module 边界要调整时的 SOP**(plan.md §1.1 Sibling Alignment 当时没料到)
 
-**核心思路**(§0.6 docs first):
+**核心思路**(文档先于工具,见 [AGENTS.md 修改纪律](../AGENTS.md)):
 
 | 加在哪 | 内容 | 体量 |
 |---|---|---|

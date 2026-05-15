@@ -27,9 +27,6 @@ Initialize a new (or existing-but-no-AGENTS.md) project's v2 baseline. Q&A walks
 ├── docs/
 │   ├── adr/{README,0000-template}.md
 │   └── gotchas.md
-├── .github/
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   └── ISSUE_TEMPLATE/{bug_report,feature_request,proposal}.md
 ├── .gitignore
 └── <tier>/                                    # 仅 fullstack
     ├── AGENTS.md                              # 差量于根
@@ -218,7 +215,6 @@ rm -rf "$TEMP_DIR"
 - `.claude/hooks/lint-on-edit.js`, `.claude/settings.json`
 - `docs/adr/{README,0000-template}.md`
 - `docs/gotchas.md`
-- `.github/...`
 - `.gitignore`
 - `_multi_tier_examples/`(仅 fullstack 用,见 Step 6)
 
@@ -430,7 +426,6 @@ template 的 lint-on-edit.js 是骨架(if-else by extension)。
 - CLAUDE.md(1 行 @AGENTS.md)
 - .claude/{rules,hooks,settings.json}
 - docs/{adr,gotchas.md}
-- .github/{PULL_REQUEST_TEMPLATE,ISSUE_TEMPLATE/*}
 - .gitignore
 - (多 tier 时,per tier 一对) `<tier>/AGENTS.md` + `<tier>/CLAUDE.md` —— 据类别(service-style / UI-style)选模板,据 mini-Q&A 填具体栈细节
 

@@ -25,14 +25,17 @@ For empty input, **first try** `git diff --name-only` — if empty, fall back to
 
 If still nothing, ask the user "what scope to review?".
 
-## Step 2 — Find AGENTS.md files
+## Step 2 — Find A 类约定文件(L2 规则源全集)
 
 Project may have:
 - Root `AGENTS.md`
 - Tier-level: `backend/AGENTS.md`, `frontend/AGENTS.md`, etc.
-- `.claude/rules/*.md` referenced via `@imports`
+- Module-level: `<module>/AGENTS.md`(仅模块"反常"时存在,见 workflow.md §2.3)
+- **All `.claude/rules/*.md` files** —— `.claude/rules/` 是 A 类约定 peer to AGENTS.md(workflow.md §0.3 / §1.3),用 `globs:` frontmatter 做路径作用域而**不是** `@imports`。**全量传给 reviewer**;reviewer 自己判断每条规则是否命中 changed file。
 
-Filter to relevant tiers based on which files changed (don't pass frontend AGENTS.md if only backend files changed).
+Filter `<tier>/AGENTS.md` to relevant tiers based on which files changed (don't pass frontend AGENTS.md if only backend files changed)。
+
+`.claude/rules/*.md` **不要在 skill 层做 globs 过滤** —— 原因:skill 是 orchestrator(Claude 自身),不是 deterministic glob 引擎,做 file-vs-globs 匹配不可靠。**全量传给 reviewer**,reviewer 在 agent 内部读每个 rule 文件的 frontmatter `globs:`,**用它判定**每条规则对应哪些 changed files。无 `globs:` 的规则(如 `security.md` 常无)按全局适用处理。
 
 Also include `docs/gotchas.md` if it exists (engineering pitfalls also count as L2-level for projects that maintain it).
 
@@ -42,22 +45,23 @@ Use the Task tool with `subagent_type: agents-md-reviewer` (the agent at `agents
 
 Pass it:
 - Scope (list of changed files)
-- AGENTS.md path(s) it should check against
-- (Optional) spec.md path for context — but agent must NOT do spec compliance, only AGENTS.md
+- A 类约定路径全集(AGENTS.md 多层 + `.claude/rules/*.md` 全量)
+- (Optional) spec.md path for context — but agent must NOT do spec compliance, only A 类约定
 
 Example task prompt:
 
-> Review AGENTS.md compliance for these files changed in the `email-verification` feature:
+> Review A 类约定合规 for these files changed in the `email-verification` feature:
 >
 > - `backend/src/email/service.py`
 > - `backend/src/auth/router.py` (modified)
 > - `backend/alembic/versions/2026_05_13_add_verification_tokens.py`
 > - `frontend/src/modules/auth/VerifyEmailView.vue`
 >
-> Rules sources:
+> Rules sources(A 类全集):
 > - `AGENTS.md` (project)
 > - `backend/AGENTS.md` (tier rules: 模块五件套 / Pydantic / SQLAlchemy 2.0 style / API 端点规范 / 测试规约)
 > - `frontend/AGENTS.md` (tier rules: Composition API / Element Plus / useApi.ts)
+> - `.claude/rules/code-style.md` / `testing.md` / `security.md` / `fastapi.md`(若存在) —— path-scoped via `globs:`,你自己判断每条规则的 globs 是否命中本 scope
 > - `docs/gotchas.md` (10 工程陷阱)
 >
 > Spec context (don't review against, just for understanding): `docs/specs/002-email-verification/spec.md`

@@ -29,7 +29,6 @@ cp -r <path-to-template>/. .
 只复制你需要的部分。比如:
 - 想要 spec 三文件:`cp -r docs/specs/_template <your-project>/docs/specs/`
 - 想要 hooks 配置:`cp -r .claude <your-project>/`
-- 想要 PR template:`cp .github/PULL_REQUEST_TEMPLATE.md <your-project>/.github/`
 
 ## 内容总览
 
@@ -54,16 +53,10 @@ template/
 │   └── adr/                  # 架构决策记录
 │       ├── README.md
 │       └── 0000-template.md
-├── .github/                  # 平台原生协作流程(替代 docs/backlog.md)
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── proposal.md
-│   │   ├── feature_request.md
-│   │   └── bug_report.md
-│   └── PULL_REQUEST_TEMPLATE.md  # 内嵌 proof bundle 检查项
 └── .gitignore                # 含 CLAUDE.local.md / .env / 常见 IDE 项
 ```
 
-> 用 GitLab? 把 `.github/` 整个目录改成 `.gitlab/`,并把 `ISSUE_TEMPLATE/` → `issue_templates/`,`PULL_REQUEST_TEMPLATE.md` → `merge_request_templates/`。结构等价。
+> **平台协作模板**(`.github/PULL_REQUEST_TEMPLATE.md` / `.github/ISSUE_TEMPLATE/`)**v2 默认不预置**——单人项目 proof bundle 走 `tasks.md` 末尾节即可;团队 / 外部协作场景按需自加,见 [workflow.md §1.9](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#19-平台协作v2-默认不铺模板)。
 
 ## 接入后的下一步
 

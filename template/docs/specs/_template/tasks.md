@@ -41,8 +41,7 @@
 
 ## Proof Bundle(完成时填,P2.3 端点交付)
 
-> **单人项目 / demo / 实验** 可直接在本节填,不必走 PR。
-> **团队协作** 走 `.github/PULL_REQUEST_TEMPLATE.md`(格式一致,本节略)。
+> 默认在本节填,不必走 PR。**团队协作** 走 PR 时,直接复制本节内容到 PR 描述(`.github/PULL_REQUEST_TEMPLATE.md` v2 默认不预置,需要时按 [workflow.md §1.9](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#19-平台协作v2-默认不铺模板) 自加)。
 >
 > 详细 proof bundle 设计见 [workflow.md §3.3](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#33-交付阶段proof-bundle)。
 

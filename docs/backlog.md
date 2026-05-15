@@ -10,7 +10,7 @@
 
 | # | 提案 | 提出日期 | 详细方案 |
 |---|---|---|---|
-| 1 | AGENTS.md 维护机制(3 阶段渐进推进) | 2026-05-08 提出,2026-05-11 大幅修订 | [`proposals/agents-md-maintenance-skill.md`](proposals/agents-md-maintenance-skill.md) |
+| 1 | A 类约定主动 refresh(`/agents-md-revise`) | 2026-05-08 提出,2026-05-11 大幅修订,**2026-05-16 ✅ Stage 1 已落地** | `skills/agents-md-revise/SKILL.md` + workflow.md §5 (proposal doc 已删除,设计文档 distill 进 workflow.md §5 + skill 本身) |
 | 2 | Spec/Plan 质量自检 + 中途修订 SOP(workflow.md + spec-driven.md + template plan.md 文档化)| 2026-05-14 提出,**v2.3.1 ✅ 已落地** | (workflow.md §2.6 / §3.5 + spec-driven.md §3.7 + spec.md template `## 修订记录`)|
 | 3 | (条件性)`system-architect` sub-agent —— P0 多方案架构探索 + ADR draft 辅助。**前置依赖**:多方案探索 SOP 先文档化(per [AGENTS.md 文档先于工具](../AGENTS.md))| 2026-05-14,**等真实使用反馈** | — |
 | 4 | `spec-quality-reviewer` sub-agent —— spec.md 主观质量二审(Outcomes 具体度 / Constraints 真假 / tasks verifiable)| 2026-05-14 提出,**v2.3.2 ✅ 已落地** | `agents/spec-quality-reviewer.md` + `skills/spec-quality-check/` |

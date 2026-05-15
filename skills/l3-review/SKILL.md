@@ -9,47 +9,52 @@ description: Run the project's L3 review — verify implementation matches the f
 
 L3 in the project-workflow methodology = **feature-spec compliance**. This is the only review level that checks "did you build what the spec said". Pairs naturally with `feature-init` (which created the spec).
 
+**Use when**: P2 endpoint, after L1 + L2 are green. Typically invoked by `/feature-done` (Step 5) but standalone-runnable.
+**Not for**: spec-self quality check (use `/spec-quality-check` — that's pre-implementation) / convention compliance (use `/l2-review`) / mechanical checks (use `/l1-review`).
+
 User input: `$ARGUMENTS` — feature slug or path to spec.md
 
-## Step 1 — Locate the spec
+> Full P2 flow: [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角).
 
-Resolve `$ARGUMENTS` to a spec.md path:
+## Step 1 — 定位 spec
 
-| Input | Resolution |
+把 `$ARGUMENTS` 解析为 spec.md 路径:
+
+| 输入 | 处理 |
 |---|---|
-| `email-verification` | `docs/specs/<NNN>-email-verification/spec.md` (latest matching NNN) |
-| `002` or `002-email-verification` | `docs/specs/002-*/spec.md` |
-| `docs/specs/.../spec.md` (full path) | Use as-is |
-| empty | Find most-recent `docs/specs/<NNN>-*/spec.md` by `ls -t` or NNN order |
+| `email-verification` | `docs/specs/<NNN>-email-verification/spec.md`(取最新匹配 NNN)|
+| `002` 或 `002-email-verification` | `docs/specs/002-*/spec.md` |
+| `docs/specs/.../spec.md`(完整路径)| 直接用 |
+| 空 | 找最近的 `docs/specs/<NNN>-*/spec.md`(按 `ls -t` 或 NNN 排序)|
 
-If spec.md missing: fail with "Spec not found. Run `/project-workflow:feature-init <slug>` first."
+spec.md 缺失 → 报 "Spec not found. Run `/project-workflow:feature-init <slug>` first." 退出。
 
-If found, also locate sibling `plan.md` and `tasks.md` (for context — pass to agent).
+找到了 → 一并定位 sibling 的 `plan.md` 和 `tasks.md`(作 context 传给 agent)。
 
-## Step 2 — Determine implementation scope
+## Step 2 — 判定实施 scope
 
-Figure out which files were changed implementing this feature:
+判定本 feature 实施时改了哪些文件:
 
-1. **Preferred**: parse `tasks.md` for explicit file mentions (paths in task items)
-2. **Fallback**: git history — find commits referencing the feature slug:
+1. **优先**:解析 `tasks.md`,提取任务项里显式提到的文件路径
+2. **后备**:git history —— 找引用 feature slug 的 commits:
    ```bash
    git log --oneline --all --grep="<slug>"
    git log --name-only -p -- $(git diff --name-only HEAD~N HEAD)
    ```
-3. **Last resort**: `git diff --name-only HEAD~1` if user says "since last commit"
-4. **If still unclear**: ask user "which commit range or file list scopes this feature?"
+3. **最后手段**:若用户说"since last commit",用 `git diff --name-only HEAD~1`
+4. **仍不明** → 问用户:"which commit range or file list scopes this feature?"
 
-## Step 3 — Spawn the spec-reviewer agent
+## Step 3 — Dispatch spec-reviewer sub-agent
 
-Use Task tool with `subagent_type: spec-reviewer`.
+用 Task 工具,`subagent_type: spec-reviewer`。
 
-Pass:
-- spec.md path
-- plan.md path (context only)
-- tasks.md path (status context)
-- List of changed files (scope)
+传:
+- spec.md 路径
+- plan.md 路径(仅 context)
+- tasks.md 路径(进度 context)
+- 改动文件列表(scope)
 
-Example task prompt:
+任务 prompt 示例:
 
 > Review L3 spec compliance for feature `email-verification`.
 >
@@ -71,9 +76,9 @@ Example task prompt:
 > 3. Spec §3 Constraints — hard numbers respected (32-byte token, 24h expiry, etc)?
 > 4. Spec §4 Verification — listed tests present?
 
-## Step 4 — Forward the agent's report
+## Step 4 — 转发 agent 报告
 
-The sub-agent returns a markdown report with sections (Missing / Deviations / Scope creep / Verified / Summary). Pass it through verbatim with header/footer:
+sub-agent 返回一份 markdown 报告(含 Missing / Deviations / Scope creep / Verified / Summary 等节)。**原样转发**,加 header / footer:
 
 ```
 ## /project-workflow:l3-review — <feature-slug>
@@ -81,19 +86,19 @@ The sub-agent returns a markdown report with sections (Missing / Deviations / Sc
 <agent's verbatim report>
 
 ---
-Next: if L3 clean → `/project-workflow:proof-bundle <slug>` to verify delivery checklist.
-If deviations remain → fix them or update spec.md (deviations from intended design need explicit spec edit).
+下一步:L3 clean → 跑 `/project-workflow:proof-bundle <slug>` 验交付清单。
+若仍有 deviation → 修复 或 改 spec.md(偏离原设计需显式 spec edit)。
 ```
 
-## Step 5 — Failure modes
+## Failure modes
 
-- **Spec describes something not yet built**: that's fine — L3 distinguishes "missing" from "deviation". If most items are missing, the feature is just in-progress; tell user "Feature looks incomplete — N of M spec items unimplemented. Continue per tasks.md."
-- **Tasks.md / files mismatch**: trust the spec, not tasks.md. tasks.md is "intended steps", spec is "what we promised".
-- **Agent finds scope creep**: don't auto-fix. The user decides: trim impl OR update spec §2.
+- **spec 描述了还没建的功能**:OK —— L3 区分 "missing" 和 "deviation"。多数项 missing 说明 feature 还在进行中,告诉用户 "Feature looks incomplete — N of M spec items unimplemented. Continue per tasks.md."
+- **tasks.md / 文件不一致**:信 spec,不信 tasks.md。tasks.md 是 "计划的步骤",spec 是 "承诺的成果"
+- **agent 发现 scope creep**:不自动 fix。用户决定:裁实施 或 改 spec §2
 
 ## Notes
 
-- **L3 ≠ L2**. L2 checks "do you follow project conventions?". L3 checks "did you build what you promised?".
-- **L3 is the most valuable layer for verifying feature delivery** but also the slowest (~2-3 min agent call).
-- **Run after L1 + L2 are green**. Spec compliance review is wasted if there are broken tests.
+- **L3 ≠ L2**。L2 问 "你遵循项目约定吗?",L3 问 "你建的是承诺的东西吗?"
+- **L3 是验 feature 交付最有价值的一层**,也最慢(~2-3 min agent 调用)
+- **L1 + L2 绿后再跑**。tests 都坏了去验 spec 合规没意义
 - **Spec ambiguities surface here**: agent's report may include a `📝 Spec ambiguities` section. Those are real signals — improve spec.md if they're recurring.

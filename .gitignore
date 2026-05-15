@@ -29,3 +29,4 @@ CLAUDE.local.md
 *.log
 .tmp/
 tmp/
+docs/_translations/

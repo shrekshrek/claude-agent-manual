@@ -116,7 +116,7 @@
 - **核心**:把 spec-driven 落到 slash commands(`/speckit.specify` / `.plan` / `.tasks` / `.clarify` / 等)
 - **优点**:跟 [spec-driven.md](spec-driven.md) 三文件结构原生对齐
 - **缺点**:`.specify/` 目录工具链,小项目偏重
-- **本项目决定**:不装工具链,**借结构和 `/speckit.clarify` 的 Q&A 概念**(参考 [proposals/agents-md-maintenance-skill.md](proposals/agents-md-maintenance-skill.md))
+- **本项目决定**:不装工具链,**借结构和 `/speckit.clarify` 的 Q&A 概念**(已落地在 [`/spec-quality-check`](../skills/spec-quality-check/SKILL.md) + [`/agents-md-revise`](../skills/agents-md-revise/SKILL.md) 的 Q&A 形态)
 
 #### OpenAI Symphony
 
@@ -151,7 +151,7 @@
 | `pr-review-toolkit` | 5+ 种 reviewer agent(code / type / silent-failure / 等) | proof bundle 阶段必跑 |
 | `commit-commands` | `/commit`、`/commit-push-pr` 等 | 标准化 git 流程 |
 | `rust-analyzer-lsp` | Rust LSP 集成 | Rust 项目实时类型检查 |
-| `/init`(原生) | 扫描代码库生成初始 CLAUDE.md | 新项目第一步;后续维护见 [proposals/agents-md-maintenance-skill.md](proposals/agents-md-maintenance-skill.md) |
+| `/init`(原生) | 扫描代码库生成初始 CLAUDE.md | 新项目第一步;后续维护用 [`/project-workflow:agents-md-revise`](../skills/agents-md-revise/SKILL.md) |
 | `/security-review`(原生) | 安全审查 | 涉及认证/输入/密钥时跑 |
 | `/review`(原生) | 通用代码审查 | 备用 |
 
@@ -188,7 +188,7 @@
 | 工具 | 评估状态 |
 |---|---|
 | Matt Pocock 精选 skills | 待跑一次手动验证(挑 3-5 个) |
-| 自建 `/refresh-agents-md`(Stage 1)| [proposals/agents-md-maintenance-skill.md](proposals/agents-md-maintenance-skill.md) 推迟实施,先用 Stage 0(零代码,proof bundle) |
+| 自建 `/agents-md-revise`(P4 主战场)| **✅ 已落地**(v2.3.3,2026-05-16)—— 见 `skills/agents-md-revise/SKILL.md` + workflow.md §5 |
 
 ### 5.4 IDE / CLI 选择
 

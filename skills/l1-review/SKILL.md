@@ -9,45 +9,50 @@ description: Run the project's L1 review — mechanical/automated checks (lint, 
 
 L1 in the project-workflow methodology = the **mechanical layer**: lint, type checks, unit tests. Stuff that machines can verify with zero ambiguity. This skill runs the project's defined "everything check" command and gives a focused report.
 
+**Use when**: P2 endpoint, or ad-hoc mechanical check during implementation. Typically invoked by `/feature-done` (Step 3) but standalone-runnable.
+**Not for**: convention compliance (use `/l2-review`) / spec compliance (use `/l3-review`) / proof bundle assembly (use `/proof-bundle`).
+
 User input: `$ARGUMENTS` (optional — usually empty; could be a sub-scope like "backend only")
 
-## Step 1 — Find the project's check command
+> Full P2 flow: [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角).
 
-Look for the command in this priority:
+## Step 1 — 找项目的 check 命令
 
-1. **`AGENTS.md` § Commands section** — look for a line/row containing `check`, `提交前`, `pre-commit`, or similar
-2. **`package.json` scripts** — look for `"check"`, `"test"`, or `"verify"` (in that order)
-3. **`Makefile`** — look for `check:` / `test:` target
-4. **Convention by stack**:
-   - Python: `pytest` (+ `ruff check` + `mypy` if present)
-   - Go: `go vet ./... && go test ./...`
-   - Rust: `cargo check && cargo test`
+按以下优先级找命令:
 
-If you can't find it, ask the user: "How do you run L1 in this project? (e.g., `pnpm check`)"
+1. **`AGENTS.md` § Commands 节** —— 找含 `check` / `提交前` / `pre-commit` 等关键词的行
+2. **`package.json` scripts** —— 按顺序找 `"check"` / `"test"` / `"verify"`
+3. **`Makefile`** —— 找 `check:` / `test:` target
+4. **按栈惯例**:
+   - Python:`pytest`(+ `ruff check` + `mypy` 若有)
+   - Go:`go vet ./... && go test ./...`
+   - Rust:`cargo check && cargo test`
 
-If `$ARGUMENTS` mentions a sub-scope (`backend`, `frontend`), narrow accordingly (e.g., `pnpm be:lint && pnpm be:test`).
+找不到 → 问用户:"How do you run L1 in this project?(e.g., `pnpm check`)"
 
-## Step 2 — Run it
+若 `$ARGUMENTS` 指定了 sub-scope(`backend` / `frontend`),按此 narrow(如 `pnpm be:lint && pnpm be:test`)。
 
-Use the Bash tool. **Pipe stdout/stderr together** so failures are visible:
+## Step 2 — 跑命令
+
+用 Bash 工具。**stdout / stderr 合并输出**,确保失败可见:
 
 ```bash
 <the-check-command> 2>&1
 ```
 
-Don't add `--verbose`, don't add flags the project didn't ask for. Use exactly what AGENTS.md says.
+**别加** `--verbose` 或项目没要求的 flag。用 AGENTS.md 写的命令原文。
 
-## Step 3 — Parse and report
+## Step 3 — 解析 + 报告
 
-Don't dump the entire stdout. Extract:
+不要全文 dump stdout。提取:
 
-- **lint**: errors count (per linter if multiple)
-- **typecheck**: errors count
-- **tests**: passed/failed/skipped counts + duration
-- **coverage**: percentage (if shown)
-- **exit code**: 0 = green; non-0 = something failed
+- **lint**:错误数(多 linter 时每个分别报)
+- **typecheck**:错误数
+- **tests**:passed / failed / skipped 数 + 时长
+- **coverage**:百分比(若有)
+- **exit code**:0 = 绿,非 0 = 有失败
 
-Format the report as a tight table or bullet list. Example:
+把报告排成紧凑表格或 bullet 列表。例:
 
 ```
 ✅ L1 Review — pnpm check (12.3s)
@@ -57,7 +62,7 @@ Format the report as a tight table or bullet list. Example:
   eslint ............... 0 errors
 ```
 
-Or for failure:
+失败示例:
 
 ```
 ❌ L1 Review — pnpm check (8.1s)
@@ -69,19 +74,19 @@ Or for failure:
   vue-tsc / eslint ..... skipped (pytest failed first)
 ```
 
-Include **just enough detail** for the user to act (file:line + 1-line cause). Full stack traces only if the failure is opaque without them.
+**信息密度刚够用户行动即可**(file:line + 1 行原因)。完整 stack trace 仅在"不给就看不懂"时附上。
 
-## Step 4 — Next-step hint
+## Step 4 — 下一步提示
 
-If green:
-> ✅ L1 green. Proceed to `/project-workflow:l2-review` (AGENTS.md compliance).
+绿:
+> ✅ L1 green. Proceed to `/project-workflow:l2-review` (A 类约定合规)。
 
-If red:
-> ❌ L1 has N issues. Fix them before L2/L3. Failed items listed above; full output saved to `/tmp/l1-<timestamp>.log` if needed.
+红:
+> ❌ L1 has N issues. Fix them before L2/L3. 失败项列在上方;完整输出可存到 `/tmp/l1-<timestamp>.log`。
 
 ## Notes
 
-- **Don't auto-fix**. L1 reports; user (or another skill) fixes.
-- **Don't run sub-scopes the user didn't ask for**. If they said "backend", don't run frontend checks.
-- **Stack-agnostic**: skill works on any project that has a defined check command in AGENTS.md.
-- If the check command needs the container/server running (e.g., `docker compose exec backend pytest`), and it's not running, fail fast with: "Container `backend` not running. Start with `pnpm dev` first, then retry."
+- **不自动 fix**。L1 只报,用户(或别的 skill)修
+- **不跑用户没要求的 sub-scope**。用户说 "backend",别顺手跑 frontend
+- **Stack-agnostic**:任何在 AGENTS.md 里定义了 check 命令的项目都适用
+- 若 check 命令需要 container / server 跑(如 `docker compose exec backend pytest`)而当前没起,fail fast:"Container `backend` not running. Start with `pnpm dev` first, then retry."

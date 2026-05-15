@@ -9,6 +9,11 @@ description: Verify a feature's proof bundle is complete — tests passing, L1/L
 
 Proof bundle = the **end-of-feature delivery checklist**. Borrowed from openai/symphony's "manage work, not agents" principle: verify the work produced the right outputs, not that the agent followed the right process.
 
+**Use when**: P2 endpoint, after L1 + L2 + L3 are run. Typically invoked by `/feature-done` (Step 6) as the final assembly step, but standalone-runnable.
+**Not for**: running the individual reviews (use `/l1-review` / `/l2-review` / `/l3-review`) / pre-implementation spec quality check (use `/spec-quality-check`).
+
+> Full P2 flow: [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角).
+
 The template (from `/feature-init` SKILL.md inline tasks.md § Proof Bundle):
 
 ```
@@ -27,113 +32,116 @@ This skill **verifies** these items and **fills them in** at the bottom of `task
 
 User input: `$ARGUMENTS` — feature slug or "current"
 
-## Step 1 — Locate the feature
+## Step 1 — 定位 feature
 
-Same logic as `/l3-review`:
+跟 `/l3-review` 同逻辑:
 
-| Input | Resolution |
+| 输入 | 处理 |
 |---|---|
 | `<slug>` | `docs/specs/<NNN>-<slug>/` |
-| `current` or empty | most-recent `docs/specs/<NNN>-*/` |
-| `<full-path>` | use directly |
+| `current` 或空 | 最近的 `docs/specs/<NNN>-*/` |
+| `<full-path>` | 直接用 |
 
-Verify all three files exist: spec.md, plan.md, tasks.md.
+校验三文件齐:spec.md / plan.md / tasks.md。
 
-## Step 2 — Cache invalidation check before reusing L2/L3 findings
+## Step 2 — 缓存校验(复用 L2/L3 前必跑)
 
-Before reusing L2/L3 findings from earlier in this session, **verify they're still valid**. Stale findings caused multiple bugs in v2.1.x development; this step is mandatory.
+复用本 session 早期 L2 / L3 findings 之前,**必须确认仍然有效**。stale findings 在 v2.1.x 开发期间引发过多次 bug,本步是 mandatory。
 
-For **L2** (AGENTS.md compliance) cache validity:
+**L2**(A 类约定合规)缓存有效性:
 
-1. Run `git status --short`
-2. **If any of these files changed since the previous L2 run**, **re-run /l2-review fresh**, don't reuse:
-   - `AGENTS.md` (root + tier-level: `backend/AGENTS.md` / `frontend/AGENTS.md`)
+1. 跑 `git status --short`
+2. **以下任一文件在上次 L2 之后改动过 → 重跑 /l2-review fresh,不复用**:
+   - `AGENTS.md`(root + tier-level:`backend/AGENTS.md` / `frontend/AGENTS.md`)
    - `.claude/rules/*.md`
-   - `docs/gotchas.md` (if exists)
-   - Any source files in scope (the implementation)
-3. **Special case**: if the project scope (e.g., a sub-project directory freshly added but not yet `git add`ed) is **fully untracked** (`?? <dir>/` in git status — entire directory not in git yet), `git status` won't show inner file changes. **In this case, always force fresh L2 run** since git can't track changes within untracked directories. Fall back to file mtime comparison if needed:
+   - `docs/gotchas.md`(若存在)
+   - scope 内任何源代码文件(实施)
+3. **特例**:若 project scope(如刚加但还没 `git add` 的 sub-project 目录)**整体 untracked**(`?? <dir>/` 出现在 git status —— 整目录还没进 git),`git status` 看不到目录内部变化。**这种情况强制 fresh 跑 L2**,因为 git 无法跟踪 untracked 目录内的变化。必要时退到 file mtime 比对:
    ```bash
    find <scope> -name "AGENTS.md" -o -name "*.md" -newer <last-review-marker> 2>/dev/null
    ```
 
-For **L3** (spec.md compliance) cache validity:
+**L3**(spec.md 合规)缓存有效性:
 
-1. Same `git status` check
-2. **If `docs/specs/<NNN>-<slug>/spec.md` or `plan.md` or `tasks.md` changed** OR any implementation file in scope changed, **re-run /l3-review fresh**
-3. Same untracked-directory rule as L2
+1. 同样的 `git status` 检查
+2. **若 `docs/specs/<NNN>-<slug>/spec.md` / `plan.md` / `tasks.md` 改动过**,或 scope 内任何实施文件改动 → **重跑 /l3-review fresh**
+3. 同 L2 的 untracked 特例
 
-If you do reuse, **state explicitly in the report header**: "L2 reused from earlier run in this session (no scoped changes detected by git status / mtime)". Don't reuse silently.
+确实复用 → **在报告头部显式声明**:"L2 reused from earlier run in this session (no scoped changes detected by git status / mtime)"。**不要静默复用**。
 
-## Step 3 — Compute each proof bundle item
+## Step 3 — 计算每个 proof bundle 项
 
 ### Item 1: Diff 摘要
 
-Use git to get a structured diff summary:
+用 git 取结构化 diff 摘要:
 
 ```bash
-git diff --stat HEAD~N HEAD  # if you can determine N from commit history
+git diff --stat HEAD~N HEAD  # 若能从 commit history 判 N
 # OR
 git diff --stat <base-branch>...HEAD
 # OR
-git status --short  # for uncommitted scope
+git status --short  # uncommitted scope
 ```
 
-Format: `<N> files changed, <X> additions(+), <Y> deletions(-)`. Then list **categorized**:
-- **New**: <count> new files (top 5 paths)
-- **Modified**: <count> modified files
-- **Deleted**: <count> deleted files
+格式:`<N> files changed, <X> additions(+), <Y> deletions(-)`。然后**分类**列:
+- **New**:<count> 新文件(top 5 路径)
+- **Modified**:<count> 修改文件
+- **Deleted**:<count> 删除文件
 
-Keep concise (5-10 lines).
+简短(5-10 行)。
 
 ### Item 2: Tests <X>/<Y> passed, coverage <Z>%
 
-Read project's `check` command from AGENTS.md (same as `/l1-review`). Run **only** the test part:
+从 AGENTS.md 读项目 `check` 命令(同 `/l1-review`)。**只跑测试部分**:
 
 ```bash
-<test-command>  # e.g., `pnpm be:test:cov`
+<test-command>  # 如 `pnpm be:test:cov`
 ```
 
-Parse output for:
-- Total passed / total / skipped
-- Coverage percentage (if shown)
+解析输出:
+- 总 passed / total / skipped
+- coverage 百分比(若有)
 
-If user already ran `/l1-review` and it's still green, you can reuse that result and skip re-running. Otherwise run fresh.
+若用户刚跑过 `/l1-review` 还在绿,可复用结果跳过重跑。否则 fresh 跑。
 
 ### Item 3: L2 合规
 
-Invoke `/project-workflow:l2-review <slug>` (or call the agents-md-reviewer agent directly). Capture the verdict:
+调 `/project-workflow:l2-review <slug>`(或直接调 agents-md-reviewer agent)。取 verdict:
 
-- ✅ "Clean (no violations)" or
-- 🟡 "N partial, no critical" or
-- 🔴 "<N> violations — list them here as 1-line summaries"
+- ✅ "Clean (no violations)" 或
+- 🟡 "N partial, no critical" 或
+- 🔴 "<N> violations —— 列单行摘要"
 
 ### Item 4: L3 合规
 
-Same pattern, invoking `spec-reviewer` agent (or `/project-workflow:l3-review <slug>`):
+同样模式,调 `spec-reviewer` agent(或 `/project-workflow:l3-review <slug>`):
 
 - ✅ "Spec match — N items verified, 0 missing/deviation"
-- ⚠️ "N deviations from spec.md (list each as 1 line)"
+- ⚠️ "N deviations from spec.md(各 1 行)"
 
-### Item 5a: AGENTS.md 触动汇总(本 feature 实际改了哪几份)
+### Item 5a: A 类约定触动汇总(本 feature 实际改了哪几份)
 
-**Why this section exists**:feature 实施期常顺手改 AGENTS.md(Boundaries / 模块结构 / 框架约定),但用户改完代码后**容易忘记自己改了哪几份**。本节给出显式 audit,让 reviewer / 自己复盘时能一眼看到。
+**Why this section exists**:feature 实施期常顺手改 A 类约定(`AGENTS.md` Boundaries / 模块结构,或 `.claude/rules/<framework>.md` 框架约定),但用户改完代码后**容易忘记自己改了哪几份**。本节给出显式 audit,让 reviewer / 自己复盘时能一眼看到。
 
-**How to compute**:
+> **A 类范围**(workflow.md §0.3 / §1.3):AGENTS.md 多层嵌套 + `.claude/rules/*.md` 扁平 globs。两者都是 A 类约定 peer,drift 同等严重。
+
+**计算方法**:
 
 ```bash
-# 找出本 feature 触动的 AGENTS.md / CLAUDE.md 文件
-git diff --name-only <base>...HEAD 2>/dev/null | grep -E "(^|/)(AGENTS|CLAUDE)\.md$"
-# 或对未 commit 的 scope:
-git status --short | awk '{print $2}' | grep -E "(^|/)(AGENTS|CLAUDE)\.md$"
+# 找出本 feature 触动的 A 类约定文件(AGENTS.md / CLAUDE.md / .claude/rules/*.md)
+git diff --name-only <base>...HEAD 2>/dev/null | grep -E "(^|/)(AGENTS|CLAUDE)\.md$|^\.claude/rules/.*\.md$"
+# 未 commit 的 scope:
+git status --short | awk '{print $2}' | grep -E "(^|/)(AGENTS|CLAUDE)\.md$|^\.claude/rules/.*\.md$"
 ```
 
-**按三档分类**:
+**按四档分类**:
 
 | 档 | 路径模式 | 例 |
 |---|---|---|
 | **root** | `./AGENTS.md` 或 `./CLAUDE.md` | 项目根 |
 | **tier** | `<tier>/AGENTS.md`(deep 2) | `backend/AGENTS.md` / `frontend/AGENTS.md` |
 | **module** | `<tier>/<...>/<module>/CLAUDE.md`(deep ≥ 3) | `backend/src/email/CLAUDE.md` |
+| **path-rule** | `.claude/rules/<topic>.md` | `.claude/rules/code-style.md` / `.claude/rules/fastapi.md` |
 
 **每份标注分类**(Align / Deviate / Codify):
 - 若 `plan.md §1.1 Sibling Alignment` 节里**显式声明了**该 module 的决策 → 用那个
@@ -144,36 +152,46 @@ git status --short | awk '{print $2}' | grep -E "(^|/)(AGENTS|CLAUDE)\.md$"
 ```markdown
 - **scaffold-v2/backend/AGENTS.md** (tier) — Codify: 加 "业务 vs infra module" 区分(本 feature 002 引入 `email/` infra,plan.md §1.1 声明 Codify)
 - **scaffold-v2/AGENTS.md** (root) — 未声明:工程坑指针修复(死链),建议补 plan.md §1.1 标 Align
+- **.claude/rules/fastapi.md** (path-rule) — 未声明:新加 "templates/ 目录约定";建议补 plan.md §1.1
 - **(无 module CLAUDE.md 触动)**
 ```
 
-若**完全没有 AGENTS.md 改动**(纯实施 feature 不动规则):写 "无 (none) — 本 feature 完全在现有 AGENTS.md 框架内,未触动任何规则文件"。
+若**完全没有 A 类约定改动**(纯实施 feature 不动规则):写 "无 (none) — 本 feature 完全在现有 A 类约定(AGENTS.md + `.claude/rules/`)框架内,未触动任何规则文件"。
 
-### Item 5b: AGENTS.md drift 建议(L2 提议但未应用)
+### Item 5b: A 类约定 drift 建议(L2 提议但未应用)
 
 L2 review 跑完会有"建议加规则但未落地"的 finding。这里抽出来跟 Item 5a(已应用)区分。
 
-Compare project's AGENTS.md against actual implementation. Look for:
+把项目 A 类约定(AGENTS.md 多层 + `.claude/rules/`)跟实际 impl 对照,看:
 
-- Things in code that violate AGENTS.md → not drift (that's an L2 issue)
-- Things in code that AGENTS.md **doesn't mention but should** (e.g., new module pattern not documented) → drift suggestion
-- Commands changed in `package.json` but not reflected in AGENTS.md `Commands` section → drift
+- 代码里违反 AGENTS.md / `.claude/rules/` 的 → 不是 drift(那是 L2 issue)
+- 代码里出现但 A 类约定**没提该提的**(如新 module pattern 未文档化、新 framework 约定不在 `.claude/rules/<framework>.md`)→ drift 建议
+- `package.json` 里命令变了但 AGENTS.md `Commands` 没同步 → drift
 
-Output: 0-3 bullets. If nothing, write "无 (none)"。
+输出:0-3 个 bullet。无则写 "无 (none)"。
 
 **跟 Item 5a 的区分**:5a = 已经改了的,5b = 还没改但建议改的。Item 5a 是 audit(已发生),Item 5b 是 backlog(待处理)。
 
+**末尾轻量 hint**(只在 5b 非空且 backlog 累积 ≥ 3 条时输出,**不强迫,不主动 nudge**):
+
+```
+📝 累积 N 条 drift backlog(本 feature + 历史 tasks.md)。
+   你方便的时候跑 `/project-workflow:agents-md-revise` 一次性 audit + apply。
+```
+
+不要 phrase 成"建议立即跑"或"应该跑";只是顺手告诉用户工具存在。**用户已经在看 feature-done 报告**,提示在 context 内,不是脱离 context 的主动 ping。
+
 ### Item 6: 开放问题
 
-Read tasks.md `## 实施记录` and `## 未决` sections (if present). Any item still pending or marked TODO → list here.
+读 tasks.md 的 `## 实施记录` 和 `## 未决` 节(若有)。仍 pending 或 TODO 的项 → 列在这里。
 
-Also include any spec ambiguities the L3 reviewer flagged.
+同时收 L3 reviewer flagged 的 spec ambiguities。
 
-## Step 4 — Write to tasks.md
+## Step 4 — 写入 tasks.md
 
-Open `<feature-dir>/tasks.md`. Find the `## Proof Bundle` section near the end. **Replace** the checklist with filled-in values (keep the checkboxes).
+打开 `<feature-dir>/tasks.md`,找文件末尾的 `## Proof Bundle` 节。**replace** checklist 为填好的值(保留 checkboxes)。
 
-Example filled version:
+填好的示例:
 
 ```markdown
 ## Proof Bundle(完成时填,P2.3 端点交付)
@@ -192,11 +210,11 @@ Example filled version:
 - [x] **开放问题**: SMTP 限速(slowapi)上线前要补,见 plan.md §4 风险 + backlog
 ```
 
-Use the user's Edit tool to update tasks.md atomically — single edit replacing the proof-bundle section.
+用 Edit 工具 atomic 更新 tasks.md —— 单次 edit 替换整个 proof-bundle 节。
 
-## Step 5 — Report back
+## Step 5 — 报告
 
-After updating tasks.md, output:
+tasks.md 更新后,输出:
 
 ```
 ## /project-workflow:proof-bundle — <feature-slug>
@@ -209,8 +227,8 @@ After updating tasks.md, output:
 | Tests | ✅ <X>/<Y> passed, coverage <Z>% |
 | L2 合规 | <status> |
 | L3 合规 | <status> |
-| AGENTS.md 触动(5a,已改) | <K> 份(root/tier/module) |
-| AGENTS.md drift(5b,待改) | <0/N suggestions> |
+| A 类约定触动(5a,已改) | <K> 份(root/tier/module/path-rule) |
+| A 类约定 drift(5b,待改) | <0/N suggestions> |
 | 开放问题 | <0/N> |
 
 Overall: **<🟢 READY / 🟡 NEEDS WORK / 🔴 BLOCKED>**
@@ -220,16 +238,19 @@ Next: commit + open PR. tasks.md proof bundle is already filled — use it as th
 
 <If NEEDS WORK / BLOCKED:>
 Address the items marked above and re-run `/project-workflow:proof-bundle`.
+
+<If Item 5b 累积 ≥ 3 条(本 feature + 历史 tasks.md 总和):>
+📝 累积 <N> 条 A 类约定 drift backlog。方便时跑 `/project-workflow:agents-md-revise` 一次性 audit + apply(不催)。
 ```
 
-Verdict logic:
-- 🟢 READY = all 6 items resolved (tests pass, L2/L3 clean or only minor partials, drift suggestions are optional)
-- 🟡 NEEDS WORK = L3 deviations or scope creep present; user must reconcile
-- 🔴 BLOCKED = tests failing OR L2 critical violations
+Verdict 判定逻辑:
+- 🟢 READY = 6 项全过(tests 过、L2/L3 clean 或仅 minor partials、drift 建议是可选)
+- 🟡 NEEDS WORK = L3 有 deviation 或 scope creep,用户需 reconcile
+- 🔴 BLOCKED = tests 失败 或 L2 critical violations
 
 ## Notes
 
-- **Don't auto-fix anything**. Even if L2/L3 find issues, this skill only reports. User fixes.
-- **Don't commit anything**. Just write the proof bundle into tasks.md and report.
-- **Idempotent**: running this twice should produce same output (modulo test re-runs).
-- This skill is **the natural exit point** of P2 (feature dev). After this, the user commits + opens PR.
+- **不自动 fix 任何东西**。L2/L3 找到问题也只是报,用户修
+- **不 commit 任何东西**。本 skill 只把 proof bundle 写进 tasks.md + 报告
+- **幂等**:跑两次应该产出相同结果(除测试 re-run 的 timing 差异)
+- 本 skill 是 P2(feature dev)的**自然出口**。跑完后用户 commit + 开 PR

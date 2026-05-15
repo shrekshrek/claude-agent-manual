@@ -69,7 +69,7 @@
 3. **`.claude/`** —— `rules/` + `hooks/lint-on-edit.js` + `settings.json`
 4. **`docs/specs/_template/`** —— 复制 spec/plan/tasks 三文件模板
 5. **`docs/gotchas.md`** —— 复制 [project-workflow 仓库的 10 工程坑](gotchas.md)
-6. **`.github/PULL_REQUEST_TEMPLATE.md`** —— 含 proof bundle 5 项 checklist
+6. (可选)**`.github/PULL_REQUEST_TEMPLATE.md`** —— 团队协作场景含 proof bundle 5 项 checklist;v2 默认不预置(见 [workflow.md §1.9](workflow.md#19-平台协作v2-默认不铺模板))
 
 多 tier 项目(fullstack 等)额外加:
 7. **`<tier>/AGENTS.md` + `<tier>/CLAUDE.md`** —— 每个 tier 差量于根 AGENTS.md,见 [`workflow.md §1.4`](workflow.md#14-claudemd-嵌套层次子级覆盖父级)
@@ -132,15 +132,16 @@
 
 ## P4:周期性 / 主动 refresh(每 2 周或感觉到 drift)
 
-3 种触发模式 ([§5.2](workflow.md#52-三种触发模式)):
+2 种触发模式 ([§5.2](workflow.md#52-两种触发模式)):
 
 | 模式 | 触发 | 动作 |
 |---|---|---|
-| **A** 主动 refresh | `/refresh-agents-md`(或手动) | 对比 AGENTS.md vs 实际,提 diff |
-| **B** 端点反思 | feature 完成时 | proof bundle "AGENTS.md drift 建议"里 |
-| **C** 信号触发 | hook 检测"记得 X" >= 2 次 | 自动开 Issue |
+| **A** 主动 refresh | `/project-workflow:agents-md-revise` | 扫 A 类约定全集 vs 项目实际,客观 drift 逐条 y/n/ignore-forever,apply + commit 草稿 |
+| **B** 端点反思 | feature 完成时 | `/proof-bundle` Item 5a(已应用)+ 5b(待 backlog),由 `/feature-done` 自动调 |
 
-**演进 drift 应对**([§5.6](workflow.md#56-演进-drift-的应对策略)):
+> 原 "模式 C 信号 hook 自动触发" v2 **不实施**(违反 §0.5 信念 1,见 §5.1 注)。
+
+**演进 drift 应对**([§5.5](workflow.md#55-演进-drift-的应对策略)):
 - 老代码违反新规则 → **默认 grandfather**,不主动回填
 - changelog 走 git history,不另写
 - 例外:安全 / 合规相关 → 必须回填
@@ -155,7 +156,7 @@
 | P2 | 每 feature | spec+plan+tasks+proof-bundle | `/feature-init` → `/spec-quality-check` → impl(`/spec-revise` 必要时) → `/feature-done` | [§3](workflow.md#3-p2feature-development每个功能) |
 | Module Setup | P2 内嵌(需新模块时)| `<module>/` 骨架 + 极少时模块 CLAUDE.md | (无独立工具) | [§2](workflow.md#2-module-setupp2-内的-sub-flow非独立-phase) |
 | P3 | 自动 | hook 日志 + LSP | hooks | [§4](workflow.md#4-p3continuous-maintenance开发期间持续) |
-| P4 | 每 2 周 / drift | AGENTS.md diff | `/refresh-agents-md` | [§5](workflow.md#5-p4drift-refresh主动修正) |
+| P4 | 每 2 周 / 感知 drift | A 类约定 diff | `/agents-md-revise` | [§5](workflow.md#5-p4drift-refresh主动修正) |
 
 ---
 

@@ -53,10 +53,11 @@ Then in any project:
 | `/project-workflow:spec-quality-check` | v2.3.2 | **Pre-implementation gate** — verify spec/plan/tasks quality per spec-driven.md §3.7 7-q checklist. Mechanical checks + dispatches `spec-quality-reviewer` sub-agent for subjective items. |
 | `/project-workflow:spec-revise` | v2.3.2 | **Mid-implementation revision** — orchestrate spec/plan/module change SOP per workflow.md §3.5 / §2.6 (ADR + spec.md 修订记录 + plan.md prior decisions + tasks.md rebalance). |
 | `/project-workflow:l1-review` | v2.1.0 | Run project's `check` command (lint/typecheck/test) and report pass/fail with concise summary |
-| `/project-workflow:l2-review` | v2.1.0 | AGENTS.md compliance review via `agents-md-reviewer` sub-agent — finds rule violations on changed files |
+| `/project-workflow:l2-review` | v2.1.0 | A 类约定 compliance review (AGENTS.md 多层 + `.claude/rules/*.md`) via `agents-md-reviewer` sub-agent — finds rule violations on changed files |
 | `/project-workflow:l3-review` | v2.1.0 | spec.md compliance review via `spec-reviewer` sub-agent — finds missing items, deviations, scope creep |
 | `/project-workflow:proof-bundle` | v2.1.0 | Verify proof bundle completeness and write to `tasks.md` § Proof Bundle |
 | `/project-workflow:feature-done` | v2.1.0 | Composite: L1 → L2 → L3 → proof-bundle, single READY/NEEDS WORK/BLOCKED verdict |
+| `/project-workflow:agents-md-revise` | v2.3.3 | **P4 main tool** — proactively audit A 类约定 (AGENTS.md 多层 + `.claude/rules/`) vs project actual state; report objective drifts (commands / deps / dirs / versions / config), per-item yes/no/ignore-forever, apply + commit draft. Critical-only, no subjective signals, no hook auto-trigger. |
 
 ## Sub-agents
 

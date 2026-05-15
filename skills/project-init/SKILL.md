@@ -12,7 +12,7 @@ Initialize a new (or existing-but-no-AGENTS.md) project's v2 baseline. Q&A walks
 > **Phase 名 vs skill 名**:[`workflow.md §1`](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#1-p0project-setup项目第一天) 的 phase 仍叫 "**P0 Project Setup**"(方法论命名);本 skill 叫 `**project-init**`(动词 init,跟 [`feature-init`](../feature-init/SKILL.md) 对齐)。两者有意分离。
 
 **Use when**: P0 — project's first day, no AGENTS.md yet.
-**Not for**: starting a new feature (use `/feature-init <slug>`) or refreshing existing AGENTS.md (use `/refresh-agents-md` — planned, not implemented).
+**Not for**: starting a new feature (use `/feature-init <slug>`) or refreshing existing A 类约定 (use `/project-workflow:agents-md-revise`).
 
 **Output structure**(written to target directory — see Step 0):
 

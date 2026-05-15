@@ -11,33 +11,38 @@ Composite skill: chains L1 → L2 → L3 → proof-bundle for end-of-P2 delivery
 
 The motivation: humans skip steps. If you forget L2, you ship code that violates project conventions. If you forget L3, you ship something that doesn't match spec. This skill makes "all four checks" a one-line action.
 
+**Use when**: P2 endpoint — feature implementation complete, ready for the four-check gate before commit / PR.
+**Not for**: starting a feature (use `/feature-init`) / mid-implementation partial review (run individual `/l1-review` or `/l2-review` for ad-hoc check) / spec revision (use `/spec-revise`).
+
 User input: `$ARGUMENTS` — feature slug or "current"
 
-## Step 1 — Resolve feature
+> Full P2 flow: [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角).
 
-Same logic as `/l3-review` and `/proof-bundle`:
+## Step 1 — 定位 feature
 
-| Input | Resolution |
+跟 `/l3-review` 和 `/proof-bundle` 同逻辑:
+
+| 输入 | 处理 |
 |---|---|
 | `<slug>` | `docs/specs/<NNN>-<slug>/` |
-| `current` or empty | most-recent `docs/specs/<NNN>-*/` |
+| `current` 或空 | 最近的 `docs/specs/<NNN>-*/` |
 
-Verify spec.md exists. If not: "No spec found. Run `/project-workflow:feature-init <slug>` first."
+校验 spec.md 存在。不存在则报 "No spec found. Run `/project-workflow:feature-init <slug>` first." 退出。
 
-## Step 2 — Cache check (skip re-running if code unchanged since last review)
+## Step 2 — 缓存检查(无改动则复用上次 review)
 
-If L2/L3/proof-bundle have already been run in this session (visible in conversation history) **and code hasn't changed since**, reuse those results instead of re-running. This makes `/feature-done` idempotent and cheap to re-invoke.
+若 L2 / L3 / proof-bundle 本 session 已跑过(对话历史可见)且**之后代码无改动**,则复用结果不重跑。这样 `/feature-done` 是幂等的,重新调用成本极低。
 
-**Cache invalidation conditions** (re-run the affected step if any are true):
-1. User explicitly requested re-run (`/feature-done <slug> --fresh` or similar wording)
-2. `git status --short` shows modified files in scope since last review timestamp
-3. Last review was > 24 hours ago
-4. Conversation context shows code edits (Edit / Write tool calls) on scoped files after the last review
-5. **Scope directory is fully untracked** (`?? <dir>/` in `git status` — entire scope not yet in git). In this case `git status` can NOT see internal file changes — git only reports the dir is untracked. **Force fresh re-run** unless you can prove no relevant files changed via file mtime comparison (`find <scope> -name "AGENTS.md" -o -name "spec.md" -newer <previous-review-time> 2>/dev/null`).
+**缓存失效条件**(任一命中则该步重跑):
+1. 用户显式要求重跑(`/feature-done <slug> --fresh` 或同义)
+2. `git status --short` 显示 scope 内文件在上次 review 时间戳之后被改
+3. 上次 review 距今 > 24 小时
+4. 对话上下文显示在上次 review 之后对 scope 文件做过 Edit / Write
+5. **scope 目录整体 untracked**(`?? <dir>/` 出现在 `git status`,整目录还没进 git)。这种情形 `git status` **看不到目录内部文件变化**,只报 dir untracked。**强制 fresh 重跑**,除非能用 file mtime 比对证明无相关变化(`find <scope> -name "AGENTS.md" -o -name "spec.md" -newer <previous-review-time> 2>/dev/null`)
 
-**For each step**, decide independently: L1 should usually re-run (cheap, ~10s); L2/L3 typically reuse if cache valid (~1-6 min agent calls saved).
+**每步独立判定**:L1 一般应重跑(便宜,~10s);L2 / L3 在 cache 有效时复用(可省 ~1-6 min agent 调用)。
 
-**Always do** `git status --short` at start to know what actually changed. Document the decision in your report header:
+**开局必做** `git status --short`,先看实际改了什么。报告头部声明每步的决定:
 
 ```
 L1: fresh (always re-run)
@@ -46,47 +51,47 @@ L3: 复用 (~6 min agent run earlier this session, no scoped changes since)
 proof-bundle: re-run (writes tasks.md, so always re-run to refresh)
 ```
 
-## Step 3 — L1 mechanical checks (almost always fresh)
+## Step 3 — L1 机械检(几乎总是 fresh)
 
-Invoke the L1 skill internally (or duplicate its logic):
-- Find check command in AGENTS.md
-- Run it
-- Parse pass/fail
+内部调 L1 skill(或复用其逻辑):
+- 从 AGENTS.md 找 check 命令
+- 跑命令
+- 解析 pass / fail
 
-**If L1 red**: STOP. Output failing items + "Fix L1 before running L2/L3." Return verdict 🔴 BLOCKED.
+**L1 红**: STOP。输出失败项 + "Fix L1 before running L2/L3."。verdict = 🔴 BLOCKED。
 
-**If L1 green**: continue.
+**L1 绿**: 继续。
 
-## Step 4 — L2 AGENTS.md compliance (reuse if cache valid per Step 2)
+## Step 4 — L2 A 类约定 合规(缓存有效则复用,见 Step 2)
 
-Invoke L2 skill (which calls `agents-md-reviewer` agent):
-- Find AGENTS.md files relevant to changed files
-- Pass scope + AGENTS.md to agent
-- Get findings
+调 L2 skill(其内部 dispatch `agents-md-reviewer` agent):
+- 收集 **A 类约定全集**:AGENTS.md 多层(root + tier-level + module-level)+ **`.claude/rules/*.md` 全集**(workflow.md §0.3 / §1.3 把 `.claude/rules/` 升为 A 类 peer to AGENTS.md)
+- 把 scope + A 类全集传给 agent。`.claude/rules/` **不在 skill 层做 globs 过滤**(LLM 不可靠做 deterministic glob 匹配),reviewer 在 agent 内部读 frontmatter `globs:` 自行判每条规则适用哪些 changed file
+- 拿到 findings
 
-**If L2 has 🔴 violations**: continue but note in final verdict.
+**L2 有 🔴 violations**: 继续,但记入最终 verdict。
 
-**If L2 clean or only partials**: continue.
+**L2 clean 或仅 partials**: 继续。
 
-## Step 5 — L3 spec.md compliance (reuse if cache valid per Step 2)
+## Step 5 — L3 spec 合规(缓存有效则复用,见 Step 2)
 
-Invoke L3 skill (which calls `spec-reviewer` agent):
-- Pass spec.md, plan.md, tasks.md, changed-files scope to agent
-- Get findings
+调 L3 skill(其内部 dispatch `spec-reviewer` agent):
+- 把 spec.md / plan.md / tasks.md / changed-files scope 传给 agent
+- 拿到 findings
 
-**Always continue to proof-bundle**, regardless of L3 result (proof bundle records it).
+**无论 L3 结果如何,都继续到 proof-bundle**(proof bundle 会记录)。
 
-## Step 6 — proof-bundle (always fresh — writes tasks.md)
+## Step 6 — proof-bundle(总是 fresh —— 写 tasks.md)
 
-Invoke proof-bundle skill:
-- Compute diff summary
-- Aggregate L1/L2/L3 results from above (don't re-run)
-- **Compute AGENTS.md audit**(per proof-bundle Item 5a, see proof-bundle SKILL):列出本 feature 实际改动的 AGENTS.md / CLAUDE.md 文件,按 root / tier / module 三档分类,标注 Align/Deviate/Codify(若 plan.md §1.1 有声明)
-- Write to tasks.md
+调 proof-bundle skill:
+- 计算 diff 摘要
+- 聚合上面 L1 / L2 / L3 结果(不重跑)
+- **计算 A 类约定 audit**(对应 proof-bundle Item 5a):列出本 feature 实际改动的 **AGENTS.md / CLAUDE.md / `.claude/rules/*.md`** 文件,按 root / tier / module / path-rule 四档分类,标注 Align / Deviate / Codify(若 plan.md §1.1 已声明)
+- 写入 tasks.md
 
-## Step 7 — Aggregate report
+## Step 7 — 聚合报告
 
-Single consolidated report (not 4 separate ones):
+单一聚合报告(不出 4 份分散报告):
 
 ```markdown
 ## /project-workflow:feature-done — <feature-slug>
@@ -102,7 +107,7 @@ Single consolidated report (not 4 separate ones):
 ### L1 — Mechanical (<duration>)
 <one-line: ✅ all green / ❌ N failures listed below>
 
-### L2 — AGENTS.md compliance (<duration>)
+### L2 — A 类约定 compliance(AGENTS.md + `.claude/rules/`)(<duration>)
 <one-line: ✅ no violations / 🟡 N partials / 🔴 N violations>
 
 <if 🔴/🟡, list the worst 3 findings>
@@ -115,7 +120,7 @@ Single consolidated report (not 4 separate ones):
 ### Proof Bundle written to <tasks.md path>
 - Tests: X/Y passed, coverage Z%
 - Diff: <N> files, +<X>/-<Y>
-- **AGENTS.md 触动**: <K> 份(root: <0/1> / tier: <0-N> / module: <0-N>)—— 详见 tasks.md proof bundle Item 5a
+- **A 类约定触动**: <K> 份(root: <0/1> / tier: <0-N> / module: <0-N> / path-rule: <0-N>)—— 详见 tasks.md proof bundle Item 5a
 - Drift suggestions (未应用): <count>
 - Open questions: <count>
 
@@ -143,9 +148,12 @@ Closes: <issue # if known>
 - L1: <failing item> (this is non-negotiable)
 
 Re-run `/project-workflow:feature-done <slug>` after fixes.
+
+<if proof bundle Item 5b 累积 ≥ 3 条(本 feature + 历史 tasks.md):>
+📝 累积 <N> 条 A 类约定 drift backlog。方便时跑 `/project-workflow:agents-md-revise` 一次性 audit + apply(不催)。
 ```
 
-## Step 8 — Verdict logic
+## Step 8 — Verdict 判定逻辑
 
 | L1 | L2 | L3 | Verdict |
 |---|---|---|---|
@@ -155,14 +163,14 @@ Re-run `/project-workflow:feature-done <slug>` after fixes.
 | ✅ | 🟡 / ✅ | ⚠️ deviations | 🟡 NEEDS WORK |
 | ✅ | ✅ | ✅ | 🟢 READY |
 
-Spec scope creep (🚫) = 🟡 NEEDS WORK (user reconciles by either trimming impl or updating spec §2).
+Spec scope creep(🚫)= 🟡 NEEDS WORK(用户裁实施 或 改 spec §2 二选一)。
 
 ## Notes
 
-- **This is the canonical "I'm done" command**. After this, user just needs to git commit + push.
-- **Don't auto-commit**. Even on 🟢 READY, leave commit to the user.
-- **Don't auto-fix**. Each underlying skill (L1/L2/L3) is read-only; this skill aggregates them.
-- **Parallelizable later**: L2 and L3 could run in parallel (they don't depend on each other). v2.1.0 runs them sequentially for simplicity; revisit if user reports slowness.
-- **Re-running is cheap** thanks to the Step 2 cache check. Encourage user to re-run after fixes — only changed steps will re-execute.
-- **ROI-ranked action list**: when verdict is 🟡, rank suggested actions by impact (highest-leverage fix first, e.g., "config change that unblocks coverage gate" before "1-line AGENTS.md edit"). Include estimated time per action when known.
-- **Conditional commit message hint**: even on 🟡, if user might want to ship despite blockers, offer a draft commit message that explicitly notes the known deviations and where context lives (e.g., proof bundle path).
+- **本 skill 是 "我完工了" 的 canonical 命令**。跑完后,用户只需 git commit + push
+- **不自动 commit**。即使 🟢 READY,commit 也留给用户
+- **不自动 fix**。底层每个 skill(L1/L2/L3)都是 read-only,本 skill 只做聚合
+- **可后续并行化**:L2 和 L3 互不依赖,理论可并行;v2.1.0 顺序执行求简,若用户反馈慢再改
+- **重跑成本低** —— 靠 Step 2 缓存检查。鼓励用户改完重跑,只跑真变化的 step
+- **ROI 排序行动列表**:verdict = 🟡 时,suggested actions 按 impact 排序(高 leverage 先 —— 比如 "改 config 解锁 coverage gate" 排在 "1 行 AGENTS.md edit" 之前);可估算单项时间
+- **条件性 commit message 草稿**:即使 🟡,用户若想带 known deviations 上线,提供 commit message 草稿,显式标注 deviations 和 context 位置(如 proof bundle 路径)

@@ -5,40 +5,49 @@ description: Start a new feature spec — create docs/specs/<NNN>-<slug>/{spec,p
 
 > **Response language**: Match the user's prompt language (中文 / English / etc.) in all natural-language output — headers, summaries, questions, progress messages. Code, commands, file paths, and `$ARGUMENTS` stay as-is.
 
-# Spec Init
+# Feature Init
 
-User wants to start a new feature. Their input: `$ARGUMENTS`
+Start a new feature's spec/plan/tasks triplet (P2 entry point). Optional Step 7 walks the user through Q&A fill, aligned with the 7-question quality checklist in [spec-driven.md §3.7](../../docs/spec-driven.md#37-specplan-写完后的质量自检7-问-checklist).
 
-## Step 1 — Parse input
+**Use when**: P2 — starting a new feature; changes span 3+ files OR touch architecture / data model / API contract ([workflow.md §3.1](../../docs/workflow.md#31-规划阶段)).
+**Not for**: P0 project scaffolding (use `/project-workflow:project-init`) / mid-implementation spec revision (use `/project-workflow:spec-revise`) / endpoint delivery (use `/project-workflow:feature-done`).
 
-`$ARGUMENTS` may be one of:
-- `<slug>` only — e.g., `email-verification`
-- `<slug>: <description>` — e.g., `email-verification: send verify link on register`
-- Empty — ask user "feature slug? (kebab-case)" then proceed
+User input: `$ARGUMENTS` — feature slug + optional description.
 
-Slug requirements:
-- kebab-case only (`a-z0-9-`)
+## Step 1 — 解析输入(可选 `$ARGUMENTS`)
+
+| 输入格式 | 例 | 处理 |
+|---|---|---|
+| 仅 `<slug>` | `email-verification` | 直接用 |
+| `<slug>: <description>` | `email-verification: send verify link on register` | 拆 slug 和 description |
+| 空 | — | 问用户 "feature slug? (kebab-case)" 后继续 |
+
+Slug 要求:
+- kebab-case only(`a-z0-9-`)
 - 2-40 chars
-- No leading/trailing hyphen
+- 不能以 `-` 开头或结尾
 
-If invalid, ask user to correct before proceeding.
+不合法 → 请用户改正再继续。
 
-## Step 2 — Determine the NNN number
+## Step 2 — 确定 NNN 编号
 
 ```bash
 ls docs/specs/ | grep -E '^[0-9]{3}-' | sort -rn | head -1
 ```
 
-Take the highest leading number, increment by 1, zero-pad to 3 digits. If `docs/specs/` doesn't exist or is empty, start with `001`.
+取最大的前导编号 +1,补零到 3 位。若 `docs/specs/` 不存在或为空,从 `001` 起。
 
-## Step 3 — Read project context
+## Step 3 — 读项目 context
+
+> A 类约定有两个载体(workflow.md §0.3 / §1.3):**AGENTS.md** 多层 + **`.claude/rules/*.md`** 扁平 globs 路径触发。两者都是项目约定 source-of-truth,Step 7 引导填空时要参考全集。
 
 **必读**(不存在则中止):
 - `AGENTS.md` — 项目级约定。**若缺**:报 "项目无 v2 baseline。先跑 `/project-workflow:project-init`(空目录)或 `/project-workflow:project-personalize`(已 clone scaffold)。" 然后中止。
 
-**选读**(skip silently if missing):
-- `docs/specs/_template/{spec,plan,tasks}.md` — 仅当项目自定义 override(有 `.user-customized` 哨兵)
-- `<tier>/AGENTS.md` for each detected tier — 拿 tier-specific conventions
+**选读**(缺失则静默跳过):
+- `docs/specs/_template/{spec,plan,tasks}.md` —— 仅当项目自定义 override(有 `.user-customized` 哨兵)
+- `<tier>/AGENTS.md` 每个检测到的 tier —— 拿 tier 特异约定
+- **`.claude/rules/*.md` 全集** —— A 类 peer to AGENTS.md(典型:`code-style.md` / `testing.md` / `security.md` + 可能的 `<framework>.md`)。读每个文件的 frontmatter `globs:`,记下"哪条规则约束哪些路径",Step 7.2 / 7.5 引导时按此对照本 feature 的 scope 提示用户
 
 ### 扫描项目结构(tier-aware)
 
@@ -53,24 +62,45 @@ Take the highest leading number, increment by 1, zero-pad to 3 digits. If `docs/
 
 若 tier 命名 / 模块位置都识别不出,**问用户**:"我没识别出模块结构。本 feature 涉及哪些目录?"
 
-## Step 4 — Detect Module Setup needs (workflow §2 sub-flow)
+## Step 4 — 检测 Module Setup 需要(workflow §2 sub-flow)
 
-Based on slug + description + existing modules, decide:
+据 slug + 描述 + 既有模块判定:
 
-| Situation | Module action |
+| 情形 | 模块决策 |
 |---|---|
-| Feature clearly extends one existing module | No new module; note "extends `<X>`" in plan |
-| Feature crosses 2+ existing modules with no clear home | Ask user: which module owns it / split how |
-| Feature is a wholly new domain (e.g., `notifications` when none exists) | **New module needed** — add module skeleton to plan/tasks |
-| Cross-tier feature (e.g., auth) | Likely needs module in **both** tiers; check each tier separately |
+| Feature 明确扩展某一既有模块 | 不建新模块;plan 注 "extends `<X>`" |
+| Feature 横跨 2+ 既有模块,主家不明 | 问用户:哪个模块承担 / 怎么拆 |
+| Feature 是全新领域(如 `notifications` 之前不存在) | **需新建模块** —— plan/tasks 加模块 skeleton |
+| 跨 tier feature(如 auth) | 多半每个 tier 都要建对应模块;逐 tier 单独判 |
 
-**If unsure, ASK the user before generating files.** Don't fabricate module decisions.
+**不确定时,生成文件前先问用户。** 不要编造模块决定。
 
-## Step 5 — Generate the three files
+### Step 4.1 — (新模块时)反常判定 + module-level AGENTS.md
 
-Create directory `docs/specs/<NNN>-<slug>/` and write:
+仅当 Step 4 决定 **New module needed** 时触发。99% 新模块跟父级(tier / 项目)默认一致,**不写** `<module>/AGENTS.md`;只在"反常"时才写(workflow.md §2.3 判定)。
 
-### `spec.md`(WHAT — frozen once approved;**canonical 4 节**,跟 [spec-driven.md §3.3](../../docs/spec-driven.md) 一致)
+问用户:
+
+```
+新建模块 <module-path>。这个模块是否"反常"——跟父级默认约定不同?常见反常情形:
+  - 存储模型不同(如其他模块 PostgreSQL,本模块 Redis)
+  - 特殊并发 / 性能约束(如必须 lock-free)
+  - 对外稳定 API 契约(公共 SDK 边界)
+  - 用了不同的第三方库范式
+
+(n)o      → 不写 module-level AGENTS.md(99% 选这个)
+(y)es     → 简述反常点,plan/tasks 加 "<module>/AGENTS.md + CLAUDE.md alias" skeleton 项
+```
+
+若 `(y)es`,把反常点写进 plan.md §1 模块影响范围的 "新模块反常约定" 子节,并在 tasks.md 加 task "建 `<module>/AGENTS.md`(差量于父级)+ `<module>/CLAUDE.md` 1 行 alias"。
+
+**反模式**:每个新模块都问 "要不要写 AGENTS.md?" —— 99% 答 no,反而稀释了反常判定本身。改成**默认 n,只在用户提到反常点时改 y**。
+
+## Step 5 — 生成三个文件
+
+新建目录 `docs/specs/<NNN>-<slug>/` 并写入:
+
+### `spec.md`(WHAT —— 评审通过后冻结;**canonical 4 节**,跟 [spec-driven.md §3.3](../../docs/spec-driven.md) 一致)
 
 > ⚠️ Agent 写文件前必须把 `<TODAY>` 替换为今天日期(YYYY-MM-DD 格式)。
 
@@ -117,7 +147,7 @@ Create directory `docs/specs/<NNN>-<slug>/` and write:
 
 > **数据模型 / API 契约不在 spec.md** —— canonical 把它们放进 plan.md §2 架构决策(HOW),不混淆 WHAT 和 HOW。
 
-### `plan.md`(HOW — 实施中可改;**canonical 4 节**)
+### `plan.md`(HOW —— 实施中可改;**canonical 4 节**)
 
 ```markdown
 # <NNN> <slug> — Plan
@@ -183,7 +213,7 @@ Create directory `docs/specs/<NNN>-<slug>/` and write:
 1. {{TODO}}
 ```
 
-### `tasks.md`(STEPS — 实施中实时更新;**canonical 2 节 + Proof Bundle 占位**)
+### `tasks.md`(STEPS —— 实施中实时更新;**canonical 2 节 + Proof Bundle 占位**)
 
 ```markdown
 # <NNN> <slug> — Tasks
@@ -232,33 +262,32 @@ Create directory `docs/specs/<NNN>-<slug>/` and write:
 - [ ] 手测确认 happy path 跑通
 ```
 
-## Step 6 — Report back
+## Step 6 — 报告
 
-After creating, output:
+文件创建后,输出:
 
 ```
 ✅ Spec created: docs/specs/<NNN>-<slug>/
-   ├── spec.md  — Fill §1 Outcomes / §3 Constraints(§2 Scope 末轮补"不做")
-   ├── plan.md  — Fill §1 模块影响 / §2 架构决策(Data Model / API)/ §3 Prior decisions
-   └── tasks.md — Fill §1 任务清单(30min-2h 颗粒度)
+   ├── spec.md  —— 待填 §1 Outcomes / §3 Constraints(§2 Scope 末轮补"不做")
+   ├── plan.md  —— 待填 §1 模块影响 / §2 架构决策(Data Model / API)/ §3 Prior decisions
+   └── tasks.md —— 待填 §1 任务清单(30min-2h 颗粒度)
 
-📌 Module decision: {{one of:}}
-   - Extends existing `<module>` (no new module)
-   - New module recommended: `<path>` (plan/tasks include skeleton setup)
-   - Needs user clarification: <which option>
+📌 Module decision: {{以下之一}}
+   - 扩展既有 `<module>`(不建新模块)
+   - 建议新模块:`<path>`(plan/tasks 已加 skeleton)
+   - 需用户澄清:<具体选项>
 
 Next steps:
 1. (推荐)立刻进 Step 7 Q&A 走完 spec §1-3 + plan §2 fill(本 skill 内置)
-2. 或选 n 跳过 → 后续自己跟 AI 在主会话填(参考 [`spec-driven.md §3.6.5`](../../docs/spec-driven.md#365-phase-a-填-todos-的-ai-协作-sop))
-3. 填完跑 `/project-workflow:spec-quality-check` — pre-implementation gate
-4. Implement following tasks.md
-5. 实施中真发现 spec/plan 错时:`/project-workflow:spec-revise`(走 [workflow.md §3.5](../../docs/workflow.md#35-开发中发现-specplan-错怎么办))
-6. 完成时:`/project-workflow:feature-done`(L1+L2+L3+proof-bundle)
+2. 或选 n 跳过 → 后续主会话跟 AI 补 TODOs(参考 [`spec-driven.md §3.6.5`](../../docs/spec-driven.md#365-phase-a填-todos-的-ai-协作-sop))
+3. 准备好后跑 `/project-workflow:spec-quality-check` —— 实施前 gate
+
+> Gate 通过后的完整 post-gate roadmap(分支 / 实施 / spec-revise / feature-done)由 `/spec-quality-check` Step 7 给出。**全 P2 流程见** [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角)。
 ```
 
-## Step 7 — (Optional)Q&A 填 TODOs
+## Step 7 — (可选)Q&A 填 TODOs
 
-After Step 6 报告完成,**询问用户是否立即进 Q&A fill 阶段**:
+Step 6 报告完成后,**询问用户是否立即进 Q&A fill 阶段**:
 
 ```
 spec.md §1 / §3 + plan.md §2 还有 TODOs。要我现在 Q&A 走完吗?
@@ -299,17 +328,23 @@ spec.md §1 / §3 + plan.md §2 还有 TODOs。要我现在 Q&A 走完吗?
 ### Step 7.2 — plan.md §2 架构决策(数据模型 + API + 关键算法)
 
 > Canonical 把 Data Model + API Contract 放在 plan.md §2(HOW),不在 spec.md(WHAT)。
+>
+> **对照 Step 3 读到的 `.claude/rules/*.md`**:若本 feature scope 命中某条规则的 `globs:`(如 `fastapi.md` 约束 `backend/**/*.py`,而本 feature 改 backend),引导问题里**显式提**该规则的相关项(如 "用 Pydantic v2 strict mode" / "endpoint 用 kebab-case path"),避免 plan §2 跟项目约定漂移。
 
 按顺序问(必要时跳过不适用项):
 
 ```
 1. (若涉及数据持久化)"核心 entity 是什么?关键 3-5 个字段 + 关系(1-1 / 1-N / N-N)?"
 2. (若涉及 HTTP API)"暴露哪些 endpoint?Method + Path + 请求体 + 响应体?"
+   → 若项目有 framework rule(如 `.claude/rules/fastapi.md`)规定 path 命名 / schema 风格,引导对齐
 3. (若涉及 HTTP API)"错误路径有哪些?(401 / 404 / 422 / 409 / 500 ...)"
    → 主动追问 "401 / 404 case 覆盖了吗?"(对应 §3.7 Q3 可测验证)
 4. (按需,若用户对 ORM / API 风格 / 序列化方式不确定)"用 X 还是 Y?要我调研吗?"
-   → 用户 yes → dispatch [`tech-researcher`](../../agents/tech-researcher.md) sub-agent
-5. (若有关键算法 / 状态机)"算法 / 状态转移?"
+   → **先看** `.claude/rules/<framework>.md` 是否已有定论(项目级 codified) → 已有 → 直接对齐(不再问)
+   → 未定论且用户 yes → dispatch [`tech-researcher`](../../agents/tech-researcher.md) sub-agent
+5. (若 plan §2 涉及多个外部库 / 不熟悉的 API / 版本相关问题)"要不要拉外部库文档塞进 plan §2 当 reference?"
+   → 用户 yes → 用 `context7` MCP(优先)或 `WebFetch`(回退)拉文档,关键部分(版本约束 / breaking changes / 推荐用法)摘进 plan.md §2,**避免实施时 AI 猜 API 形状**(workflow.md §3.1 决策清单 #3)
+6. (若有关键算法 / 状态机)"算法 / 状态转移?"
 ```
 
 写进 plan.md §2 各子节(数据模型 / API 契约 / 关键算法)。确认。
@@ -375,11 +410,9 @@ spec.md §1 / §3 + plan.md §2 还有 TODOs。要我现在 Q&A 走完吗?
 ```
 ✅ spec §1 + plan §2 + spec §3 + spec §2 Exclude + spec §4 + plan §1.1 已 Q&A 填完。
 
-下一步建议:
-1. 跑 `/project-workflow:spec-quality-check` 验最后那 5%(机械检 + 主观二审)
-2. 通过后 `git commit` spec.md + plan.md + tasks.md → 进 implementation
-3. 实施中发现 spec 错 → `/project-workflow:spec-revise`
-4. 完成时 → `/project-workflow:feature-done`(L1+L2+L3+proof-bundle)
+下一步:跑 `/project-workflow:spec-quality-check` 验最后那 5%(机械检 + 主观二审)。
+
+> Gate 通过后的完整 post-gate roadmap(分支 / 实施 / spec-revise / feature-done)由 `/spec-quality-check` Step 7 给出。**全 P2 流程见** [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角)。
 ```
 
 ### Step 7 Failure modes
@@ -394,6 +427,6 @@ spec.md §1 / §3 + plan.md §2 还有 TODOs。要我现在 Q&A 走完吗?
 
 ## Notes
 
-- **Do not** generate code yet — this is the planning artifact only
-- **Do not** overwrite existing `docs/specs/<NNN>-<slug>/` (collision detection: error out)
+- **Do not** generate code —— 本 skill 只产规划 artifact
+- **Do not** overwrite existing `docs/specs/<NNN>-<slug>/`(碰撞检测:报错退出)
 - **Template source**:本 SKILL.md § Step 5 起的 spec/plan/tasks 内置模板是 canonical source。若项目有 `docs/specs/_template/`(用户手工 mkdir + `.user-customized` 哨兵),则优先读本地 override

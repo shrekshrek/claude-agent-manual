@@ -30,10 +30,10 @@
 
 | 类别 | 文件 | 本文档涉及? |
 |---|---|---|
-| **A. 约定** — 项目级常识 / Tier 级约定 / 模块级反常 | 根 `AGENTS.md` + tier `<tier>/AGENTS.md` + 模块 `<module>/AGENTS.md`(均含 1 行 `CLAUDE.md` alias) | §2 速查,详 workflow.md §1.3 |
+| **A. 约定** — 项目级常识 / Tier 级约定 / 模块级反常 / 路径级 topic 详规则 | 根 `AGENTS.md` + tier `<tier>/AGENTS.md` + 模块 `<module>/AGENTS.md`(均含 1 行 `CLAUDE.md` alias)+ `.claude/rules/*.md`(扁平 + globs 路径触发) | §2 速查,详 workflow.md §1.3 |
 | **B. 任务** — 功能级 spec / plan / tasks | `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` | **§3 起本文档主题** |
 | **C. 决策** — 架构选择 + trade-off | `docs/adr/NNNN-<title>.md` | 不在本文档,见 workflow.md §1.8 |
-| **D. 基础设施** — hook / lint / settings | `.claude/{rules,hooks,settings.json}` + `.github/` | 不在本文档,见 workflow.md §1.6 / §1.7 |
+| **D. 工具基础设施** — hook / lint / settings | `.claude/{hooks,settings.json}` + `.gitignore`(`.github/` 模板 v2 默认不预置,见 workflow.md §1.9) | 不在本文档,见 workflow.md §1.6 / §1.7 |
 
 > "Tier" 概念详见 [workflow.md §0.3](workflow.md#03-概念区分钉死再读后续)。简言之:**全栈/多端项目的架构性分层**(前后端、客户端服务端等);单 tier 项目不存在这层。
 
@@ -70,13 +70,14 @@
 详细写法见 [workflow.md §1.3 AGENTS.md 的内容标准](workflow.md#13-agentsmd-的内容标准) + [§1.4 嵌套层次](workflow.md#14-claudemd-嵌套层次子级覆盖父级)。
 
 要点速查:
-- 项目周期内**最低频更新**(明显低于 tier / 模块级 AGENTS.md);仍随项目演化更新,3 层频率梯度详见 [workflow.md §1.3 末尾](workflow.md#13-agentsmd-的内容标准)
+- 项目周期内**最低频更新**(明显低于 tier / 模块级 AGENTS.md);3 层频率梯度详见 [workflow.md §5.0 三层 AGENTS.md 的更新频率梯度](workflow.md#50-三层-agentsmd-的更新频率梯度)
 - 六要素(Addy 框架):Commands / Testing / Project Structure / Code Style / Git Workflow / Boundaries
 - Boundaries 三档:✅ Always / ⚠️ Ask first / 🚫 Never
-- 嵌套层次:**系统 / 用户 / 项目根 / 子目录(tier + 模块)/ 私有**(详细见 workflow.md §1.4)
+- 嵌套层次:**用户 / 项目根 / 子目录(tier + 模块)/ 私有**(详细见 [workflow.md §1.4](workflow.md#14-agentsmd--claudemd-嵌套层次子级覆盖父级);系统级 `/etc/claude-code/CLAUDE.md` 为企业 IT 场景,v2 audience 不覆盖)
 - 模块级 AGENTS.md(`<module>/AGENTS.md` + 1 行 `CLAUDE.md` alias)是**可选**,仅模块"反常"时才写(见 [workflow.md §2.3](workflow.md#23-反常判定何时该写模块-agentsmd))
+- `.claude/rules/*.md`(扁平 + globs 路径触发)是 A 类 peer to AGENTS.md(workflow.md §0.3 / §1.3),不在嵌套层次表里,靠 frontmatter 实现路径作用域
 
-维护工具(规划中):见 [proposals/agents-md-maintenance-skill.md](proposals/agents-md-maintenance-skill.md)。
+维护工具:[`/project-workflow:agents-md-revise`](../skills/agents-md-revise/SKILL.md) —— P4 主动 refresh A 类约定全集(AGENTS.md 嵌套 + `.claude/rules/`)。
 
 ---
 
@@ -549,7 +550,7 @@ docs/specs/
 | 起新 feature 三文件 | [`/feature-init <slug>`](../skills/feature-init/SKILL.md) —— 自动创建 `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` |
 | spec 不完整想 AI 帮你补 | GitHub Spec Kit `/speckit.clarify`(若装) —— Q&A 引导补全 |
 | L3 检查代码合规 | `pr-review-toolkit:review-pr`,提供 spec.md + plan.md 路径作 context,见 [workflow §6.4](workflow.md#64-按规则源分层验证three-layer-review-separation) |
-| CLAUDE.md(项目/Tier/模块级)维护 | 见 [`proposals/agents-md-maintenance-skill.md`](proposals/agents-md-maintenance-skill.md)(规划中) |
+| A 类约定(AGENTS.md 多层 + `.claude/rules/`)主动 refresh | [`/project-workflow:agents-md-revise`](../skills/agents-md-revise/SKILL.md)(P4 主战场) |
 
 ---
 

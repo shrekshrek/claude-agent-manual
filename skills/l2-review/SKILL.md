@@ -7,25 +7,30 @@ description: Run the project's L2 review — verify code changes follow the AGEN
 
 # L2 Review
 
-L2 in the project-workflow methodology = **project-level conventions** (the things in AGENTS.md). This skill triggers a sub-agent to mechanically check changed code against those conventions. Designed to find: "you wrote `db.query(...)` but `backend/AGENTS.md` says 'never use 1.x query style'".
+L2 in the project-workflow methodology = **project-level A 类约定** (AGENTS.md 多层 + `.claude/rules/*.md`). This skill triggers a sub-agent to mechanically check changed code against those conventions. Designed to find: "you wrote `db.query(...)` but `backend/AGENTS.md` says 'never use 1.x query style'".
+
+**Use when**: P2 endpoint review of project-convention compliance — typically dispatched by `/feature-done`,but standalone-runnable for ad-hoc check during implementation.
+**Not for**: mechanical checks(use `/l1-review`)/ spec compliance(use `/l3-review`)/ proof bundle 装配(use `/proof-bundle`)/ A 类约定主动 refresh(use `/agents-md-revise`)。
 
 User input: `$ARGUMENTS` (optional — feature slug or "current" to scope to most-recent feature)
 
-## Step 1 — Determine scope
+> Full P2 flow: [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角).
 
-Three modes:
+## Step 1 — 判定 scope
 
-| User input | Scope |
+三种模式:
+
+| 用户输入 | Scope |
 |---|---|
-| `<feature-slug>` (e.g., `email-verification`) | Files changed in `docs/specs/<NNN>-<slug>/tasks.md` implementation |
-| `current` or empty | All uncommitted changes (`git diff --name-only` + `git status --porcelain` for untracked) |
-| `since:HEAD~3` (or any git ref) | `git diff --name-only HEAD~3` |
+| `<feature-slug>`(如 `email-verification`)| 该 feature `docs/specs/<NNN>-<slug>/tasks.md` 实施期改的文件 |
+| `current` 或空 | 所有未 commit 改动(`git diff --name-only` + `git status --porcelain` 含 untracked) |
+| `since:HEAD~3`(或任何 git ref)| `git diff --name-only HEAD~3` |
 
-For empty input, **first try** `git diff --name-only` — if empty, fall back to `git log --name-only -1 --pretty=` (last commit).
+输入为空时,**先试** `git diff --name-only`;若为空,退到 `git log --name-only -1 --pretty=`(上次 commit)。
 
-If still nothing, ask the user "what scope to review?".
+仍无 → 问用户 "what scope to review?"。
 
-## Step 2 — Find A 类约定文件(L2 规则源全集)
+## Step 2 — 收集 A 类约定文件(L2 规则源全集)
 
 Project may have:
 - Root `AGENTS.md`
@@ -33,22 +38,22 @@ Project may have:
 - Module-level: `<module>/AGENTS.md`(仅模块"反常"时存在,见 workflow.md §2.3)
 - **All `.claude/rules/*.md` files** —— `.claude/rules/` 是 A 类约定 peer to AGENTS.md(workflow.md §0.3 / §1.3),用 `globs:` frontmatter 做路径作用域而**不是** `@imports`。**全量传给 reviewer**;reviewer 自己判断每条规则是否命中 changed file。
 
-Filter `<tier>/AGENTS.md` to relevant tiers based on which files changed (don't pass frontend AGENTS.md if only backend files changed)。
+按 changed file 命中的 tier 过滤 `<tier>/AGENTS.md`(只改 backend 时不传 frontend AGENTS.md)。
 
 `.claude/rules/*.md` **不要在 skill 层做 globs 过滤** —— 原因:skill 是 orchestrator(Claude 自身),不是 deterministic glob 引擎,做 file-vs-globs 匹配不可靠。**全量传给 reviewer**,reviewer 在 agent 内部读每个 rule 文件的 frontmatter `globs:`,**用它判定**每条规则对应哪些 changed files。无 `globs:` 的规则(如 `security.md` 常无)按全局适用处理。
 
-Also include `docs/gotchas.md` if it exists (engineering pitfalls also count as L2-level for projects that maintain it).
+若项目有 `docs/gotchas.md`,也一并传(工程陷阱清单对维护它的项目也算 L2 级)。
 
-## Step 3 — Spawn the reviewer agent
+## Step 3 — Dispatch reviewer agent
 
-Use the Task tool with `subagent_type: agents-md-reviewer` (the agent at `agents/agents-md-reviewer.md` in this plugin).
+用 Task 工具,`subagent_type: agents-md-reviewer`(agent 文件:`agents/agents-md-reviewer.md`)。
 
-Pass it:
-- Scope (list of changed files)
+传:
+- Scope(changed files 列表)
 - A 类约定路径全集(AGENTS.md 多层 + `.claude/rules/*.md` 全量)
-- (Optional) spec.md path for context — but agent must NOT do spec compliance, only A 类约定
+- (可选)spec.md 路径作 context —— 但 agent **不能**做 spec 合规,只做 A 类约定
 
-Example task prompt:
+任务 prompt 示例:
 
 > Review A 类约定合规 for these files changed in the `email-verification` feature:
 >
@@ -68,34 +73,34 @@ Example task prompt:
 >
 > Return structured findings per your output format.
 
-## Step 4 — Forward the agent's report
+## Step 4 — 转发 agent 报告
 
-The sub-agent returns a structured markdown report. **Pass it through** to the user verbatim (don't re-summarize — agent's report IS the deliverable).
+sub-agent 返回结构化 markdown 报告。**原样转发**给用户(不再 summarize —— agent 的报告就是交付物)。
 
-Add a one-line header above the agent's report:
+报告前加 1 行 header:
 
 ```
 ## /project-workflow:l2-review — <feature-slug> (<N files>)
 
-<agent's verbatim report>
+<agent 原样报告>
 ```
 
-And a one-line footer:
+末尾 1 行 footer:
 
 ```
 ---
-Next: `/project-workflow:l3-review <slug>` to verify spec compliance.
+下一步:跑 `/project-workflow:l3-review <slug>` 验 spec 合规。
 ```
 
 ## Step 5 — Failure modes
 
-- **No AGENTS.md found**: tell user "L2 review requires AGENTS.md; this project has none. Run `/project-workflow:feature-init` setup first or create AGENTS.md per template."
-- **Agent returns empty findings**: that's fine, report "✅ L2: no violations found across N files."
-- **Agent finds something subjective**: trust it — the agent has strict scoping in its system prompt to only cite explicit rules.
+- **找不到 AGENTS.md**:报 "L2 review requires AGENTS.md; this project has none. Run `/project-workflow:project-init` 或 `/project-personalize` 起 baseline。"
+- **Agent 返回空 findings**:OK,报 "✅ L2: no violations found across N files."
+- **Agent 找到看似主观的东西**:信它 —— agent system prompt 有 strict scoping(cite-or-skip)只允许引明确规则
 
 ## Notes
 
-- **L2 is fast** (~1-2 min per agent call) when AGENTS.md is well-written and scope is small.
-- **L2 finds template drift** more reliably than humans — e.g., "you set `container_name` even though AGENTS.md says don't" — easy for humans to miss.
-- L2 ≠ L3. If user asks "is this implementation correct?" → that's L3 (`spec-reviewer`), not L2.
-- This skill is a **router**. The intelligence is in the `agents-md-reviewer` sub-agent.
+- **L2 快**(~1-2 min agent 调用),前提 AGENTS.md 写得好 + scope 小
+- **L2 比人更可靠地抓 template drift** —— 如 "你设了 `container_name`,但 AGENTS.md 说别设" —— 人眼容易漏
+- L2 ≠ L3。用户问 "实现对不对?" → 那是 L3(`spec-reviewer`),不是 L2
+- 本 skill 是 **router**,智能在 `agents-md-reviewer` sub-agent 里

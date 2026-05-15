@@ -15,19 +15,21 @@ Orchestrate the mid-implementation revision SOP from [`workflow.md §3.5`](../..
 
 User input: `$ARGUMENTS` — optional `<feature-slug>` and/or `--spec` / `--module` mode hint.
 
-## Step 1 — Locate the feature
+> Full P2 flow: [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角). 本 skill 是 P2 实施期"贵阶段修订"通道。
 
-Resolve target feature directory:
+## Step 1 — 定位 feature
 
-| Input | Behavior |
+目标 feature 目录解析:
+
+| 输入 | 处理 |
 |---|---|
-| `<slug>` (e.g., `email-verification`) | Find `docs/specs/<NNN>-email-verification/` |
-| Empty / "current" | Find feature with most recent activity (latest mtime in `docs/specs/`) |
-| Multiple matches / unclear | Ask user to pick |
+| `<slug>`(如 `email-verification`)| 找 `docs/specs/<NNN>-email-verification/` |
+| 空 / "current" | 找最近活跃的 feature(`docs/specs/` 下 mtime 最新)|
+| 多个匹配 / 不明 | 请用户挑 |
 
-Read the feature's `spec.md` + `plan.md` + `tasks.md` so subsequent steps have context.
+读该 feature 的 `spec.md` + `plan.md` + `tasks.md`,为后续步骤准备 context。
 
-## Step 2 — Determine if revision is warranted (走 §3.5 判断表)
+## Step 2 — 判定是否需要 revision(走 §3.5 判断表)
 
 Ask user: "什么发现触发了这次 revision?简述。"
 
@@ -49,7 +51,7 @@ Q&A 决策:
 - **不必修(只是模糊/难做)**→ 引导用户写 plan.md prior decisions(`§3` 加一条)+ 退出。**不强行起 ADR / 改 spec**——避免过度 ceremony 把 plan.md 当 release note 用。
 - **module 边界变更** → 自动跑 §2.6 流程(走 Step 5.5)
 
-## Step 3 — Find next ADR number
+## Step 3 — 找下一个 ADR 编号
 
 ```bash
 ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
@@ -57,7 +59,7 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 
 取最大 4 位数字 + 1,zero-pad to 4 digits。若 `docs/adr/` 不存在或为空,起 `0001`。`0000-template.md` 跳过。
 
-## Step 4 — Draft ADR
+## Step 4 — 起 ADR 草稿
 
 复制 `docs/adr/0000-template.md` 到 `docs/adr/<NNNN>-<topic-slug>.md`。
 
@@ -71,7 +73,7 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 
 写好 ADR 文件,用户 review。
 
-## Step 5 — Update spec.md
+## Step 5 — 改 spec.md
 
 ### 5.1 改正文(对应 §3.5 / §2.6 的"改 spec.md 节")
 
@@ -91,13 +93,14 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 
 按 [§2.6](../../docs/workflow.md#26-module-中途变更feature-实施中发现边界要调整):
 
-1. 重审 plan.md `§1.1 Sibling Alignment`——这次往往触发 "Codify"
-2. 若 module **反常**(参见 [§2.3](../../docs/workflow.md#23-反常判定何时该写模块-claudemd) 判定)→ 写 / 改 `<module>/CLAUDE.md`
+1. 重审 plan.md `§1.1 Sibling Alignment` —— 这次往往触发 "Codify"
+2. 若 module **反常**(参见 [§2.3](../../docs/workflow.md#23-反常判定何时该写模块-agentsmd) 判定)→ 写 / 改 `<module>/AGENTS.md`(主文件)+ `<module>/CLAUDE.md`(1 行 `@AGENTS.md` alias)
 3. (如适用)起 tier-level AGENTS.md 调整(若 codify 出来的规则属于 tier 级)
+4. (如适用)若 codify 出来的规则属 framework / topic 级 → 加 / 改 `.claude/rules/<topic>.md`(A 类 peer to AGENTS.md,见 [§1.3](../../docs/workflow.md#13-a-类约定的内容标准agentsmd--clauderules))
 
 每步跟用户确认改了什么。
 
-## Step 6 — Update plan.md
+## Step 6 — 改 plan.md
 
 ### 6.1 `## 3. Prior decisions` 加一条
 
@@ -113,7 +116,7 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 
 若 ADR Decision 涉及架构层(数据模型、API 契约、关键算法):在此节加 1-2 句简述,引 ADR 详细。
 
-## Step 7 — Update tasks.md(若任务列表变化)
+## Step 7 — 改 tasks.md(若任务列表变化)
 
 按修订决策评估:
 - 已完成的 task 是否要重做?
@@ -122,7 +125,7 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 
 跟用户确认每条变化,用 Edit 工具更新 `tasks.md`。
 
-## Step 8 — Summary
+## Step 8 — 总结
 
 ```markdown
 ## ✅ Spec revision complete
@@ -134,7 +137,8 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 - `docs/specs/<NNN>-<slug>/spec.md` — §<N> + ## 修订记录(+1 条)
 - `docs/specs/<NNN>-<slug>/plan.md` — Prior decisions / §1 / §2(按需)
 - `docs/specs/<NNN>-<slug>/tasks.md` — (若任务变化)
-- `<module>/CLAUDE.md` — (若 §5.5 触发反常)
+- `<module>/AGENTS.md`(+ `<module>/CLAUDE.md` alias)— (若 §5.5 触发反常)
+- `.claude/rules/<topic>.md` — (若 §5.5 触发 framework / topic 级 codify)
 
 ### 📋 下一步
 1. `git diff` 看一遍所有改动

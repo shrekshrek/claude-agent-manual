@@ -187,11 +187,6 @@ sub-agent 返回结构化报告(detected scale / tier breakdown / frameworks / m
 3. **用户答 yes / edit 后** → 用 Edit 工具替换 AGENTS.md 对应节
 4. **答 no** → 跳过,继续 Step 4
 
-**为什么 sub-agent 而不是 inline bash**:
-- codebase 扫描涉及 find / grep / 读多个 manifest + 整理报告,**独立 context** 避免污染 project-personalize 主会话
-- 跟 v1 `codebase-explorer` 哲学一致(独立 scan agent)
-- sub-agent 有 read-only scope 保证,不会误写文件
-
 **不做**(避免过度工程,在 codebase-explorer 内已规约):
 - 完整依赖图(networkx 之类)
 - 导入分析(AST 解析)
@@ -234,7 +229,5 @@ sub-agent 返回结构化报告(detected scale / tier breakdown / frameworks / m
 
 ## Notes
 
-- **跟 `/project-init` 区别**:`/project-init` 在**空目录**起 v2 baseline; `/project-personalize` 在**已有 v2 baseline 的目录**做 personalize / retrofit。**两者不互替**。
-- **跟 v1 `tech-researcher / codebase-explorer` 关系**:Path C 用 Task tool dispatch [`codebase-explorer`](../../agents/codebase-explorer.md) sub-agent(吸收 v1 思路,独立 context 扫码)。
-- **Claude Code-native**:本 skill 用 Task tool dispatch sub-agent,**不再**追求 pure SKILL.md / 跨工具兼容(v2.3+ floor 收紧到 Claude Code only,见 [`feedback_tool_support_floor`](../../../memory/feedback_tool_support_floor.md))。
-- **goal-driven**:本 skill 服务 [§0.1 命题 3 Drift](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#01-这本手册解决什么) —— 让 scaffold-cloned / 既有项目跟 v2 中庸方案对齐,避免 default 值漂移和 tier-level 不一致。
+- **跟 `/project-init` 区别**:`/project-init` 在**空目录**起 v2 baseline;`/project-personalize` 在**已有 v2 baseline 的目录**做 personalize / retrofit。**两者不互替**。
+- **方法论本体**:[`docs/workflow.md §1 P0`](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#1-p0project-setup项目第一天) —— 不装 plugin 也能纯手工跑 P0 personalize。

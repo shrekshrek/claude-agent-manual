@@ -97,8 +97,6 @@ ls -la       # 此时 cwd 已是 target
 - 默认值基于:**(a) 本会话已答的 Q&A 答案** + **(b) 该栈的社群通用 default**;**不基于** target 的父级 / 兄弟级项目偏好
 - 一旦发现自己想说 "跟 ... 一致"(无论是 monorepo 兄弟项目、lab 测试场、父仓库 reference 实现)→ **改用栈通用描述**(如 "Python async 主流"、"轻量 sync 框架"、"Vue 3 生态契合最深"等)
 
-**为什么这条规则存在**:用户跑 `/project-init` 的子目录可能是 monorepo / dotfiles 仓 / 测试 lab 内,Claude 默认会读父级 CLAUDE.md。父级偏好**对本新项目没有约束力**——新项目应该独立选型,不该自动继承。若用户真要继承,他们会跑 `/project-personalize`(那才是 scaffold-cloned / retrofit 工具)。
-
 ### Q&A 引导原则(委托 tech-researcher sub-agent)
 
 用户答 "不确定" / "帮我选" / "推荐一个" 时,**dispatch [`tech-researcher`](../../agents/tech-researcher.md) sub-agent** 做研究并返回结构化报告:
@@ -337,14 +335,18 @@ For each tier in [Q&A 轮 1.5 tier list]:
 
 不确定时问用户:"这个 tier 主要是后台服务,还是有用户界面?"
 
+**Q&A 规则(适用所有 tier 类别)**:
+- ✅ **Required**:必问。产出文件每条 project-specific 断言必 trace 到这些答案
+- ⚪️ **Optional**:可省;若省,生成文件**只能用 stack default 或留 TODO**,**禁** agent 单方面写决策塞进 AGENTS.md
+
 #### Service-style tier mini-Q&A
 
-✅ **Required(必问 —— 产出文件每条 project-specific 断言必 trace 到这些答案)**:
+✅ Required:
 1. 框架?(FastAPI / Django / Flask / Express / Spring Boot / Gin / Rocket / 其他)
 2. ORM?(SQLAlchemy 2.0 / 1.x / Django ORM / Prisma / TypeORM / 不用)
 3. 数据库?(PostgreSQL / MySQL / SQLite / MongoDB / etc.)
 
-⚪️ **Optional(可省;若省,生成文件**只能用 stack default 或留 TODO**,**禁** agent 单方面写决策塞进 AGENTS.md)**:
+⚪️ Optional:
 4. 任务队列?(Celery / RQ / BullMQ / Sidekiq / 不用 ── 若 tier 本身就是 worker,在此问 broker)
 5. Migration 工具?(Alembic / Atlas / sqlx-cli / 框架自带 / 纯 SQL)
 6. 主要库?(Pydantic / Redis client / Kafka client / 等,列 3-5 个)
@@ -354,13 +356,13 @@ For each tier in [Q&A 轮 1.5 tier list]:
 
 #### UI-style tier mini-Q&A
 
-✅ **Required(必问 —— 产出文件每条 project-specific 断言必 trace 到这些答案)**:
+✅ Required:
 1. 框架?(Vue/Nuxt / React/Next / Svelte/SvelteKit / Solid / Astro / React Native / Flutter / 其他)
 2. UI 库?(Nuxt UI / shadcn / MUI / Element Plus / Ant Design / Tailwind only / 自造)
 3. State 管理?(Pinia / Vuex / Redux Toolkit / Zustand / Jotai / 不用)
 4. 渲染模式 / 平台目标?(SSR / SSG / SPA / hybrid / iOS+Android / etc.)
 
-⚪️ **Optional(可省;若省,生成文件**只能用 stack default 或留 TODO**,**禁** agent 单方面写决策塞进 AGENTS.md)**:
+⚪️ Optional:
 5. 样式方案?(Tailwind / UnoCSS / CSS Modules / styled-components / scoped CSS only)
 6. 组件测试框架?(Vitest + @vue/test-utils / Jest + RTL / 其他)
 7. E2E 框架?(Playwright / Cypress / 不用)
@@ -476,7 +478,7 @@ wc -l AGENTS.md $(find . -maxdepth 2 -name 'AGENTS.md' -not -path './AGENTS.md' 
 ### 📋 下一步
 
 1. `git init && git add . && git commit -m "P0: initial project setup"`
-2. **扫一遍 `docs/gotchas.md`** —— 10 条工程坑,P0 前必读
+2. **扫一遍 `docs/gotchas.md`** —— 10 条工程坑,第一个 feature 实施前必读
 3. 开始第一个 feature:
    ```
    /project-workflow:feature-init <your-first-feature-slug>
@@ -493,7 +495,7 @@ wc -l AGENTS.md $(find . -maxdepth 2 -name 'AGENTS.md' -not -path './AGENTS.md' 
 | 错误 | 应对 |
 |---|---|
 | `git clone` 失败(无网络 / 防火墙) | 告诉用户手工 fallback(见 Step 3) |
-| 当前目录非空且有冲突文件 | 询问 overwrite / augment / abort(Step 1) |
+| 当前目录非空且有冲突文件 | 按 Step 1 处理:已有 AGENTS.md → 重定向到 /project-personalize;已有 .claude/ 但无 AGENTS.md → 询问 (a) 全部覆盖 / (b) 中止 |
 | 用户在 project-workflow 仓库本身跑 | Step 1 警告 + 询问是否继续 |
 | Q&A 中用户中途退出 | 保存已答的部分,告诉用户跑 project-init 时已答的不再问 |
 | Fullstack 但某 tier 不存在(如纯 backend + DB migrations) | 询问用户是否实际是 (b) Web Backend |

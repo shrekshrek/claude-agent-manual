@@ -1,4 +1,5 @@
 ---
+description: FastAPI + SQLAlchemy 2.0 + Pydantic v2 detailed rules (path-scoped to backend Python)
 globs: backend/**/*.py
 ---
 

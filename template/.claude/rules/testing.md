@@ -1,4 +1,5 @@
 ---
+description: {{TESTING_DESCRIPTION}}
 globs: {{TESTING_GLOBS}}
 ---
 

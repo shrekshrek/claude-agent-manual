@@ -319,6 +319,33 @@ TESTING_GLOBS    = "server/tests/**/*.py, web/**/*.test.{ts,vue}"
 
 只填 Q&A 信息能推出来的;栈没特殊点就只填 1-2 个,把 `- {{STYLE_HIGHLIGHT_3}}` 那行删掉。
 
+### 5.6 `@imports` 启用判断(强制)
+
+template 根 `AGENTS.md` 末尾默认有 3 行注释:
+
+```
+<!-- @.claude/rules/code-style.md -->
+<!-- @.claude/rules/testing.md -->
+<!-- @.claude/rules/security.md -->
+```
+
+**全注释**——默认所有 path-scoped rule 靠 frontmatter `globs:` 自动加载,**但 always-on 规则不走 globs 机制**,需要取消 `@import` 注释才进 context。
+
+**逐文件判断 + 落盘**:
+
+| 文件 | frontmatter 状态 | 加载方式 | 根 AGENTS.md `@import` 注释 |
+|---|---|---|---|
+| `code-style.md` | 有 `globs:`(P0 后) | path-scoped(Read 匹配文件触发) | **保留注释**(globs 已处理) |
+| `testing.md` | 有 `globs:`(P0 后) | path-scoped | **保留注释** |
+| `security.md` | **无 `globs:`**(模板 default 全量加载) | 需 `@import` 才进 context | **取消注释** —— 改成 `@.claude/rules/security.md` |
+| `<framework>.md`(若用户后续从 `_examples/` 启用 starter)| 有 `globs:` | path-scoped | 保留注释 |
+
+→ agent 落盘根 `AGENTS.md` 时,**自动取消** `<!-- @.claude/rules/security.md -->` 的注释(变成 `@.claude/rules/security.md`),保留其他两行注释。
+
+**用户已 customize 的兜底**:若用户后期手工给 security.md 加了 `globs:`(明确要 path-scoped),skill 重跑时应识别并跳过取消注释步骤。本次 P0 first-run 不存在此 case,直接走默认逻辑。
+
+**与 F-18 known limitation 的关系**:F-18(Write 不触发 path-scoped rules,Anthropic closed as not planned)对**有 globs** 的规则有影响。本 Step 确保 security.md 这种**全局规则**走 `@imports` 兜底,**绕开** F-18 影响 —— security 规则适用任何代码,不应依赖 globs 触发。
+
 ## Step 6 — Fullstack:per-tier AGENTS.md + CLAUDE.md
 
 **仅当 Q&A 轮 1 答 (a) Fullstack 时执行**。其他项目类型跳过本 Step。
@@ -464,6 +491,110 @@ wc -l AGENTS.md $(find . -maxdepth 2 -name 'AGENTS.md' -not -path './AGENTS.md' 
 | > 200 | 🚫 警告 —— Anthropic best-practices 显示 > 200 依从度下降 | 建议:长尾搬 `.claude/rules/*.md`(用 `@imports` 在末尾按需拉)/ 或拆到 `docs/architecture.md` / ADR;tier-level AGENTS.md 同样原则,各 < 100 |
 
 **不允许** agent 跳过本步 / 凭印象描述 / 用"大约"表达。每个 AGENTS.md 都必须有具体行数 + 分类标签。
+
+### Self-verify(强制,在行数检查之后)
+
+agent 跑下列 8 项 verify,**任一项不过强制回头改 OR 标 deferred**,不能 self-report done。
+对应 [workflow §1.11](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#111-校验) P0 校验 4 项 + 接 F-17 / F-19 / F-21 silent fail 系列防御。
+
+#### 8.5a 静态 verify(必须当场过)
+
+##### V1. Placeholder 残留扫描
+
+```bash
+grep -rn '{{' --include='*.md' --include='*.js' --include='*.json' .
+```
+
+唯一允许命中:`README.md` 里 instruction 文本 `把 {{PLACEHOLDER}} 替换为你的项目信息`(literal quote)。
+其他 `{{...}}` 命中 → 必须返回 Step 5 / 6 修。
+
+##### V2. frontmatter 完整性
+
+```bash
+head -10 .claude/rules/*.md
+```
+
+每个 path-scoped rule(`code-style.md` / `testing.md` / 复制出的 framework starter)frontmatter 必须含:
+- `description:` 一行(< 80 字符)
+- `globs:` comma-separated 字符串
+
+`security.md`(always-on)同样应含 `description:`(无 `globs:` 行)。缺 → 据规则用途补一句话。
+
+##### V3. globs 跟实际目录结构对齐
+
+提取每个 path-scoped rule 的 globs,验证 path prefix 真存在:
+
+```bash
+# 例:globs: backend/**/*.py, frontend/**/*.{ts,vue}
+# 验证 backend/ + frontend/ 都存在(P0 时通常仅含 AGENTS.md / CLAUDE.md 也算)
+ls backend/ frontend/ 2>&1 | grep -v "No such" || echo "PATH MISSING"
+```
+
+若整段 glob 在 path 不存在 → 路径错(典型场景:tier 命名后期改了但 globs 没同步)。
+
+##### V4. 命令推导前后一致
+
+- 根 AGENTS.md 引用 `(见各 <tier>/AGENTS.md)` → 对应 tier-level AGENTS.md `Commands` 节存在且有命令字符串(`cd <tier> && ...`)
+- `<tier>/AGENTS.md` 引用的命令 verb(`uv run pytest` / `pnpm test` 等)跟 Q&A 答的 pkg-mgr / test framework 一致(`uv` 答案对应 `uv run X`;`pnpm` 答案对应 `pnpm X`)
+
+#### 8.5b 运行时 verify(workflow §1.11 4 项 — 此刻跑不了的标 deferred)
+
+##### V5. AGENTS.md 加载验证(对应 workflow §1.11 #1)
+
+执行 `/memory`(Claude Code)→ 输出列表应含本仓库 `AGENTS.md` + `CLAUDE.md`(若 fullstack 还应含各 `<tier>/AGENTS.md`)。
+
+> 此项**当场必须过** —— skill 跑时已在 Claude Code 环境内,`/memory` 立即可用。若 `/memory` 列表里看不到 → 文件位置 / 嵌套层次错(参考 workflow §1.4)。
+
+##### V6. AGENTS.md 写的命令真能跑(对应 workflow §1.11 #2)
+
+挑 1-2 个 P0 此刻就能跑的命令试一次:
+- `docker compose config`(验证 docker-compose.yml 语法,若 B 层用户已 init)
+- 真命令(`pnpm test` / `uv run pytest`)**通常跑不了**——因 B 层 code scaffold 还没起
+
+→ 本项 P0 时**标 deferred**:写进 Step 8 输出"还需手工 review"节,提示用户:
+> `/feature-init` 第一次实施前,先跑 `cd <tier> && <pkg-mgr> --version` 确认环境就绪;若命令报"command not found" → AGENTS.md 命令推导错。
+
+##### V7. Hook 真触发(对应 workflow §1.11 #3)
+
+P0 此刻 `.claude/hooks/lint-on-edit.js` 已就位,但需要**真改一个文件**才能触。
+
+trip-wire 验法(可选当场跑,通常 deferred):
+1. 在受 globs 覆盖路径下建 probe 文件(如 `<tier>/.lint-probe.py`)
+2. 用 Edit 工具改它
+3. PostToolUse hook 应触发,stderr 应看到 Ruff / ESLint 跑(可能因 `.venv` / `node_modules` 还没就位 → ENOENT,**这本身也是预期信号**,说明 hook 路径对了)
+4. 跑完用 `find <tier> -name '.lint-probe.py' -delete` 清理
+
+→ 若 hook 完全无反应(连 ENOENT 都没)→ `.claude/settings.json` matcher 或 command 路径错。
+
+> 此项 P0 时**通常 deferred**(因 lint binary 还没装),记 Step 8 输出告诉用户 `pnpm install` / `uv sync` 完成首日跑一次 trip-wire 验。
+
+##### V8. AI 读 AGENTS.md 测试(对应 workflow §1.11 #4)
+
+skill 末尾在 main session 自问:
+> "基于这个项目的 AGENTS.md + 各 tier AGENTS.md,**1 句话总结**这个项目是什么、用什么栈、怎么起服务、怎么跑测试。"
+
+返回的总结要素核对:
+- 项目类型(fullstack / backend-only / etc.)正确 ✓
+- 主栈名(FastAPI / Vue 3 / 等)正确 ✓
+- 起服务命令正确 ✓
+- 跑测试命令正确 ✓
+
+任一要素错 / 漏 → AGENTS.md **写得不够清晰**,回去补;不是"AI 不够聪明"的锅。
+
+#### verify 报告格式(贴进 Step 8 总结)
+
+| Verify | 状态 | 备注 |
+|---|---|---|
+| V1 placeholder 残留 | ✅ / ❌ | (唯一允许命中 README.md instruction 文本) |
+| V2 frontmatter | ✅ / ❌ | description + globs 都在(security.md 无 globs) |
+| V3 globs 路径 | ✅ / ❌ | 匹配的 path 真存在 |
+| V4 命令前后一致 | ✅ / ❌ | 根级指针 / tier 级实命令对齐 |
+| V5 `/memory` 加载 | ✅ / ❌ | 此刻必须过 |
+| V6 命令真能跑 | ✅ / 🟡 deferred | 标 `/feature-init` 前必查 |
+| V7 hook 触发 | ✅ / 🟡 deferred | 标 `pnpm install` / `uv sync` 后跑 trip-wire |
+| V8 AI 读 AGENTS.md 总结 | ✅ / ❌ | 1 句话核对要素 |
+
+**任一 V1-V5 / V8 标 ❌** → skill 不能 self-report done,回头改后重跑 verify 表。V6 / V7 deferred 不阻断 P0 完成。
 
 ### ⚠️ Aspirational refs(本 P0 不创建)
 

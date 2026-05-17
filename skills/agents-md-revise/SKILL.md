@@ -121,6 +121,23 @@ git log --since="30 days ago" --pretty=format:"%s" 2>/dev/null | head -30
 
 收齐答案。
 
+## Step 4.5 — 决策完整性 audit(强制,workflow §1.12 Generation Discipline)
+
+应用 patches 之前,dispatch [`decision-completeness-auditor`](../../agents/decision-completeness-auditor.md)(input/output 详见 agent doc)审待打 patch 内容:
+
+- `files_to_audit`: 每个待 patch 文件的**应用后 inline content**(用 Step 4 用户答 y 的 patches 模拟 apply,**不实际改盘**)
+- `qa_answers`: Step 3 drift 报告里的"为什么改"原因 + Step 4 用户 y/n 决定 + Step 2 扫到的项目客观状态(commands / deps / dir structure / etc.)dot-path keyed
+- `language_conventions`: null
+- `plugin_hardcoded_defaults`: 跟项目原 AGENTS.md baseline 一致(项目自身约定就是 hardcode);此外加 workflow §1.10 plugin policy(branch naming / GitHub / 等,若项目沿用)
+- **Retrofit 模式**:既有 AGENTS.md 里的特定字符串决策来自历史,agent 标 `(existing baseline)` 视同 ✅;**只审 patch 引入的新决策**
+
+**典型 plant**(audit 应 catch):
+- Patch 引入新模块名 / 新 broker / 新路径 — 但 Step 3 drift 报告没说为什么改 → 🚫
+- Patch 修了命令但版本数字凭空(`pytest 8.x` 当前装的可能是 7.x)→ 🚫(应 trace 回 Step 2 扫到的实际版本)
+- 跨文件 patch 引用对方未存在的新概念 → 🚫
+
+**Block 规则**:🚫 > 0 不进 Step 5,要么(a) 改 patch 写法补 trace / deferred,要么(b) 把对应 drift 项答 (n) 跳过本轮;⚠️ 不 block,Step 5 commit msg 草稿同时附 ⚠️ 摘要。
+
 ## Step 5 — 应用 patches + commit 草稿
 
 用 Edit 工具 atomic 改文件(每条 y 的 drift 一次 Edit):

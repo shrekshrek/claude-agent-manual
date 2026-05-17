@@ -183,7 +183,19 @@ sub-agent 返回结构化报告(detected scale / tier breakdown / frameworks / m
 1. **完整展示给用户**(不重写,sub-agent 报告本身就是 deliverable)
 2. **问用户**:"要把 sub-agent 的 `Recommended Project Structure` 写入 AGENTS.md `## Project Structure` 节吗?(yes / no / edit 后写入)"
 3. **用户答 yes / edit 后** → 用 Edit 工具替换 AGENTS.md 对应节
-4. **答 no** → 跳过,继续 Step 5
+4. **答 no** → 跳过,继续 Step 4.D
+
+## Step 4.D — 决策完整性 audit(强制,workflow §1.12 Generation Discipline)
+
+落盘前 dispatch [`decision-completeness-auditor`](../../agents/decision-completeness-auditor.md)(input/output 详见 agent doc)审 Step 4.A/B/C 累积修改:
+
+- `files_to_audit`: 本次 personalize 涉及的所有文件(根 `AGENTS.md` + tier-level + `.claude/rules/*`)inline content
+- `qa_answers`: Step 2 用户选的 paths + Step 4.A scaffold 替换答案 + Step 4.B tier 答案 + Step 4.C 接受/拒绝 Project Structure 决定
+- `language_conventions`: null
+- `plugin_hardcoded_defaults`: per [workflow §1.10](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#110-qa-设计project-setup-skill-问什么) 表,同 `/project-init` §4.5b 列表(branch naming / GitHub / conventional commits / coverage / 模块组织 / deploy deferred)
+- **Retrofit 模式标注**:`files_to_audit` 中已存在代码的决策(从 codebase 扫出的 framework / tier 命名)→ agent 标 `(retrofit: from existing code)`,视同 ✅
+
+**Block 规则**:🚫 > 0 不进 Step 5,按 agent 修正选项处理(deferred / 追问 / template-default 标注)后**重跑本 step**;⚠️ 不 block,Step 6 Summary 同时展示给用户。
 
 ## Step 5 — Self-verify(强制,简化版对应 [workflow §1.11](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#111-校验))
 

@@ -261,10 +261,28 @@ Step 6 末尾收到用户答 (y) / (n) / (s)。若 (n) → exit。若 (y) 或 (s
 
 写进 plan.md §1.1 表格。确认。
 
+### Step 7.6b — 决策完整性 audit(强制,workflow §1.12 Generation Discipline)
+
+报告之前,dispatch [`decision-completeness-auditor`](../../agents/decision-completeness-auditor.md)(input/output 详见 agent doc)审 Step 7.1-7.6 累积填写:
+
+- `files_to_audit`: `docs/specs/<NNN>-<slug>/{spec,plan}.md`(tasks.md 多为引用 spec/plan,通常不审 ── 除非 Step 7 也填了 tasks.md)
+- `qa_answers`: Step 7.1-7.6 所有 Q&A 答案(Outcomes 场景 / API endpoints / 字段 / Constraints / Verification 场景 / Sibling Alignment / etc.),dot-path keyed
+- `language_conventions`: null
+- `plugin_hardcoded_defaults`: 最小集 — feature-level 主要审 plant **API path / 字段名 / 错误码 / library 选择**;`{value: "NNN-<slug>", source: "workflow.md §3 spec-driven", rationale: "feature 编号 + slug 约定"}` 一条即可
+
+**典型 plant**(audit 应 catch):
+- API endpoint path 凭空(`/api/v1/foo` Q&A 没具体路径) → 🚫
+- 错误码具体值(401 / 404 / 422 Q&A 没问) → 🚫(若 .claude/rules/<framework>.md 规定则 ✅)
+- 字段名 / entity 名超出 Q&A → 🚫
+- HTTP method 推测(Q&A 答 "REST" 但具体 method / endpoint plant 出来) → 🚫
+
+**Block 规则**:🚫 > 0 不进 Step 7.7,按 agent 修正选项处理(回 Q&A 追问 / deferred / 删过具体处)后**重跑本 step**;⚠️ 不 block,Step 7.7 同时展示。
+
 ### Step 7.7 — 报告 + 提示下一步
 
 ```
 ✅ spec §1 + plan §2 + spec §3 + spec §2 Exclude + spec §4 + plan §1.1 已 Q&A 填完。
+✅ 决策完整性 audit 通过(0 🚫;N ⚠️ 已展示)。
 
 下一步:跑 `/project-workflow:spec-quality-check` 验最后那 5%(机械检 + 主观二审)。
 

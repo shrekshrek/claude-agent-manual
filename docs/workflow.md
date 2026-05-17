@@ -389,6 +389,20 @@ AGENTS.md(全局加载,精简):
 
 **子级覆盖父级**:同名约束以更深层为准(模块级 boundaries > tier 级 boundaries > 项目级 boundaries)。
 
+#### 双文件方案(命名约定)
+
+> 本手册术语:每层用 `AGENTS.md`(canonical 内容)+ `CLAUDE.md`(1 行 `@AGENTS.md` alias)的**双文件 pattern**。项目根 / tier 级 / 模块级(反常时)全部一致。
+
+折中两个极端:
+
+| 选项 | 怎么做 | 问题 |
+|---|---|---|
+| 纯 `CLAUDE.md`(v1 老风格) | 规则只放 CLAUDE.md | Claude Code 专属,Codex / Cursor / OpenCode 不读 → **不跨工具** |
+| 纯 `AGENTS.md`(纯跨工具) | 规则只放 AGENTS.md,无 CLAUDE.md | Claude Code 子目录靠 CLAUDE.md 触发自动加载,缺它 → **tier / 模块级规则进不了 context** |
+| **双文件**(本手册采用) | AGENTS.md 是 canonical;CLAUDE.md 1 行 `@AGENTS.md` 把内容 inline 进来 | 跨工具读 AGENTS.md ✅;Claude Code 加载 CLAUDE.md → @import → AGENTS.md 内容进 context ✅ |
+
+各处引用此节锚点("跟双文件方案对齐")避免重复定义。**注意**:跟 §1.3 反模式"AGENTS.md + CLAUDE.md 双文件独立维护"对照 —— 那个反模式是**两份都填内容 + 互相漂移**;双文件方案是**AGENTS.md 填,CLAUDE.md 仅 1 行 alias**,**没有漂移空间**。
+
 ### 1.5 `@imports` 语法(官方支持)
 
 > 何时选 `@imports` vs `.claude/rules/` globs?决策口诀见 [§1.3](#13-a-类约定的内容标准agentsmd--claude-rules)。本节只讲 `@imports` 机制本身。
@@ -547,23 +561,48 @@ docs/adr/
 
 ### 1.10 Q&A 设计(Project Setup skill 问什么)
 
-> **形态说明**:Project Setup 是 **skill,不是独立 CLI**。前提是用户已经:(1) 创建项目目录、(2) 打开 AI 工具(Claude Code / Codex / OpenCode)。在 AI session 内调用 `/setup`(或同类),skill 用 `AskUserQuestion` 类工具问 5-8 个问题,基于答案渲染 starter kit。CLI 形态仅作可选边缘场景(CI 自动建项目)。
+> **形态说明**:Project Setup 是 **skill,不是独立 CLI**。前提是用户已经:(1) 创建项目目录、(2) 打开 AI 工具(Claude Code 主力)。在 AI session 内调用 `/project-init`(或同类),skill 用 `AskUserQuestion` 工具问 2-4 轮问题,基于答案渲染 starter kit。CLI 形态仅作可选边缘场景(CI 自动建项目)。
 
-Project Setup skill 问 5-8 个关键问题(每个 1 句答),涵盖:
+#### 实际问什么(对齐 plugin `/project-init` 实现)
 
-1. **项目名 + 主栈** ← 影响所有后续文件
-2. **起服务/测试/lint 的命令** ← 进 AGENTS.md Commands
-3. **目录组织模式** ← 进 AGENTS.md Project Structure
-4. **代码风格** ← 给一段现有代码或问偏好
-5. **测试覆盖率门槛** ← 进 .claude/rules/testing.md
-6. **Boundaries 三档**(✅ Always / ⚠️ Ask first / 🚫 Never)
-7. **Git workflow**(分支命名、commit 规范、平台:GitHub / GitLab)
-8. **特殊约束**(性能/安全/合规)
+**轮 1 — 项目类型** ← 决定 tier 结构 + 后续 Q&A 走向
+- (a) Fullstack / (b) Web Backend / (c) Web Frontend / (d) CLI·Library / (e) Mobile / (f) 其他
+- 若 (a) → 追加 1.5 tier 命名(default: `backend` + `frontend`)
 
-**关键纪律**:
-- 每题必须 1 句话能答(否则就是问题设计太大)
-- 二选一/填空 > 开放式
-- 答案直接渲染到模板,**用户审完 diff 才写入**
+**轮 2 — 主语言 + 跨 tier 共性** ← 影响 globs / 命令推导
+- 主语言?(若多语言列 2-3 个)
+- (Fullstack only)跨 tier 共性 = single-lang(共享)还是 mixed-lang(per-tier)?
+  - single-lang → 本轮追加问 test framework / lint / pkg-mgr(全 tier 共享)
+  - mixed-lang → 挪到 Step 5.1 mini-Q&A 各 tier 单独问
+
+**Step 5.1 mini-Q&A(仅 Fullstack,每 tier 一轮)** ← 填 tier-level AGENTS.md
+- **Service-style** tier(backend / api / worker / etc.)required:框架 / ORM / 数据库 / [mixed-lang: test/lint/pkg-mgr];optional:任务队列 / Migration 工具
+- **UI-style** tier(frontend / web / mobile / etc.)required:框架 / UI 库 / state 管理 / [Nuxt/Next: 渲染模式] / [mixed-lang: test/lint/pkg-mgr];optional:样式方案 / E2E 框架
+
+题量:单 tier ~5 题 / single-lang fullstack ~8 题 / mixed-lang fullstack ~15-17 题。
+
+#### 不问什么(故意省的题,每项都有原则)
+
+| 项 | 怎么处理 | 为什么不问 |
+|---|---|---|
+| 项目名 | 不收集 | A 层不存项目名(那是 B 层 `package.json` / `pyproject.toml` 的事,见 §1.2) |
+| 起服务 / 测试 / lint 命令 | framework + pkg-mgr 推导 | 直接问 = 冗余;framework + pkg-mgr 足够推 |
+| 部署命令 `{{DEPLOY_COMMAND}}` | 固定填 deferred 占位 | B 层未起,P0 拍脑袋写 = aspirational(违 §0.5 信念 1) |
+| 目录组织模式 | default "按 feature/domain"(见 §2.5) | 反模式("按 type"散布)社区共识,无信息增量 |
+| 代码风格 / STYLE_HIGHLIGHT | 据栈推 1-3 条真特殊点 | 通用 default 不算特殊 |
+| 测试覆盖率门槛 | default 80 | 社区惯例,99% 接受 |
+| Boundaries 三档 | template default(改 API / 加依赖 / 改迁移 / 改权限) | default 足够 baseline;**P0 后用户 review 节按项目特点补 ⚠️ Ask first 项** |
+| 分支命名 | hardcode `feat/<NNN>-<slug>` + `fix/<scope>` | 跟 `/feature-init` 工具行为对齐;问了工具也不响应 = 假定制 |
+| Git 平台 | hardcode GitHub(PR / `.github/`) | 系统其他地方都默认 GitHub 词汇,问 GitLab 只改一行文案 = 假定制 |
+| 特殊约束(性能 / 合规 / 安全) | 不问 | P0 无基线数据,拍脑袋写 = aspirational;真需要的项目 P0 后写 ADR + 加节(见 §1.8) |
+
+> 这些**省掉的**都对应一个反 aspirational 信念:**让 AI 凭训练即兴生成"看起来对"的内容,比留空 / 用 default 更糟**(详 §0.5 信念 1)。问了也拿不到具体答案 → 用 default 或 deferred 占位,**不让 LLM 编**。
+
+#### 关键纪律
+
+- 每题 1 句话能答;答不出 → dispatch [`tech-researcher`](../agents/tech-researcher.md) sub-agent 调研,返 2-3 候选 + 推荐,用户确认再回填
+- 二选一 / 填空 > 开放式
+- 答案累积在 agent 内存,**Preview Gate 强制用户审完才落盘**(根 AGENTS.md + `.claude/rules/*` 一组 preview;tier-level AGENTS.md 单 tier 一组 preview)
 
 ### 1.11 校验
 
@@ -614,7 +653,7 @@ Project Setup skill 问 5-8 个关键问题(每个 1 句答),涵盖:
 
 **差量原则**:模块 AGENTS.md 只写**跟父级(tier 级或项目级)默认的差异**,绝不重复父级已经说过的事。
 
-**文件命名**:写 `<module>/AGENTS.md`(主)+ `<module>/CLAUDE.md`(1 行 `@AGENTS.md` alias),跟项目 / tier 级中庸方案一致。
+**文件命名**:写 `<module>/AGENTS.md`(主)+ `<module>/CLAUDE.md`(1 行 `@AGENTS.md` alias),跟项目 / tier 级**双文件方案**一致(见 [§1.4](#14-agentsmd--claudemd-嵌套层次子级覆盖父级))。
 
 **父级是什么**(取决于项目结构):
 - 多 tier 项目:模块的父级是 tier(如 `backend/AGENTS.md`)

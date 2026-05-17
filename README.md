@@ -48,7 +48,7 @@ Then in any project:
 | Skill | Version | What it does |
 |---|---|---|
 | `/project-workflow:project-init` | v2.3.0 | P0 greenfield initialization — Q&A walks through stack and conventions, generates 10+ files (AGENTS.md / .claude/ / docs/specs/_template/ / etc.). "不确定" answers trigger `tech-researcher` sub-agent for parallel research. Auto-handles fullstack tier structure. |
-| `/project-workflow:project-personalize` | v2.3.0 | P0 scaffold-cloned / retrofit — adapts existing v2-shaped project to user's values. Replaces scaffold defaults, completes tier-level AGENTS.md (中庸 scheme), dispatches `codebase-explorer` sub-agent to scan existing structure. |
+| `/project-workflow:project-personalize` | v2.3.0 | P0 scaffold-cloned / retrofit — adapts existing v2-shaped project to user's values. Replaces scaffold defaults, completes tier-level AGENTS.md (双文件 scheme), dispatches `codebase-explorer` sub-agent to scan existing structure. |
 | `/project-workflow:feature-init` | v2.3.2 | Start a new feature spec — creates `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` with module-setup auto-detection (per workflow §2). **Step 7 (optional Q&A fill)** walks through §3-5 TODOs with §3.7 quality criteria inline; dispatches `tech-researcher` for stack-unsure choices. |
 | `/project-workflow:spec-quality-check` | v2.3.2 | **Pre-implementation gate** — verify spec/plan/tasks quality per spec-driven.md §3.7 7-q checklist. Mechanical checks + dispatches `spec-quality-reviewer` sub-agent for subjective items. |
 | `/project-workflow:spec-revise` | v2.3.2 | **Mid-implementation revision** — orchestrate spec/plan/module change SOP per workflow.md §3.5 / §2.6 (ADR + spec.md 修订记录 + plan.md prior decisions + tasks.md rebalance). |
@@ -75,6 +75,7 @@ Then in any project:
 - [`docs/gotchas.md`](docs/gotchas.md) — ⭐ 10 engineering pitfalls (from real validation)
 - [`docs/spec-driven.md`](docs/spec-driven.md) — spec/plan/tasks pattern detail
 - [`docs/dev-deploy.md`](docs/dev-deploy.md) — local dev + sync deploy pattern
+- [`docs/manual-setup.md`](docs/manual-setup.md) — manual `cp -r template/. .` flow (no plugin)
 
 ## Migration from v1
 

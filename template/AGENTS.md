@@ -17,8 +17,7 @@ README.md                  快速上手 + 命令清单
 AGENTS.md                  本文件,项目级 AI 协作约定
 CLAUDE.md                  thin pointer: @AGENTS.md
 └── docs/
-    ├── specs/_template/   功能 spec 三文件模板
-    ├── specs/<NNN>-<slug>/ 实际功能 spec(每开发任务一个目录)
+    ├── specs/<NNN>-<slug>/ 实际功能 spec(每开发任务一个目录,由 /feature-init 创建)
     ├── adr/               架构决策记录
     └── (其他业务文档)
 ```
@@ -79,7 +78,7 @@ CLAUDE.md                  thin pointer: @AGENTS.md
 
 ## 工程坑清单(P0 必扫)
 
-P0 完成、第一次 `pnpm dev` 之前,务必扫一遍工程陷阱清单 `docs/gotchas.md`(从 [project-workflow v2 仓库](https://github.com/shrekshrek/project-workflow) 复制进项目,或直接读在线版)。10 条覆盖 Docker / pnpm script 命名 / Pydantic extras / 测试基建 / asyncpg 跨 loop 等,**全是 AI 第一次搭项目会踩**。
+P0 完成、第一次起服务之前,务必扫一遍工程陷阱清单 [`docs/gotchas.md`](docs/gotchas.md)。10 条覆盖 Docker / 包管理 / 测试基建 / async 跨 loop 等,**全是 AI 第一次搭项目会踩**。
 
 ## 代码修改原则(KISS + 最小变更)
 

@@ -47,39 +47,21 @@ P0 时根据栈填齐 placeholder。
 - {{TIER_STYLE_HIGHLIGHT_2}}(如 "Pydantic v2 strict mode,参考 `docs/gotchas.md` #3")
 - {{TIER_STYLE_HIGHLIGHT_3}}(如 "SQLAlchemy 2.0 风格:用 `select()`,禁 `Query.filter`")
 
-## 框架特殊约定
+## 框架特殊约定(critical only,详规则 split 到 `.claude/rules/`)
 
-### {{TIER_FRAMEWORK}}
+### {{TIER_FRAMEWORK}}(critical rules,≤ 5 条)
 
-{{TIER_FRAMEWORK_RULES}}
+{{TIER_FRAMEWORK_CRITICAL_RULES}}
 
-<!-- 例(FastAPI):
-  - 路由分组用 APIRouter,顶层 app/main.py include
-  - 错误用 HTTPException + 统一 exception handler
-  - Dependency injection 走 Depends,不绕过
-  - 异步函数返回值 Pydantic schema(不直接返 ORM model)
--->
+**详规则**:见 `.claude/rules/<framework>.md`(P0 时若 `_examples/<framework>.example.md` 存在,skill 已自动 `cp` + 适配 globs)。
 
-### {{TIER_ORM}}(如适用)
+### {{TIER_ORM}}(critical rules,如适用,≤ 3 条)
 
-{{TIER_ORM_RULES}}
+{{TIER_ORM_CRITICAL_RULES}}
 
-<!-- 例(SQLAlchemy 2.0):
-  - 用 `select()` / `scalar()` / `scalars()`,不用 1.x `Query.filter`
-  - Session 走 DI,不 module-level globals
-  - Async session: AsyncSession 透传到 service 层
--->
+### {{TIER_QUEUE}}(critical rules,可选,≤ 3 条)
 
-### {{TIER_QUEUE}}(可选)
-
-{{TIER_QUEUE_RULES}}
-
-<!-- 例(Celery):
-  - 所有 task 必须**幂等**(重试不能产生副作用)
-  - Retry 策略:exponential backoff,max 5 retries
-  - Task 不直接调 ORM,走 service 层
-  - 长任务(> 30 秒)用 chord/group 拆分
--->
+{{TIER_QUEUE_CRITICAL_RULES}}
 
 ## Boundaries(本 tier 特有,继承根)
 

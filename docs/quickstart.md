@@ -54,7 +54,7 @@
 适用 clone 已有 v2 scaffold 后想替换具体值。提供 4 条 path(可多选):
 
 - **A** 替换 scaffold default 值(项目名 / DB 名 / etc.)
-- **B** 补齐 tier-level AGENTS.md(中庸方案)
+- **B** 补齐 tier-level AGENTS.md(双文件方案)
 - **C** 扫 codebase 推 `## Project Structure`(类似 v1 codebase-explorer)
 - **D** 啥都不补,直接进 `/feature-init`
 

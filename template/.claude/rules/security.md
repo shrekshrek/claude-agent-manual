@@ -1,6 +1,6 @@
 ---
 description: Security baseline (always-loaded, no globs — Never/Ask first/Always lists)
-# 安全规则全量加载,不加 globs frontmatter;需在根 AGENTS.md 末尾启用 @import 才进 context(见 SKILL.md Step 5.6 / workflow §1.5)
+# 安全规则全量加载,不加 globs frontmatter;需在根 AGENTS.md 末尾启用 @import 才进 context(见 workflow §1.5)
 ---
 
 # Security Rules

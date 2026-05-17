@@ -1,10 +1,12 @@
-# Project Starter Template
+# Manual Setup(无 plugin 接入)
 
-> **What this is**:project-workflow v2 blueprint 的 P0 starter kit —— **纯方法论模板**(AGENTS.md 骨架 / spec 三文件 / ADR / Issue·PR 模板 / hook 骨架)。给任何已有项目或新项目接入 AI 协作层。
+> 不装 Claude Code plugin,纯手工 `cp -r template/. .` 接入 v2 baseline 的指引。
 >
-> **What this is NOT**:不是工程脚手架,**不包含**:Dockerfile / docker-compose / package.json scripts / 后端模块结构 / 前端框架代码 等。
->
-> **想避免"AI 第一次搭项目踩的坑"**:看 [`docs/gotchas.md`](../docs/gotchas.md)(10 条,从真实搭建过程沉淀)。
+> **已装 plugin 的用户跑 `/project-workflow:project-init` 替代,本文不必读。**
+
+`template/` 内容:**纯方法论模板**(AGENTS.md 骨架 / spec 三文件 / ADR / hook 骨架),不是工程脚手架,**不**含 Dockerfile / docker-compose / package.json scripts / 后端模块结构 / 前端框架代码等。
+
+> 想避免"AI 第一次搭项目踩的坑":看 [`gotchas.md`](gotchas.md)(10 条,从真实搭建过程沉淀)。
 
 ## 怎么用
 
@@ -21,7 +23,7 @@ cp -r <path-to-template>/. .
 2. 编辑 `.claude/rules/*.md`,按你的栈调整规则
 3. 编辑 `.claude/hooks/lint-on-edit.js`,**取消注释**对应栈的 lint 命令(eslint / ruff / gofmt 等)
 4. 编辑 `.gitignore`,加你栈特定的 ignore 项(node_modules / __pycache__ 等)
-5. **(新项目)还要补工程化骨架** —— Dockerfile / docker-compose / 包管理 / 测试基建。参照 [`gotchas.md`](../docs/gotchas.md) 自己写
+5. **(新项目)还要补工程化骨架** —— Dockerfile / docker-compose / 包管理 / 测试基建。参照 [`gotchas.md`](gotchas.md) 自己写
 6. `git add` + 第一次 commit("setup: 接入 project-workflow v2 starter kit")
 
 ### 方式 B:选择性复制(按需接入)

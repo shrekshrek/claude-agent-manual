@@ -94,173 +94,38 @@ ls docs/specs/ | grep -E '^[0-9]{3}-' | sort -rn | head -1
 
 若 `(y)es`,把反常点写进 plan.md §1 模块影响范围的 "新模块反常约定" 子节,并在 tasks.md 加 task "建 `<module>/AGENTS.md`(差量于父级)+ `<module>/CLAUDE.md` 1 行 alias"。
 
-**反模式**:每个新模块都问 "要不要写 AGENTS.md?" —— 99% 答 no,反而稀释了反常判定本身。改成**默认 n,只在用户提到反常点时改 y**。
+**默认 n**:99% 新模块跟父级一致,不应每个都问。只在用户主动提到反常点时改 y。
 
-## Step 5 — 生成三个文件
+## Step 5 — 生成三个文件(从 plugin 模板 cp + Edit placeholder)
 
-新建目录 `docs/specs/<NNN>-<slug>/` 并写入:
+**Canonical 模板**:`$PLUGIN_ROOT/template/docs/specs/_template/{spec,plan,tasks}.md`(3 个文件,内容跟 [spec-driven.md §3.3](../../docs/spec-driven.md) 一致)。
 
-### `spec.md`(WHAT —— 评审通过后冻结;**canonical 4 节**,跟 [spec-driven.md §3.3](../../docs/spec-driven.md) 一致)
+**用户 override**:若用户项目本地有 `./docs/specs/_template/` 且含 `.user-customized` 哨兵 → 优先用本地版,跳过 plugin source。
 
-> ⚠️ Agent 写文件前必须把 `<TODAY>` 替换为今天日期(YYYY-MM-DD 格式)。
+```bash
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(ls -td ~/.claude/plugins/cache/project-workflow/project-workflow/*/ 2>/dev/null | head -1)}"
 
-```markdown
-# <NNN> <slug> — Spec
+# 优先本地 override,否则用 plugin canonical
+if [ -f "./docs/specs/_template/.user-customized" ]; then
+  SRC="./docs/specs/_template"
+else
+  SRC="$PLUGIN_ROOT/template/docs/specs/_template"
+fi
 
-> 创建于 <TODAY> · 状态:**草稿** / 评审中 / 已确认 / 已实现 / 已上线
->
-> **本文件回答 WHAT —— 做什么、为什么。评审通过后冻结,需变更则起新功能 spec。**
-> 写法详见 [`docs/spec-driven.md`](../../docs/spec-driven.md)(plugin 仓)。
-
-## 1. Outcomes
-
-> 场景化散文 **或** API 行为描述。**不要**用 user story 句式("As a X I want Y...")。
-
-{{TODO — 谁,在什么场景下,能做什么。具体动作,不写 wish list}}
-
-## 2. Scope boundaries
-
-**做**:
-- {{TODO}}
-
-**不做**(显式列出避免 scope creep,至少 2-3 条):
-- {{TODO}}
-
-## 3. Constraints
-
-> 性能 / 安全 / 兼容性 / 法规等**硬数字**约束。**不**写 "希望快"(那是 wish);写 "P95 < 200ms"。
-
-- {{TODO}}
-
-## 4. Verification
-
-> 上线前怎么验证。具体、可执行,**不要**写"覆盖率 80%"这种空话。
-
-- 单测:{{TODO 测什么场景}}
-- 集成:{{TODO 测什么端到端流程}}
-- 手测:{{TODO 运行什么命令验证什么}}
-- 上线指标:{{若适用}}
-- L1 review(`/project-workflow:l1-review`)pass
-- L2 review(`/project-workflow:l2-review`)pass
-- L3 review(`/project-workflow:l3-review`)pass —— 本文件是 L3 基线
+mkdir -p "docs/specs/$NNN-$SLUG"
+cp "$SRC/spec.md"  "docs/specs/$NNN-$SLUG/spec.md"
+cp "$SRC/plan.md"  "docs/specs/$NNN-$SLUG/plan.md"
+cp "$SRC/tasks.md" "docs/specs/$NNN-$SLUG/tasks.md"
 ```
+
+复制后用 Edit 工具替换 3 个 placeholder(对 3 个文件分别处理):
+- `<NNN>` → 实际编号(如 `001`)
+- `<slug>` → 实际 slug(如 `email-verification`)
+- `<TODAY>` → 今天日期(YYYY-MM-DD;仅 spec.md 有)
+
+`{{TODO ...}}` markers **保留**,留给用户(或 Step 7 Q&A)填。
 
 > **数据模型 / API 契约不在 spec.md** —— canonical 把它们放进 plan.md §2 架构决策(HOW),不混淆 WHAT 和 HOW。
-
-### `plan.md`(HOW —— 实施中可改;**canonical 4 节**)
-
-```markdown
-# <NNN> <slug> — Plan
-
-> 基于 spec.md。回答 **HOW** —— 怎么做。实施中可改;改的同时在 §3 Prior decisions 写"为什么改"。
-
-## 1. 模块影响范围
-
-列出本 feature 涉及的所有模块(新增 + 改动),按 tier 分组:
-
-- `<tier>/<module>/` —— {{新增模块 / 改:加 xxx / 改:替换 yyy}}
-- ...
-
-### 1.1 Sibling Alignment(涉及多模块时必填)
-
-| 兄弟模块 | 对齐方式 | 备注 |
-|---|---|---|
-| `<sibling-module>` | **Align**(沿用现有约定) / **Deviate**(本 feature 特例,写理由) / **Codify**(把本 feature 模式提升为约定,更新 AGENTS.md)| {{TODO}} |
-
-> 单模块 feature 可省本子节。多模块 feature 不填 = drift 风险(见 [spec-driven.md §3.7 Q6](../../docs/spec-driven.md#37-specplan-写完后的质量自检7-问-checklist))。
-
-## 2. 架构决策
-
-> 数据模型、API 契约、关键算法、状态管理 —— **本 feature 的具体技术形状**。
-> 不重复 spec.md(spec 写做什么,plan 写怎么做)。
-
-### 数据模型(若适用)
-
-{{TODO — 关键 entity 字段、关系、索引}}
-
-### API 契约(若适用)
-
-| Method | Path | Body | Response | Errors |
-|---|---|---|---|---|
-| {{TODO}} | | | | 401 / 404 / 422 / ... |
-
-### 关键算法 / 状态机(若适用)
-
-{{TODO}}
-
-## 3. Prior decisions
-
-> 每个决策**带 why**,实施中遇到诱惑回头讨论时 = 关闭讨论的依据。
-
-| 决策 | 为什么 |
-|---|---|
-| {{TODO 用 X 不用 Y}} | {{TODO 具体原因}} |
-
-## 4. 风险与未决
-
-### 风险
-
-- {{TODO}}
-
-### 未决(实施时决)
-
-- {{TODO}}
-
-## 5. 实施顺序
-
-{{若全栈 feature 走 [workflow §8.6](../../docs/workflow.md) 后端先行;else: by phase}}
-
-1. {{TODO}}
-```
-
-### `tasks.md`(STEPS —— 实施中实时更新;**canonical 2 节 + Proof Bundle 占位**)
-
-```markdown
-# <NNN> <slug> — Tasks
-
-> 基于 plan.md。颗粒度 30 分钟 - 2 小时,实施时勾选 + 加注。
-
-## 1. 任务清单
-
-### Setup(若 plan 标注新增模块)
-- [ ] 建 `<tier>/<module-path>/` 目录
-- [ ] 五件套文件(`{__init__,models,schemas,service,router}.py` 或 tier 等价)
-- [ ] 注册 router 到 `main.py` / wire into app
-- [ ] Alembic migration(若改 DB schema)
-
-### Backend
-- [ ] {{TODO 拆 30min-2h 颗粒度}}
-
-### Frontend(若适用)
-- [ ] {{TODO}}
-
-### Tests
-- [ ] {{TODO 单测}}
-- [ ] {{TODO 集成 / e2e}}
-
-### Acceptance
-- [ ] spec §4 Verification 全部 pass
-- [ ] Proof bundle 就绪(`/project-workflow:proof-bundle`)
-
-## 2. 实施记录
-
-> 实施中的偏差 / 补充决策 / 临时方案。**不改 spec.md**;plan.md 有补充则在 plan 加注。
-
-- {{YYYY-MM-DD: 偏差描述}}
-
-## Proof Bundle
-
-> 由 `/project-workflow:proof-bundle` 填。本节实施前留占位,完成后由 skill 写入。
-
-- [ ] Diff 摘要:(新建/改了什么)
-- [ ] Tests:`<X>/<Y>` passed, coverage `<Z>%`
-- [ ] L1 合规
-- [ ] L2 合规(reviewer 提供 AGENTS.md 作 context 跑过)
-- [ ] L3 合规(reviewer 提供 spec.md 作 context 跑过)
-- [ ] AGENTS.md 实际改动审计(item 5a)
-- [ ] AGENTS.md drift 建议(item 5b)
-- [ ] 手测确认 happy path 跑通
-```
 
 ## Step 6 — 报告
 
@@ -277,27 +142,18 @@ ls docs/specs/ | grep -E '^[0-9]{3}-' | sort -rn | head -1
    - 建议新模块:`<path>`(plan/tasks 已加 skeleton)
    - 需用户澄清:<具体选项>
 
-Next steps:
-1. (推荐)立刻进 Step 7 Q&A 走完 spec §1-3 + plan §2 fill(本 skill 内置)
-2. 或选 n 跳过 → 后续主会话跟 AI 补 TODOs(参考 [`spec-driven.md §3.6.5`](../../docs/spec-driven.md#365-phase-a填-todos-的-ai-协作-sop))
-3. 准备好后跑 `/project-workflow:spec-quality-check` —— 实施前 gate
+要我现在 Q&A 走完上面的 TODOs 吗?
+  (y)es      → 按 canonical 4 节走 spec §1 Outcomes → plan §2 架构决策(Data Model + API)
+                → spec §3 Constraints → spec §2 末轮补"不做" → plan §1.1 Sibling Alignment(若多模块)
+  (n)o       → 你后续自由填(参考 [`spec-driven §3.6.5`](../../docs/spec-driven.md#365-phase-a填-todos-的-ai-协作-sop)),完了跑 `/project-workflow:spec-quality-check`
+  (s)kip §X  → 只填指定节(如 'skip 架构' 跳过 plan §2)
 
 > Gate 通过后的完整 post-gate roadmap(分支 / 实施 / spec-revise / feature-done)由 `/spec-quality-check` Step 7 给出。**全 P2 流程见** [workflow.md §3.0](../../docs/workflow.md#30-p2-流程全景skill-视角)。
 ```
 
 ## Step 7 — (可选)Q&A 填 TODOs
 
-Step 6 报告完成后,**询问用户是否立即进 Q&A fill 阶段**:
-
-```
-spec.md §1 / §3 + plan.md §2 还有 TODOs。要我现在 Q&A 走完吗?
-  (y)es      → 我按 canonical 4 节走 spec §1 Outcomes → plan §2 架构决策(Data Model + API)
-                → spec §3 Constraints → spec §2 末轮补"不做" → plan §1.1 Sibling Alignment(若多模块)
-  (n)o       → 你后续自由填(我退出)
-  (s)kip §X  → 只填指定节(如 'skip 架构' 跳过 plan §2)
-```
-
-若用户答 (n) → exit。若 (y) 或 (s),按下面顺序执行 7.1-7.6。
+Step 6 末尾收到用户答 (y) / (n) / (s)。若 (n) → exit。若 (y) 或 (s),按下面顺序执行 7.1-7.6。
 
 **贯穿 Step 7 的纪律**(对应 [`spec-driven.md §3.7`](../../docs/spec-driven.md#37-specplan-写完后的质量自检7-问-checklist) 7 问):
 
@@ -429,4 +285,4 @@ spec.md §1 / §3 + plan.md §2 还有 TODOs。要我现在 Q&A 走完吗?
 
 - **Do not** generate code —— 本 skill 只产规划 artifact
 - **Do not** overwrite existing `docs/specs/<NNN>-<slug>/`(碰撞检测:报错退出)
-- **Template source**:本 SKILL.md § Step 5 起的 spec/plan/tasks 内置模板是 canonical source。若项目有 `docs/specs/_template/`(用户手工 mkdir + `.user-customized` 哨兵),则优先读本地 override
+- **Template source**:canonical 模板在 `$PLUGIN_ROOT/template/docs/specs/_template/{spec,plan,tasks}.md`(Step 5 直接 cp)。若项目有 `./docs/specs/_template/` + `.user-customized` 哨兵 → 优先用本地 override

@@ -9,8 +9,6 @@ description: Initialize a project's v2 starter kit (AGENTS.md + .claude/ + tier-
 
 Initialize a new (or existing-but-no-AGENTS.md) project's v2 baseline. Q&A walks the user through stack and conventions, then writes 10+ files in one pass.
 
-> **Phase 名 vs skill 名**:[`workflow.md §1`](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#1-p0project-setup项目第一天) 的 phase 仍叫 "**P0 Project Setup**"(方法论命名);本 skill 叫 `**project-init**`(动词 init,跟 [`feature-init`](../feature-init/SKILL.md) 对齐)。两者有意分离。
-
 **Use when**: P0 — project's first day, no AGENTS.md yet.
 **Not for**: starting a new feature (use `/feature-init <slug>`) or refreshing existing A 类约定 (use `/project-workflow:agents-md-revise`).
 
@@ -72,7 +70,7 @@ ls -la       # 此时 cwd 已是 target
 | 空目录 / 几乎空 | 直接进 Step 2(greenfield 流程) |
 | 已有 `AGENTS.md` | **`/project-init` 不适合**——跑 `/project-workflow:project-personalize` 替代(见下) |
 | 已有 `.claude/` 但无 AGENTS.md | 问: "已有 .claude/。要 (a) 全部覆盖 / (b) 中止?" |
-| 已有 `docs/specs/_template/` | 问:"已有自定模板,要 (a) 保留 / (b) 覆盖?" 默认 (a) |
+| 已有 `docs/specs/_template/` | 保留不动(用户 override,/feature-init 会优先读)|
 
 若用户选中止 → 直接停。否则继续。
 
@@ -83,7 +81,7 @@ ls -la       # 此时 cwd 已是 target
 
 ## Step 2 — Q&A:栈 + 约定
 
-**一问一答,等用户回答再问下一个**。每轮把答案存到本地变量等 Step 5 用。
+**一问一答,等用户回答再问下一个**。每轮把答案存到本地变量等 Step 4 用。
 
 ### ⚠️ Greenfield 隔离原则(critical)
 
@@ -148,68 +146,41 @@ sub-agent 返回结构化报告(2-3 candidates + recommendation + 理由)→ pro
   (2) 自定义:输入 tier 名 + 路径(如 server + web / api + app)
 ```
 
-### 轮 2:语言
+### 轮 2:语言 + 跨 tier 共性
 
 - 主语言?(若多语言列 2-3 个)
+- **(Fullstack only)** 跨 tier 共性问 — 答 "shared" / "per-tier":
+  - 若 mixed-lang(Python + TS / Go + TS / etc.)→ **per-tier**(test / lint / pkg-mgr 在 Step 5.1 mini-Q&A 各 tier 单独问)
+  - 若 single-lang(全 TS / 全 Python)→ **shared**(本轮追加问 test framework / lint / pkg-mgr,所有 tier 共享)
 
-**Fullstack 项目本轮只问跨 tier 共性**(如全栈都用 TS / 后端 Python + 前端 TS)。**具体框架(FastAPI / Vue / React 等)在 Step 6.1 per-tier mini-Q&A 问**,本轮不重复。
+> Round 3 已废:test framework / lint / pkg-mgr **per-tier** 时全挪进 mini-Q&A(F-22)。**只有 single-lang fullstack 或单 tier 项目本轮问这 3 项**。
 
-### 轮 3:测试 + Lint + 包管理
+### 命令推导主声明
 
-- 测试框架?(给栈 default 建议)
-- Lint 工具?(给栈 default)
-- 包管理器?(pnpm / npm / yarn / pip / poetry / cargo / go mod / 等)
+**起服务 / 跑测试 / lint / migration / E2E 命令**:**不单独问** —— 据 framework + pkg mgr + 轮 1.5 tier 名 + Step 5.1 mini-Q&A 推导。Step 4 / Step 5.3 填文件时 agent 内部生成具体命令字符串。**若推导歧义,问用户确认,不单方面写**。部署命令 P0 不收集(B 层,见 [workflow §1.2](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#12-产出物完整-starter-kit)),`{{DEPLOY_COMMAND}}` 填 deferred 占位。
 
-### 轮 4:部署 + 团队
+## Step 3 — 复制 template + gotchas.md(从本地 plugin)
 
-- 部署目标?(单机+Docker / Kubernetes / Serverless / 不部署)
-- 团队规模?(solo / small / large)
-- 分支命名?(default: `feat/<scope>` + `fix/<scope>`,接受 default 答 "ok")
-
-> **关于命令值(起服务 / 跑测试 / lint / 部署 / migration / E2E)**:**不单独问** —— 据轮 3(test framework / lint 工具 / pkg mgr)+ 轮 1.5(tier 名)+ 本轮 deploy 目标 + Step 6.1 mini-Q&A(framework / ORM)**推导**。Step 5 / Step 6.3 填文件时,agent 内部据这些答案生成具体命令字符串。若推导歧义,**问用户确认**而不是单方面写。
-
-## Step 3 — Clone v2 template
+Plugin 已装在本地(用户能跑 `/project-workflow:project-init` 即证明),`template/` + `docs/gotchas.md` 都在本地;**不**走 network clone。
 
 ```bash
-TEMP_DIR=$(mktemp -d)
-git clone --depth 1 https://github.com/shrekshrek/project-workflow "$TEMP_DIR/pw" 2>/dev/null
-```
+# Claude Code 调用 skill 时注入 CLAUDE_PLUGIN_ROOT;defensive fallback 走 cache 目录最新版
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(ls -td ~/.claude/plugins/cache/project-workflow/project-workflow/*/ 2>/dev/null | head -1)}"
 
-**失败处理**:若 clone 失败(网络 / 防火墙)→ 告诉用户:
+# template/ 复制,排除 _multi_tier_examples/(plugin asset,Step 5 直接从 $PLUGIN_ROOT 读)
+find "$PLUGIN_ROOT/template" -mindepth 1 -maxdepth 1 ! -name '_multi_tier_examples' \
+  -exec cp -r {} . \;
 
-> Git clone 失败。手工 fallback:
-> 1. 从 https://github.com/shrekshrek/project-workflow 下载 zip
-> 2. 解压后把 `template/*` 复制到当前目录
-> 3. 把 `docs/gotchas.md` 复制到 `./docs/gotchas.md`
-> 4. 重新跑 project-init,跳过 Step 3-4(我会从这里 detect 已有文件)
-
-成功后继续。
-
-## Step 4 — 复制 template + gotchas.md
-
-```bash
-# template/ 整个复制(starter kit shape)
-cp -r "$TEMP_DIR/pw/template/." .
-
-# Spec 模板由 /feature-init bundle 提供,项目本地不持有
-# 例外:存在 .user-customized 哨兵表示用户已自定 override,保留
-# 注:用 find -delete + rmdir 代替 rm -rf —— 部分 Claude Code sandbox 模式拦截 rm -rf
-# 即使用户已 approve(`find ... -delete` 通常不被等同 rm -rf 处理)
-if [ -d "./docs/specs/_template" ] && [ ! -f "./docs/specs/_template/.user-customized" ]; then
-  find "./docs/specs/_template" -type f -delete
-  rmdir "./docs/specs/_template" 2>/dev/null
-fi
+# docs/specs/_template/ + .claude/rules/_examples/ 都是 plugin asset(skill 直接从 $PLUGIN_ROOT 读)
+# —— 上面 cp 顺手带进来了,清掉
+find ./docs/specs -type f -delete 2>/dev/null
+rmdir ./docs/specs/_template ./docs/specs 2>/dev/null
+find ./.claude/rules/_examples -type f -delete 2>/dev/null
+rmdir ./.claude/rules/_examples 2>/dev/null
 
 # gotchas.md 在 docs/ 不在 template/
 mkdir -p docs
-cp "$TEMP_DIR/pw/docs/gotchas.md" docs/gotchas.md
-
-# 多 tier example 暂留在 _multi_tier_examples/,Step 6 处理
-# 单 tier 项目可以删:
-# rm -rf _multi_tier_examples/
-
-# 清理临时目录
-rm -rf "$TEMP_DIR"
+cp "$PLUGIN_ROOT/docs/gotchas.md" docs/gotchas.md
 ```
 
 复制后 ls 验证关键文件存在:
@@ -219,31 +190,34 @@ rm -rf "$TEMP_DIR"
 - `docs/adr/{README,0000-template}.md`
 - `docs/gotchas.md`
 - `.gitignore`
-- `_multi_tier_examples/`(仅 fullstack 用,见 Step 6)
+- **不**该出现 `_multi_tier_examples/`(plugin asset,Step 5 按需读)
 
-**不**该出现 `docs/specs/_template/`(除非存在 `.user-customized` 哨兵)。
+## Step 4 — 填 placeholder(根 AGENTS.md + `.claude/rules/`)
 
-## Step 5 — 填 placeholder(根 AGENTS.md + `.claude/rules/`)
+用 Edit 工具逐文件填齐 placeholder。**填齐或删行,不允许留** `{{...}}`(no aspirational)。
 
-用 Edit 工具逐文件填齐 placeholder。**填齐或删行,不允许留** `{{...}}`(符合 Addy Osmani "no aspirational" 原则)。
-
-### 5.1 根 `AGENTS.md`
+### 4.1 根 `AGENTS.md`
 
 | Placeholder | 据什么填 |
 |---|---|
-| `{{DEV_COMMAND}}` / `{{TEST_COMMAND}}` / `{{LINT_COMMAND}}` | 据轮 3(pkg mgr / test / lint)+ 轮 1.5(tier 名)推导(不单独问命令) |
-| `{{DEPLOY_COMMAND}}` | 据轮 4 deploy 目标推(单机+Docker → `docker compose up -d` / Kubernetes → `kubectl apply -f k8s/` / 不部署 → "(项目演化中补)") |
-| `{{TEST_FRAMEWORK}}` | Q&A 轮 3 |
+| `{{DEV_COMMAND}}` / `{{TEST_COMMAND}}` / `{{LINT_COMMAND}}` | mixed-lang fullstack → 改成指针 `(见各 <tier>/AGENTS.md)`(per-tier 推导);single-lang / 单 tier → 据 pkg-mgr + framework 直填 |
+| `{{DEPLOY_COMMAND}}` | 固定填 `(B 层未定 — 部署时补,见 docs/adr/000N-deploy.md)`(P0 不预测部署) |
+| `{{TEST_FRAMEWORK}}` | mixed-lang → 指针;single-lang → Q&A 轮 2 共享答案 / mini-Q&A test framework |
 | `{{TEST_LOCATION}}` | 默认 `tests/`(可改) |
 | `{{COVERAGE_THRESHOLD}}` | 默认 80 |
 | `{{SRC_DIR}}` | **单 tier**:`src`(语言惯例:Python `<project>/`,Go `cmd/`+`internal/`)<br>**多 tier**:根 AGENTS.md **不填具体路径**,改成指针 `(见各 <tier>/AGENTS.md)`——避免跟 tier-level 重复 |
 | `{{TEST_DIR}}` | 同上 SRC_DIR 规则 |
-| `{{BRANCH_PATTERN}}` | Q&A 轮 4 |
+| `{{BRANCH_PATTERN}}` | 固定填 `feat/<NNN>-<slug>` + `fix/<scope>`(跟 /feature-init 硬编码对齐;要 GitFlow / 票据流的用户 P0 后改 AGENTS.md) |
 | `{{COMMIT_FORMAT}}` | 默认 conventional commits |
-| `{{LINT_CONFIG_PATH}}` | 据 Q&A 轮 3 lint 工具推断(如 `.eslintrc.cjs` / `pyproject.toml`)|
-| `{{STYLE_HIGHLIGHT_1/2/3}}` | 据栈推 1-3 条**真正特殊**的风格点(见 5.4)|
+| `{{LINT_CONFIG_PATH}}` | mixed-lang → 指针 `(见各 <tier>/AGENTS.md)`;single-lang → 据 lint 工具推(`.eslintrc.cjs` / `pyproject.toml`)|
+| `{{STYLE_HIGHLIGHT_1/2/3}}` | 据栈推 1-3 条**真正特殊**的风格点(见 4.4)|
 
-### 5.2 `.claude/rules/`
+**模块组织模式 default**(写进 `## Project Structure` 节末尾,**不问用户**):
+> 模块组织模式:**按 feature / domain 组织,不按 type**(避免 `controllers/` `services/` `utils/` 这种 type-based 散布)。详见 [workflow §2.5](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#25-模块组织建议领域优先不要技术分层)。
+
+**Git 平台 default**(写进 `## Git Workflow` 节):固定填 `平台:GitHub(PR + Actions + Discussions)`(系统其他地方都默认 GitHub 词汇 / `.github/`;GitLab/Gitea 用户 P0 后手动改)。
+
+### 4.2 `.claude/rules/`
 
 | 文件 | Placeholder | 据什么填 |
 |---|---|---|
@@ -253,12 +227,12 @@ rm -rf "$TEMP_DIR"
 | `code-style.md` | `{{INDENT}}` | 据语言:Python 4 / JS-TS-Go 2 / Rust 4 |
 | `code-style.md` | `{{LINE_LIMIT}}` | 默认 100(Python 可 88) |
 | `testing.md` | `{{TESTING_DESCRIPTION}}` | 一句话(< 80 字符),如 `Testing conventions — pytest (backend) + Vitest (frontend) + Playwright (E2E)` |
-| `testing.md` | `{{TESTING_GLOBS}}` | 据 Q&A 1.5 tier 命名 + 轮 3 测试框架推导,见下方"globs 推导" |
-| `testing.md` | `{{UNIT_TEST_FRAMEWORK}}` / `{{INTEGRATION_TEST_FRAMEWORK}}` | Q&A 轮 3 |
+| `testing.md` | `{{TESTING_GLOBS}}` | 据 Q&A 1.5 tier 命名 + 轮 2 语言推导,见下方"globs 推导" |
+| `testing.md` | `{{UNIT_TEST_FRAMEWORK}}` / `{{INTEGRATION_TEST_FRAMEWORK}}` | mixed-lang fullstack → mini-Q&A;single-lang / 单 tier → Q&A 轮 2 共享答案 |
 | `testing.md` | `{{E2E_FRAMEWORK}}` | 询问 / 默认 Playwright |
 | `testing.md` | `{{TEST_FILE_LAYOUT}}` | 推断(Python tests/ 镜像 src/ / JS `*.test.ts` 同目录) |
 | `testing.md` | `{{TEST_NAME_PATTERN}}` | 据框架推 |
-| `testing.md` | `{{TEST_RUN_COMMAND}}` / `{{COVERAGE_COMMAND}}` / `{{E2E_RUN_COMMAND}}` | 据轮 3 test framework + pkg mgr 推 |
+| `testing.md` | `{{TEST_RUN_COMMAND}}` / `{{COVERAGE_COMMAND}}` / `{{E2E_RUN_COMMAND}}` | mixed-lang → 指针;single-lang → 据 test framework + pkg mgr 推 |
 | `testing.md` | `{{COVERAGE_THRESHOLD}}` | 默认 80(跟根 AGENTS.md 一致) |
 | `security.md` | `description:` 字段已 hardcode 在 template;**无** placeholder。固定文本节内极少 placeholder | 通常不需大改 |
 
@@ -267,7 +241,7 @@ rm -rf "$TEMP_DIR"
 - `security.md`(always-on 全局规则)同样应含,描述 "Security baseline (always-loaded)"
 - 缺 `description:` 不算 silent fail(规则照常加载),但 hurt scalability / discoverability —— 多 path-scoped rule 时看不出每条管什么
 
-### 5.3 globs 推导(`{{CODE_STYLE_GLOBS}}` / `{{TESTING_GLOBS}}`)
+### 4.3 globs 推导(`{{CODE_STYLE_GLOBS}}` / `{{TESTING_GLOBS}}`)
 
 格式:**comma-separated 字符串**(`globs: pattern1, pattern2`)—— 不要用 `paths:` YAML 列表,silently fails(见 workflow.md §1.6)。
 
@@ -306,7 +280,7 @@ TESTING_GLOBS    = "server/tests/**/*.py, web/**/*.test.{ts,vue}"
 
 栈识别不出 → 填一个保守 fallback:`**/*.<ext>`(全仓 ext 匹配),用户后续按需收窄。
 
-### 5.4 STYLE_HIGHLIGHT 推断规则
+### 4.4 STYLE_HIGHLIGHT 推断规则
 
 **不要写栈通用 default**(如"2 空格缩进"——工具 default,不算特殊)。**要写项目级别真正会出错的**:
 
@@ -319,43 +293,35 @@ TESTING_GLOBS    = "server/tests/**/*.py, web/**/*.test.{ts,vue}"
 
 只填 Q&A 信息能推出来的;栈没特殊点就只填 1-2 个,把 `- {{STYLE_HIGHLIGHT_3}}` 那行删掉。
 
-### 5.6 `@imports` 启用判断(强制)
+### 4.5 `@imports` 启用判断(强制)
 
-template 根 `AGENTS.md` 末尾默认有 3 行注释:
+根 `AGENTS.md` 末尾 3 行 `@import` 注释,据 `.claude/rules/*.md` 是否有 `globs:` 自动判断:
 
-```
-<!-- @.claude/rules/code-style.md -->
-<!-- @.claude/rules/testing.md -->
-<!-- @.claude/rules/security.md -->
-```
+- **有 `globs:`**(`code-style.md` / `testing.md` / framework starter) → **保留注释**(globs 已处理 path-scoped 加载)
+- **无 `globs:`**(`security.md` always-on 全局规则)→ **取消注释**,改 `@.claude/rules/security.md`(走 @import 强制加载,避开 `globs:` 不触发 Write 的 limitation 见 workflow §1.6)
 
-**全注释**——默认所有 path-scoped rule 靠 frontmatter `globs:` 自动加载,**但 always-on 规则不走 globs 机制**,需要取消 `@import` 注释才进 context。
+在 agent 内存中改根 AGENTS.md 末尾,**不立即 Write**(等 4.6 preview 通过)。
 
-**逐文件判断 + 落盘**:
+### 4.6 落盘前 Preview Gate(强制,workflow §1.10 关键纪律)
 
-| 文件 | frontmatter 状态 | 加载方式 | 根 AGENTS.md `@import` 注释 |
-|---|---|---|---|
-| `code-style.md` | 有 `globs:`(P0 后) | path-scoped(Read 匹配文件触发) | **保留注释**(globs 已处理) |
-| `testing.md` | 有 `globs:`(P0 后) | path-scoped | **保留注释** |
-| `security.md` | **无 `globs:`**(模板 default 全量加载) | 需 `@import` 才进 context | **取消注释** —— 改成 `@.claude/rules/security.md` |
-| `<framework>.md`(若用户后续从 `_examples/` 启用 starter)| 有 `globs:` | path-scoped | 保留注释 |
+Step 4.1-4.5 全部改动**累积在 agent 内存**,**未落盘**。本步一次性 stdout preview 全部最终状态(每个文件代码块包,带文件名标题):
+- 根 `AGENTS.md`(含 4.5 取消注释后的 `@import` 行)
+- `.claude/rules/code-style.md`
+- `.claude/rules/testing.md`
+- `.claude/rules/security.md`(若 4.5 改了 description)
 
-→ agent 落盘根 `AGENTS.md` 时,**自动取消** `<!-- @.claude/rules/security.md -->` 的注释(变成 `@.claude/rules/security.md`),保留其他两行注释。
+打完后 AskUserQuestion:
+- **接受所有 → 落盘**
+- **第 N 个要改 → 让用户指,改完重新 preview**
+- **全 revert → 回 Step 4.1 重填**
 
-**用户已 customize 的兜底**:若用户后期手工给 security.md 加了 `globs:`(明确要 path-scoped),skill 重跑时应识别并跳过取消注释步骤。本次 P0 first-run 不存在此 case,直接走默认逻辑。
+用户 confirm 才走 Edit/Write 落盘。
 
-**与 F-18 known limitation 的关系**:F-18(Write 不触发 path-scoped rules,Anthropic closed as not planned)对**有 globs** 的规则有影响。本 Step 确保 security.md 这种**全局规则**走 `@imports` 兜底,**绕开** F-18 影响 —— security 规则适用任何代码,不应依赖 globs 触发。
-
-## Step 6 — Fullstack:per-tier AGENTS.md + CLAUDE.md
+## Step 5 — Fullstack:per-tier AGENTS.md + CLAUDE.md
 
 **仅当 Q&A 轮 1 答 (a) Fullstack 时执行**。其他项目类型跳过本 Step。
 
-### Step 6.0:清理 `_multi_tier_examples/`(非 fullstack 即删)
-
-- **非 fullstack 项目**:`find _multi_tier_examples -type f -delete && rmdir _multi_tier_examples 2>/dev/null`(用不到,删干净;不用 `rm -rf` 避 sandbox 拦截)
-- **Fullstack 项目**:暂保留,Step 6.4 用完后删
-
-### Step 6.1:对每个 tier 分类 + 跑 per-tier mini-Q&A
+### Step 5.1:对每个 tier 分类 + 跑 per-tier mini-Q&A
 
 For each tier in [Q&A 轮 1.5 tier list]:
 
@@ -377,15 +343,16 @@ For each tier in [Q&A 轮 1.5 tier list]:
 ✅ Required:
 1. 框架?(FastAPI / Django / Flask / Express / Spring Boot / Gin / Rocket / 其他)
 2. ORM?(SQLAlchemy 2.0 / 1.x / Django ORM / Prisma / TypeORM / 不用)
-3. 数据库?(PostgreSQL / MySQL / SQLite / MongoDB / etc.)
+3. 数据库?(PostgreSQL / MySQL / SQLite / MongoDB / etc.) — **LLM context only**,不填 placeholder,用于推导 ORM critical rules(async driver / dialect / pool)
+4. **(mixed-lang fullstack only)** 测试框架?(pytest / Jest / 等;single-lang 已在 Q&A 轮 2 共享答过,跳过)
+5. **(mixed-lang fullstack only)** Lint 工具?(Ruff / Black + Flake8 / ESLint / 等)
+6. **(mixed-lang fullstack only)** 包管理器?(uv / poetry / pdm / pip / pnpm / npm / cargo / go mod / 等)
 
 ⚪️ Optional:
-4. 任务队列?(Celery / RQ / BullMQ / Sidekiq / 不用 ── 若 tier 本身就是 worker,在此问 broker)
-5. Migration 工具?(Alembic / Atlas / sqlx-cli / 框架自带 / 纯 SQL)
-6. 主要库?(Pydantic / Redis client / Kafka client / 等,列 3-5 个)
-7. 测试框架(本 tier 特有,可跟根不同;不问则继承根)?
+7. 任务队列?(Celery / RQ / BullMQ / Sidekiq / 不用 ── 若 tier 本身就是 worker,在此问 broker)
+8. Migration 工具?(Alembic / Atlas / sqlx-cli / 框架自带 / 纯 SQL)
 
-**起服务 / 跑测试 / lint / migration / 任务运行 命令不单独问** —— 据 framework + pkg mgr + ORM 推导。
+> 起服务 / 测试 / lint / migration 命令**推导**(见 Step 2 末尾主声明)。
 
 #### UI-style tier mini-Q&A
 
@@ -393,26 +360,29 @@ For each tier in [Q&A 轮 1.5 tier list]:
 1. 框架?(Vue/Nuxt / React/Next / Svelte/SvelteKit / Solid / Astro / React Native / Flutter / 其他)
 2. UI 库?(Nuxt UI / shadcn / MUI / Element Plus / Ant Design / Tailwind only / 自造)
 3. State 管理?(Pinia / Vuex / Redux Toolkit / Zustand / Jotai / 不用)
-4. 渲染模式 / 平台目标?(SSR / SSG / SPA / hybrid / iOS+Android / etc.)
+4. **(Nuxt/Next/SvelteKit only)** 渲染模式?(SSR / SSG / hybrid;Vite-based SPA / native 默认推 SPA,不问) — **LLM context only**,不填 placeholder,用于推导 `{{TIER_BUILD_COMMAND}}`(`nuxt build` vs `nuxt generate`)+ critical rules
+5. **(mixed-lang fullstack only)** 组件测试框架?(Vitest + @vue/test-utils / Jest + RTL / 其他)
+6. **(mixed-lang fullstack only)** Lint 工具?(ESLint / Biome / 等)
+7. **(mixed-lang fullstack only)** 包管理器?(pnpm / npm / yarn / bun / 等)
 
 ⚪️ Optional:
-5. 样式方案?(Tailwind / UnoCSS / CSS Modules / styled-components / scoped CSS only)
-6. 组件测试框架?(Vitest + @vue/test-utils / Jest + RTL / 其他)
-7. E2E 框架?(Playwright / Cypress / 不用)
+8. 样式方案?(Tailwind / UnoCSS / CSS Modules / styled-components / scoped CSS only)
+9. E2E 框架?(Playwright / Cypress / 不用)
 
-**起开发 / build / test / lint 命令不单独问** —— 据 framework + pkg mgr 推导。
+> 起开发 / build / test / lint 命令**推导**(见 Step 2 末尾主声明)。
 
-### Step 6.2:据类别选模板,复制到 `<tier>/`
+### Step 5.2:据类别选模板,复制到 `<tier>/`
 
 模板按**类别**(不是 tier 名),覆盖任意 tier 名:
 
 ```bash
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(ls -td ~/.claude/plugins/cache/project-workflow/project-workflow/*/ 2>/dev/null | head -1)}"
 TIER_NAME=<from Q&A 轮 1.5>     # 用户自定的 tier 名(如 backend / worker / api / mobile / web ...)
-TIER_CATEGORY=<service-tier 或 ui-tier>  # 据 Step 6.1 分类
+TIER_CATEGORY=<service-tier 或 ui-tier>  # 据 Step 5.1 分类
 
 mkdir -p "$TIER_NAME"
-cp "_multi_tier_examples/${TIER_CATEGORY}.AGENTS.md.example" "$TIER_NAME/AGENTS.md"
-cp "_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.example" "$TIER_NAME/CLAUDE.md"
+cp "$PLUGIN_ROOT/template/_multi_tier_examples/${TIER_CATEGORY}.AGENTS.md.example" "$TIER_NAME/AGENTS.md"
+cp "$PLUGIN_ROOT/template/_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.example" "$TIER_NAME/CLAUDE.md"
 ```
 
 例:
@@ -421,26 +391,29 @@ cp "_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.example" "$TIER_NAME/CLAUDE.
 - 用户的 `frontend/` tier(UI) → `ui-tier.example` → `frontend/AGENTS.md`
 - 用户的 `mobile/` tier(UI) → `ui-tier.example` → `mobile/AGENTS.md`
 
-### Step 6.3:填 tier-level AGENTS.md placeholder
+### Step 5.3:填 tier-level AGENTS.md placeholder + framework split
 
 逐个替换 `{{TIER_NAME}}` / `{{TIER_DEV_COMMAND}}` / `{{TIER_FRAMEWORK}}` 等(详见 [_multi_tier_examples/README.md](../template/_multi_tier_examples/README.md))。
 
-**关键 1**:`{{TIER_FRAMEWORK_RULES}}` / `{{TIER_ORM_RULES}}` / `{{TIER_UI_USAGE_RULES}}` 等内容**根据 Q&A 答案动态填**——不留 placeholder。
+**关键 1:framework 规则强制 split**(workflow §1.3 决策口诀 + 反模式防御):
 
-**关键 2:连同 `<!-- 例 -->` 一起替换**:template 里每个 placeholder 下方有 `<!-- 例(FastAPI): ... -->` 这种参考注释,**给 skill writer 看的**,**不该留在用户项目里**。填具体内容时,**连同上方/下方的 `<!-- 例 -->` 注释一起替换**——否则用户的 tier-level AGENTS.md 会同时有"具体规则 + stale FastAPI 示例",看起来矛盾。
+- `{{TIER_FRAMEWORK_CRITICAL_RULES}}` / `{{TIER_ORM_CRITICAL_RULES}}` / `{{TIER_QUEUE_CRITICAL_RULES}}` 只填 **≤ 5 条 critical**(最常违反 + 最影响项目正确性的)
+- **完整 detail** split 到 `.claude/rules/<framework>.md`:
+  1. 检测 `$PLUGIN_ROOT/template/.claude/rules/_examples/<framework>.example.md` 是否存在(`fastapi` / `vue` / `django` / etc.)
+  2. 若有 → `cp "$PLUGIN_ROOT/template/.claude/rules/_examples/<framework>.example.md" .claude/rules/<framework>.md`,改 frontmatter `globs:` 适配 tier(如 `globs: backend/**/*.py`),`description:` 适配
+  3. 若无 starter → tier-level critical 段填 5 条;`.claude/rules/<framework>.md` 先建空壳带 frontmatter + TODO comment
 
-**关键 3:删除不适用的整个章节**:某 tier 用不到的章节(如 service-tier 不用 ORM 时 `### {{TIER_ORM}}` 整节删)直接整段删,**不留空章节**。
+**关键 2:删除不适用的整个章节**:某 tier 用不到的章节(如 service-tier 不用 ORM 时 `### {{TIER_ORM}}` 整节删)直接整段删,不留空章节。
 
-### Step 6.4:删除残留 example
+### Step 5.4:Tier-level Preview Gate(强制)
 
-所有 tier 处理完后(不用 `rm -rf` 避 sandbox 拦截):
+每填完一个 tier-level AGENTS.md(Step 5.3),**stdout preview 一组文件**:
+- tier-level `<tier>/AGENTS.md`
+- 该 tier 自动 cp 出来的 `.claude/rules/<framework>.md`(若 Step 5.3 关键 1 第 2 步触发)
 
-```bash
-find _multi_tier_examples -type f -delete
-rmdir _multi_tier_examples 2>/dev/null
-```
+AskUserQuestion 接受 / 改 / revert。Fullstack 2 tier = 2 次 preview confirm。CLAUDE.md 单行 @AGENTS.md 无 preview 价值,自动落盘。
 
-## Step 7 — 裁剪 `.claude/hooks/lint-on-edit.js`
+## Step 6 — 裁剪 `.claude/hooks/lint-on-edit.js`
 
 template 的 lint-on-edit.js 是骨架(if-else by extension)。
 
@@ -451,150 +424,58 @@ template 的 lint-on-edit.js 是骨架(if-else by extension)。
 
 用 Edit 工具裁剪。
 
-## Step 8 — 总结 + 下一步建议
-
-报告生成的文件 + 提示下一步:
-
-```markdown
-## ✅ Project setup complete
+## Step 7 — 生成文件清单 + 行数检查
 
 ### 生成的文件
 
-- AGENTS.md(根, {{N}} 个 placeholder 已填)
-- CLAUDE.md(1 行 @AGENTS.md)
+- AGENTS.md(根)+ CLAUDE.md(1 行 @AGENTS.md)
 - .claude/{rules,hooks,settings.json}
-- docs/{adr,gotchas.md}
-- .gitignore
-- (多 tier 时,per tier 一对) `<tier>/AGENTS.md` + `<tier>/CLAUDE.md` —— 据类别(service-style / UI-style)选模板,据 mini-Q&A 填具体栈细节
+- docs/{adr,gotchas.md} + .gitignore
+- (多 tier)`<tier>/AGENTS.md` + `<tier>/CLAUDE.md` × N tier
 
-### 还需手工 review
-
-- 部分 placeholder 若 Q&A 没覆盖到,可能留在文件里 —— 搜 "{{" 看是否有残留
-- `.claude/rules/code-style.md` 各章节("函数/类"、"文件/模块"、"错误处理")可按项目实践补充
-- Spec/plan/tasks 模板由 `/feature-init` 提供。**想 per-project 定制**:`mkdir -p docs/specs/_template && touch docs/specs/_template/.user-customized` + 自己写 `spec.md / plan.md / tasks.md`,`/feature-init` 会优先读本地版
-- 想加 framework-specific rules(FastAPI / Vue / etc.):看 `.claude/rules/_examples/` 下的 starter(如 `fastapi.example.md`),复制成 `.claude/rules/<framework>.md` 改 globs 适配你项目。frontmatter 格式坑(`paths:` 列表静默失败)+ debug 步骤见 [workflow.md §1.6](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#16-路径级规则claudrules官方支持)
-
-### AGENTS.md 行数检查
-
-**强制跑**(不是 "建议跑"):
+### AGENTS.md 行数检查(强制)
 
 ```bash
 wc -l AGENTS.md $(find . -maxdepth 2 -name 'AGENTS.md' -not -path './AGENTS.md' 2>/dev/null) 2>/dev/null
 ```
 
-把每个文件的行数列进总结报告,按下表分类判定:
+每文件行数 + 状态:< 100 ✅ 理想 / 100-200 ⚠️ 可接受 / > 200 🚫 警告(长尾搬 `.claude/rules/*.md` 或 ADR;tier-level 同样 < 100)。
 
-| 行数区间 | 状态 | 行动 |
-|---|---|---|
-| < 100 | ✅ 理想(Anthropic Boris Cherny 标杆)| 无需动作 |
-| 100-200 | ⚠️ 可接受 | 留意未来增长 |
-| > 200 | 🚫 警告 —— Anthropic best-practices 显示 > 200 依从度下降 | 建议:长尾搬 `.claude/rules/*.md`(用 `@imports` 在末尾按需拉)/ 或拆到 `docs/architecture.md` / ADR;tier-level AGENTS.md 同样原则,各 < 100 |
+**不允许** agent 跳过 / 凭印象描述。每个 AGENTS.md 都必须有具体行数 + 状态。
 
-**不允许** agent 跳过本步 / 凭印象描述 / 用"大约"表达。每个 AGENTS.md 都必须有具体行数 + 分类标签。
+## Step 7.5 — Self-verify(强制,对应 [workflow §1.11](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#111-校验))
 
-### Self-verify(强制,在行数检查之后)
-
-agent 跑下列 8 项 verify,**任一项不过强制回头改 OR 标 deferred**,不能 self-report done。
-对应 [workflow §1.11](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#111-校验) P0 校验 4 项 + 接 F-17 / F-19 / F-21 silent fail 系列防御。
-
-#### 8.5a 静态 verify(必须当场过)
-
-##### V1. Placeholder 残留扫描
+跑下面这段 bash,结合已知 Q&A 答案做 V1-V4.5 静态判断;再补 4 项 §1.11 运行时校验。任一 ❌(V6/V7 deferred 例外)→ 回头改,不能 self-report done。
 
 ```bash
+# V1 placeholder 残留(唯一允许命中:README.md instruction 文本 `把 {{PLACEHOLDER}} 替换...`)
 grep -rn '{{' --include='*.md' --include='*.js' --include='*.json' .
-```
-
-唯一允许命中:`README.md` 里 instruction 文本 `把 {{PLACEHOLDER}} 替换为你的项目信息`(literal quote)。
-其他 `{{...}}` 命中 → 必须返回 Step 5 / 6 修。
-
-##### V2. frontmatter 完整性
-
-```bash
+# V2 frontmatter(path-scoped rule 含 description + globs;security.md 仅 description)
 head -10 .claude/rules/*.md
 ```
 
-每个 path-scoped rule(`code-style.md` / `testing.md` / 复制出的 framework starter)frontmatter 必须含:
-- `description:` 一行(< 80 字符)
-- `globs:` comma-separated 字符串
+agent 看上面输出 + Q&A 答案对照 3 项:
+- **V3 globs 路径**:每段 globs 的 path prefix(`backend/` / `frontend/` 等)真存在(P0 时仅含 AGENTS.md/CLAUDE.md 也算)
+- **V4 命令一致**:根 AGENTS.md `(见各 <tier>/AGENTS.md)` 指针 ↔ tier-level `Commands` 节存在;命令 verb 跟 Q&A pkg-mgr / test framework 对齐(`uv` → `uv run X` / `pnpm` → `pnpm X`)
+- **V4.5 framework split**:tier-level `<framework>` / `<orm>` / `<queue>` 各节 ≤ 5 条,深度 topic split 到 `.claude/rules/<framework>.md`
 
-`security.md`(always-on)同样应含 `description:`(无 `globs:` 行)。缺 → 据规则用途补一句话。
-
-##### V3. globs 跟实际目录结构对齐
-
-提取每个 path-scoped rule 的 globs,验证 path prefix 真存在:
-
-```bash
-# 例:globs: backend/**/*.py, frontend/**/*.{ts,vue}
-# 验证 backend/ + frontend/ 都存在(P0 时通常仅含 AGENTS.md / CLAUDE.md 也算)
-ls backend/ frontend/ 2>&1 | grep -v "No such" || echo "PATH MISSING"
-```
-
-若整段 glob 在 path 不存在 → 路径错(典型场景:tier 命名后期改了但 globs 没同步)。
-
-##### V4. 命令推导前后一致
-
-- 根 AGENTS.md 引用 `(见各 <tier>/AGENTS.md)` → 对应 tier-level AGENTS.md `Commands` 节存在且有命令字符串(`cd <tier> && ...`)
-- `<tier>/AGENTS.md` 引用的命令 verb(`uv run pytest` / `pnpm test` 等)跟 Q&A 答的 pkg-mgr / test framework 一致(`uv` 答案对应 `uv run X`;`pnpm` 答案对应 `pnpm X`)
-
-#### 8.5b 运行时 verify(workflow §1.11 4 项 — 此刻跑不了的标 deferred)
-
-##### V5. AGENTS.md 加载验证(对应 workflow §1.11 #1)
-
-执行 `/memory`(Claude Code)→ 输出列表应含本仓库 `AGENTS.md` + `CLAUDE.md`(若 fullstack 还应含各 `<tier>/AGENTS.md`)。
-
-> 此项**当场必须过** —— skill 跑时已在 Claude Code 环境内,`/memory` 立即可用。若 `/memory` 列表里看不到 → 文件位置 / 嵌套层次错(参考 workflow §1.4)。
-
-##### V6. AGENTS.md 写的命令真能跑(对应 workflow §1.11 #2)
-
-挑 1-2 个 P0 此刻就能跑的命令试一次:
-- `docker compose config`(验证 docker-compose.yml 语法,若 B 层用户已 init)
-- 真命令(`pnpm test` / `uv run pytest`)**通常跑不了**——因 B 层 code scaffold 还没起
-
-→ 本项 P0 时**标 deferred**:写进 Step 8 输出"还需手工 review"节,提示用户:
-> `/feature-init` 第一次实施前,先跑 `cd <tier> && <pkg-mgr> --version` 确认环境就绪;若命令报"command not found" → AGENTS.md 命令推导错。
-
-##### V7. Hook 真触发(对应 workflow §1.11 #3)
-
-P0 此刻 `.claude/hooks/lint-on-edit.js` 已就位,但需要**真改一个文件**才能触。
-
-trip-wire 验法(可选当场跑,通常 deferred):
-1. 在受 globs 覆盖路径下建 probe 文件(如 `<tier>/.lint-probe.py`)
-2. 用 Edit 工具改它
-3. PostToolUse hook 应触发,stderr 应看到 Ruff / ESLint 跑(可能因 `.venv` / `node_modules` 还没就位 → ENOENT,**这本身也是预期信号**,说明 hook 路径对了)
-4. 跑完用 `find <tier> -name '.lint-probe.py' -delete` 清理
-
-→ 若 hook 完全无反应(连 ENOENT 都没)→ `.claude/settings.json` matcher 或 command 路径错。
-
-> 此项 P0 时**通常 deferred**(因 lint binary 还没装),记 Step 8 输出告诉用户 `pnpm install` / `uv sync` 完成首日跑一次 trip-wire 验。
-
-##### V8. AI 读 AGENTS.md 测试(对应 workflow §1.11 #4)
-
-skill 末尾在 main session 自问:
-> "基于这个项目的 AGENTS.md + 各 tier AGENTS.md,**1 句话总结**这个项目是什么、用什么栈、怎么起服务、怎么跑测试。"
-
-返回的总结要素核对:
-- 项目类型(fullstack / backend-only / etc.)正确 ✓
-- 主栈名(FastAPI / Vue 3 / 等)正确 ✓
-- 起服务命令正确 ✓
-- 跑测试命令正确 ✓
-
-任一要素错 / 漏 → AGENTS.md **写得不够清晰**,回去补;不是"AI 不够聪明"的锅。
-
-#### verify 报告格式(贴进 Step 8 总结)
-
-| Verify | 状态 | 备注 |
+| 运行时(§1.11) | 此刻 | 说明 |
 |---|---|---|
-| V1 placeholder 残留 | ✅ / ❌ | (唯一允许命中 README.md instruction 文本) |
-| V2 frontmatter | ✅ / ❌ | description + globs 都在(security.md 无 globs) |
-| V3 globs 路径 | ✅ / ❌ | 匹配的 path 真存在 |
-| V4 命令前后一致 | ✅ / ❌ | 根级指针 / tier 级实命令对齐 |
-| V5 `/memory` 加载 | ✅ / ❌ | 此刻必须过 |
-| V6 命令真能跑 | ✅ / 🟡 deferred | 标 `/feature-init` 前必查 |
-| V7 hook 触发 | ✅ / 🟡 deferred | 标 `pnpm install` / `uv sync` 后跑 trip-wire |
-| V8 AI 读 AGENTS.md 总结 | ✅ / ❌ | 1 句话核对要素 |
+| V5 `/memory` 加载 | ✅ 必过 | 输出含根 + 各 tier AGENTS.md / CLAUDE.md;缺 → 嵌套层次错(§1.4) |
+| V6 命令真能跑 | 🟡 deferred | B 层未起,Step 8 提示 `/feature-init` 前 `<pkg-mgr> --version` 兜底 |
+| V7 hook 触发 | 🟡 deferred | lint binary 未装,`pnpm install` / `uv sync` 后改文件验 |
+| V8 AI 读 AGENTS.md 总结 | ✅ 必过 | 自问 "1 句话总结栈 + 命令",4 要素(类型/主栈/起服务/跑测试)全对 |
 
-**任一 V1-V5 / V8 标 ❌** → skill 不能 self-report done,回头改后重跑 verify 表。V6 / V7 deferred 不阻断 P0 完成。
+报告格式:`V1✅ V2✅ V3✅ V4✅ V4.5✅ V5✅ V6🟡def V7🟡def V8✅`
+
+## Step 8 — 用户报告(还需手工 review + 下一步)
+
+### 还需手工 review
+
+- **AGENTS.md `## Boundaries` 节**:template default 是合理 baseline(改 API / 加依赖 / 改迁移 / 改权限 → ⚠️ Ask first);**项目特定**的 ⚠️ Ask first 项(如"改 prompt template 必问 LLM ops team" / "改 billing rate 必问 finance")只有你知道,P0 后扫一遍补上(workflow §1.10 不收集这部分,见同节"不问什么"表)
+- `.claude/rules/code-style.md` 各章节("函数/类"、"文件/模块"、"错误处理")可按项目实践补充
+- 想 per-project 定制 spec/plan/tasks 模板:`mkdir -p docs/specs/_template && touch docs/specs/_template/.user-customized` + 自己写 `spec.md / plan.md / tasks.md`(`/feature-init` 会优先读本地版)
+- 想加 framework-specific rules(FastAPI / Vue / etc.):`cp "$CLAUDE_PLUGIN_ROOT/template/.claude/rules/_examples/<framework>.example.md" .claude/rules/<framework>.md`,然后改 frontmatter `globs:` + `description:`(说明见同目录 README.md)
 
 ### ⚠️ Aspirational refs(本 P0 不创建)
 
@@ -606,7 +487,7 @@ skill 末尾在 main session 自问:
 
 | 文件 | 怎么获得 |
 |---|---|
-| `docker-compose.yml` / `docker-compose.prod.yml`(deploy = Docker 时) | 自己写,或 fork 现成 scaffold |
+| `docker-compose.yml` / `docker-compose.prod.yml`(若用 Docker) | 自己写,或 fork 现成 scaffold |
 | `<tier>/pyproject.toml`(Python 包骨架) | `cd <tier> && uv init`(或 `poetry init` / `pdm init`)—— 仅起包,**不含 app 主入口** |
 | `<tier>/app/main.py` + `<tier>/app/__init__.py` 等 FastAPI / Django / Flask app 主入口 | **自己写**,或 fork starter(如 [zhanymkanov/fastapi-best-practices](https://github.com/zhanymkanov/fastapi-best-practices))|
 | `<tier>/package.json` / `<tier>/vite.config.ts` / `<tier>/eslint.config.js` + `<tier>/src/main.ts` 等前端入口(TS/JS tier) | `cd <tier> && pnpm create vite`(或框架对应 init,如 `pnpm create next-app` / `pnpm dlx nuxi init`)—— **此命令产完整 app 含入口** |
@@ -618,18 +499,7 @@ skill 末尾在 main session 自问:
 ### 📋 下一步
 
 1. `git init && git add . && git commit -m "P0: initial project setup"`
-2. **写 ADR 0001 ~ 000N**(P0 期间 5+ 个重大决策捕获 — [workflow §1.8](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#18-adr-目录初始化)):
-
-   把 Q&A 选的下列决策**各写一份 ADR**(每条独立文件,避免日后忘"为什么"):
-   - `docs/adr/0001-framework-choice.md`(为什么选 FastAPI / Django / Flask / etc.)
-   - `docs/adr/0002-orm-choice.md`(为什么选 SQLAlchemy 2.0 / Django ORM / Prisma / etc.)
-   - `docs/adr/0003-db-choice.md`(为什么选 Postgres / MySQL / SQLite / MongoDB)
-   - `docs/adr/0004-frontend-stack.md`(为什么选 Vue / React / etc. + UI 库)
-   - `docs/adr/0005-pkg-mgr.md`(为什么选 uv / pnpm / etc.)
-
-   每条遵循 Michael Nygard 模板(Context / Decision / Consequences,见 `docs/adr/0000-template.md`)。
-   Context 节引用 tech-researcher 调研报告(若 Q&A 触发了 dispatch);Decision 节填 Q&A 答案;Consequences 节标"后期 review 触发条件"(如"团队规模 > 5 人时 revisit pkg-mgr")。
-
+2. **写 ADR 捕获 P0 重大决策**:把 Q&A 选的 framework / ORM / DB / 前端栈 / pkg-mgr 等 5+ 项**各写一份独立 ADR**(`docs/adr/000N-<topic>.md`),模板与写法见 [workflow §1.8](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#18-adr-目录初始化) + `docs/adr/0000-template.md`。Context 节可引用 tech-researcher 报告(若 Q&A dispatched)
 3. **扫一遍 `docs/gotchas.md`** —— 10 条工程坑,第一个 feature 实施前必读
 4. 开始第一个 feature:
    ```
@@ -640,19 +510,18 @@ skill 末尾在 main session 自问:
 - 完整方法论:https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md
 - 快速操作版:https://github.com/shrekshrek/project-workflow/blob/main/docs/quickstart.md
 - spec/plan/tasks 写法:https://github.com/shrekshrek/project-workflow/blob/main/docs/spec-driven.md
-```
 
 ## Failure modes
 
 | 错误 | 应对 |
 |---|---|
-| `git clone` 失败(无网络 / 防火墙) | 告诉用户手工 fallback(见 Step 3) |
+| `PLUGIN_ROOT` 解析为空(`CLAUDE_PLUGIN_ROOT` 未注入 + cache 目录不存在)| plugin 安装异常。让用户跑 `/plugin uninstall project-workflow && /plugin install project-workflow` 重装后重试 |
 | 当前目录非空且有冲突文件 | 按 Step 1 处理:已有 AGENTS.md → 重定向到 /project-personalize;已有 .claude/ 但无 AGENTS.md → 询问 (a) 全部覆盖 / (b) 中止 |
 | 用户在 project-workflow 仓库本身跑 | Step 1 警告 + 询问是否继续 |
 | Q&A 中用户中途退出 | 保存已答的部分,告诉用户跑 project-init 时已答的不再问 |
 | Fullstack 但某 tier 不存在(如纯 backend + DB migrations) | 询问用户是否实际是 (b) Web Backend |
 | Q&A 推不出 STYLE_HIGHLIGHT(冷门栈) | 填 1-2 条,删第 3 行 |
-| `rm -rf` / `rmdir` 被 sandbox 拦(部分 Claude Code permission 模式即使用户 approve 也拒) | skill 已默认用 `find -type f -delete` + `rmdir 2>/dev/null` 组合(Step 4 / Step 6.0 / Step 6.4),不应再触。若仍拦,改 `rm <file>` 单文件循环 + `rmdir <dir>`(避所有递归删除调用) |
+| `find -delete` / `rmdir` 仍被 sandbox 拦 | 改 `rm <file>` 单文件循环 + `rmdir <dir>`(避所有递归删除调用) |
 
 ## Notes
 

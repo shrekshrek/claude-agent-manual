@@ -95,23 +95,13 @@ P0 时根据栈填齐 placeholder。
   - selectors 在 `selectors/` 单独文件
 -->
 
-## 框架特殊约定
+## 框架特殊约定(critical only,详规则 split 到 `.claude/rules/`)
 
-### {{TIER_FRAMEWORK}}
+### {{TIER_FRAMEWORK}}(critical rules,≤ 5 条)
 
-{{TIER_FRAMEWORK_RULES}}
+{{TIER_FRAMEWORK_CRITICAL_RULES}}
 
-<!-- 例(Vue 3 + Nuxt 4):
-  - SSR / SPA 模式:{{TIER_RENDERING_MODE}}
-  - 文件命名约定:Nuxt 自动路由,`pages/` 用 kebab-case
-  - 服务端调用:`useFetch` / `$fetch`,SSR 时同构
-  - 不写 export default(用 <script setup>)
-
-  例(React + Next.js):
-  - App Router(不用 Pages Router)
-  - Server Components by default,Client Components 显式 'use client'
-  - 数据 fetch 走 Server Components 或 Route Handlers
--->
+**详规则**:见 `.claude/rules/<framework>.md`(P0 时若 `_examples/<framework>.example.md` 存在,skill 已自动 `cp` + 适配 globs)。
 
 ## Boundaries(本 tier 特有,继承根)
 

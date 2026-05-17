@@ -1,54 +1,44 @@
-# `<NNN>` `<slug>` — Tasks
+# <NNN> <slug> — Tasks
 
-> 创建于 YYYY-MM-DD · 基于 [`spec.md`](spec.md) + [`plan.md`](plan.md)
->
-> **本文件回答 STEPS —— 实际怎么做、做到哪了。实施过程中持续更新。**
-> 详细写法见 [project-workflow / spec-driven.md](https://github.com/shrekshrek/project-workflow/blob/main/docs/spec-driven.md)。
+> 基于 plan.md。颗粒度 30 分钟 - 2 小时,实施时勾选 + 加注。
 
----
+## 1. 任务清单
 
-## 任务清单
+### Setup(若 plan 标注新增模块)
+- [ ] 建 `<tier>/<module-path>/` 目录
+- [ ] 五件套文件(`{__init__,models,schemas,service,router}.py` 或 tier 等价)
+- [ ] 注册 router 到 `main.py` / wire into app
+- [ ] Alembic migration(若改 DB schema)
 
-> 30 分钟到 2 小时颗粒度。按你项目情况分组:
-> - **全栈项目**:后端 / 前端 / 验证,**且按"后端先行"** 顺序(见 [workflow.md §8.6](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#86-全栈项目的后端先行backend-first-tactic))
-> - **单 tier 项目**:实现 / 测试 / 验收
-> - **简单功能**:不分组直接列即可
+### Backend
+- [ ] {{TODO 拆 30min-2h 颗粒度}}
 
-### <你的分组,例如 "实现">
+### Frontend(若适用)
+- [ ] {{TODO}}
 
-- [ ] (任务,Xh)
-- [ ] (任务,Xh)
+### Tests
+- [ ] {{TODO 单测}}
+- [ ] {{TODO 集成 / e2e}}
 
-### <你的分组,例如 "测试">
+### Acceptance
+- [ ] spec §4 Verification 全部 pass
+- [ ] Proof bundle 就绪(`/project-workflow:proof-bundle`)
 
-- [ ] (任务,Xh)
+## 2. 实施记录
 
-### <你的分组,例如 "验收">
+> 实施中的偏差 / 补充决策 / 临时方案。**不改 spec.md**;plan.md 有补充则在 plan 加注。
 
-- [ ] (任务,Xh)
+- {{YYYY-MM-DD: 偏差描述}}
 
-**预计总时间**:~?h
+## Proof Bundle
 
----
+> 由 `/project-workflow:proof-bundle` 填。本节实施前留占位,完成后由 skill 写入。
 
-## 实施记录
-
-> 实施过程中遇到的偏差、补充决策、临时解决方案。**不改 spec.md;若 plan.md 有补充,在 plan.md 加注。**
-
-- YYYY-MM-DD: (内容)
-
----
-
-## Proof Bundle(完成时填,P2.3 端点交付)
-
-> 默认在本节填,不必走 PR。**团队协作** 走 PR 时,直接复制本节内容到 PR 描述(`.github/PULL_REQUEST_TEMPLATE.md` v2 默认不预置,需要时按 [workflow.md §1.9](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#19-平台协作v2-默认不铺模板) 自加)。
->
-> 详细 proof bundle 设计见 [workflow.md §3.3](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#33-交付阶段proof-bundle)。
-
-- [ ] **Diff 摘要**:(新建/改了什么)
-- [ ] **Tests**:`<X>/<Y>` passed,coverage `<Z>%`
-- [ ] **L2 合规**(reviewer 提供 AGENTS.md 作 context 跑过):
-- [ ] **L3 合规**(reviewer 提供 spec.md 作 context 跑过):
-- [ ] **AGENTS.md 触动汇总**(本 feature 实际改了哪几份 root / tier / module):
-- [ ] **AGENTS.md drift 建议**(L2 提议但未应用,如有):
-- [ ] **开放问题**(如有):
+- [ ] Diff 摘要:(新建/改了什么)
+- [ ] Tests:`<X>/<Y>` passed, coverage `<Z>%`
+- [ ] L1 合规
+- [ ] L2 合规(reviewer 提供 AGENTS.md 作 context 跑过)
+- [ ] L3 合规(reviewer 提供 spec.md 作 context 跑过)
+- [ ] AGENTS.md 实际改动审计(item 5a)
+- [ ] AGENTS.md drift 建议(item 5b)
+- [ ] 手测确认 happy path 跑通

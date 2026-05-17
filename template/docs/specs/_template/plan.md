@@ -1,65 +1,61 @@
-# `<NNN>` `<slug>` — Plan
+# <NNN> <slug> — Plan
 
-> 创建于 YYYY-MM-DD · 基于 [`spec.md`](spec.md)
->
-> **本文件回答 HOW —— 用什么技术、改哪些模块。实施过程中可补充,但不能推翻 spec。**
-> 详细写法见 [project-workflow / spec-driven.md](https://github.com/shrekshrek/project-workflow/blob/main/docs/spec-driven.md)。
-
----
+> 基于 spec.md。回答 **HOW** —— 怎么做。实施中可改;改的同时在 §3 Prior decisions 写"为什么改"。
 
 ## 1. 模块影响范围
 
-> 列出本功能会动哪些**模块**(不是文件)。这是 feature ↔ module 关系的桥梁。
->
-> - **多 tier 项目**(全栈等):列出每个 tier 内的模块,如 `backend/src/<module>/` + `frontend/layers/<module>/`
-> - **单 tier 项目**:列模块,如 `src/<module>/`
-> - **小项目 / 无模块划分**:直接写"集中在 X.py" 或 "单文件改动",跳过下面的罗列
+列出本 feature 涉及的所有模块(新增 + 改动),按 tier 分组:
 
-- `<module-path>/` — 改 / 新增 / 不动
-- `<module-path>/` — 改 / 新增 / 不动
+- `<tier>/<module>/` —— {{新增模块 / 改:加 xxx / 改:替换 yyy}}
+- ...
 
-### 1.1 Sibling Alignment(对齐既有兄弟模块)
+### 1.1 Sibling Alignment(涉及多模块时必填)
 
-> **写本节前**:扫一眼项目里做"同型事情"的现有模块——错误处理、API 路由命名、test 风格、字段命名约定等。
-> 这一步把 Tier 1 #3 Drift 的**空间维度**(workflow.md §0.1)在 spec 阶段就截住,不必事后检测。
-
-每个本功能涉及的"同型决策"在下表做 3 选 1:
-
-| 决策 | 含义 | 后续动作 |
+| 兄弟模块 | 对齐方式 | 备注 |
 |---|---|---|
-| **Align** | 沿用既有模块的做法 | 不动 AGENTS.md |
-| **Deviate** | 用不同做法 + 写明为什么 | 在本节列理由,接受 L2 / L3 review 质询 |
-| **Codify** | 既有模块和本功能都该统一,提取到 AGENTS.md | 列入 proof bundle 的 "AGENTS.md drift 建议",P4 处理 |
+| `<sibling-module>` | **Align**(沿用现有约定) / **Deviate**(本 feature 特例,写理由) / **Codify**(把本 feature 模式提升为约定,更新 AGENTS.md)| {{TODO}} |
 
-填写示例:
-
-- 错误处理风格:**Align** —— 跟 `backend/src/invitations/` 一致(`try/except + log + raise`)
-- 字段命名:**Codify** —— 现有 A/B 模块 snake_case,C 模块 camelCase → 应统一,加 AGENTS.md `Code Style` 节
-- 数据校验:**Deviate** —— 本模块涉外部输入,需更严的 Pydantic v2 strict mode,理由:外部信任边界
-
-**无既有兄弟可对齐时**(首个同型模块)写一行 "首个 X-型模块,无对齐对象" 即可。
-
-### 1.2 跨模块依赖
-
-> 运行时调用关系 / 数据流 / 共享 contract(跟 §1.1 不同 —— 这里是**会调谁**,§1.1 是**应该长什么样**)。
-
-(简述)
+> 单模块 feature 可省本子节。多模块 feature 不填 = drift 风险(见 [spec-driven.md §3.7 Q6](https://github.com/shrekshrek/project-workflow/blob/main/docs/spec-driven.md#37-specplan-写完后的质量自检7-问-checklist))。
 
 ## 2. 架构决策
 
-> 数据模型、API 契约、关键算法、状态管理选择。
+> 数据模型、API 契约、关键算法、状态管理 —— **本 feature 的具体技术形状**。
+> 不重复 spec.md(spec 写做什么,plan 写怎么做)。
 
-(简述本功能在系统里的位置和形状)
+### 数据模型(若适用)
+
+{{TODO — 关键 entity 字段、关系、索引}}
+
+### API 契约(若适用)
+
+| Method | Path | Body | Response | Errors |
+|---|---|---|---|---|
+| {{TODO}} | | | | 401 / 404 / 422 / ... |
+
+### 关键算法 / 状态机(若适用)
+
+{{TODO}}
 
 ## 3. Prior decisions
 
-> 已经讨论或选定的技术决策,**附带"为什么"**。每次跟 AI 讨论中作出的决策**当场**写回来。
+> 每个决策**带 why**,实施中遇到诱惑回头讨论时 = 关闭讨论的依据。
 
-- 选 X 不选 Y:(原因)
+| 决策 | 为什么 |
+|---|---|
+| {{TODO 用 X 不用 Y}} | {{TODO 具体原因}} |
 
 ## 4. 风险与未决
 
-> 已知风险点 + 还没敲定但会在实施中决定的事。
+### 风险
 
-- 风险:
-- 未决:
+- {{TODO}}
+
+### 未决(实施时决)
+
+- {{TODO}}
+
+## 5. 实施顺序
+
+{{若全栈 feature 走 [workflow §8.6](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md) 后端先行;else: by phase}}
+
+1. {{TODO}}

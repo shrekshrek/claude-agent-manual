@@ -4,7 +4,26 @@
 
 ## 现有 starter
 
-- [`fastapi.example.md`](fastapi.example.md) — FastAPI + SQLAlchemy 2.0 + Pydantic v2 项目级约定 starter
+- [`fastapi.example.md`](fastapi.example.md) — FastAPI + SQLAlchemy 2.0 + Pydantic v2(🐍 Python backend)
+- [`gin.example.md`](gin.example.md) — Gin + sqlx(🐹 Go backend)
+- [`react.example.md`](react.example.md) — React 18+ + Vite + React Router(⚛️ TypeScript frontend)
+- [`vue.example.md`](vue.example.md) — Vue 3 + Vite + Pinia(💚 TypeScript frontend)
+
+## 缺失 starter(欢迎 PR)
+
+按用户群 / 主流度倒序,首批待补:
+
+- `django.example.md` — Django REST Framework(🐍 Python backend,Django ORM + DRF serializers)
+- `nextjs.example.md` — Next.js 14+ App Router(⚛️ TypeScript fullstack,RSC / Server Actions)
+- `springboot.example.md` — Spring Boot 3+(☕ Java/Kotlin backend,JPA / 3 layer)
+- `express.example.md` — Express + Prisma / TypeORM(📦 Node backend)
+- `flask.example.md` — Flask + SQLAlchemy(🐍 Python sync backend)
+- `nuxt.example.md` — Nuxt 4(💚 Vue meta-framework,SSR)
+- `axum.example.md` 或 `actix.example.md` — Rust backend
+- `svelte.example.md` 或 `sveltekit.example.md` — Svelte 5+(🔥 frontend)
+
+走 PR 流程:fork plugin 仓库,加 `<framework>.example.md` 文件 + 在本表挪到"现有 starter" 列。
+
 
 ## 怎么用
 

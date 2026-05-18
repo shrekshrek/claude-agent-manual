@@ -448,6 +448,13 @@ cp "$PLUGIN_ROOT/template/_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.exampl
 
 **关键 2:删除不适用的整个章节**:某 tier 用不到的章节(如 service-tier 不用 ORM 时 `### {{TIER_ORM}}` 整节删)直接整段删,不留空章节。
 
+**关键 3:Module Structure 节按主语言渲染**:template `## Module Structure` 节列了**多语言示例**(Python `.py` / Go `.go` / Java `*.java` / etc.)。Step 5.3 渲染时:
+- **保留**:对应主语言的那行文件名
+- **删掉**:其他语言示例(避免产物含不适用的语言)
+- 示例:Q&A 主语言 == Go → `router.py / service.py / repository.py / ...` 全删,保留 `handler.go / service.go / repository.go / dto.go / models.go`
+- 不强制保留所有 5 层 — 若 Q&A 答没有 ORM(如 backend.orm: 不用)或 repository 模式不需要,删对应层
+- 跨 tier 时(`internal/<domain>/`)按该语言惯例确定子目录结构
+
 ### Step 5.3b 决策完整性 audit(强制,workflow §1.12 Generation Discipline)
 
 每填完一个 tier(Step 5.3),**单 tier 一组** dispatch [`decision-completeness-auditor`](../../agents/decision-completeness-auditor.md)(input/output 详见 agent doc):

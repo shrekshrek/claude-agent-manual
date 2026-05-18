@@ -23,7 +23,7 @@ description: Security baseline (always-loaded, no globs — Never/Ask first/Alwa
 
 ## 默认做(✅ Always)
 
-- 用户输入用 schema 校验(Pydantic / Zod / 等)
+- 用户输入用 schema 校验(具体库视技术栈,如 Go: `go-playground/validator` / `ozzo-validation`;TypeScript: `Zod` / `Yup` / `Valibot`;Python: `Pydantic`;Java: `Bean Validation`)
 - 错误信息不泄露 stack trace 给 end user(只 log,不 expose)
 - 密钥从环境变量读,不在代码里
 - 日志脱敏敏感字段

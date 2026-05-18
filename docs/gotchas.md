@@ -4,9 +4,32 @@
 >
 > **怎么用**:新项目 P0 阶段扫一遍;AGENTS.md 可以 `@imports` 引用本文件让 AI 读到。
 
+## 📋 内容范围(stack 覆盖度)
+
+每条坑标 **🌐 通用** / **🐍 Python+FastAPI** / **📦 Node/TS** 等标签。**只看跟自己栈相关的**。当前内容偏 Python+FastAPI(plugin 早期主要在该栈实证落地),其他栈陆续补:
+
+| 章节 | 适用 stack |
+|---|---|
+| #1 `pnpm setup` 覆盖 script | 📦 Node/TS pkg-mgr |
+| #2 `asyncpg` libpq-dev | 🐍 Python + PostgreSQL |
+| #3 `PROJECT_NAME` 端口冲突 | 🌐 Docker |
+| #4 `container_name` vs `name:` | 🌐 Docker |
+| #5 scripts 命名分层 | 🌐 Monorepo / `package.json` scripts |
+| #6 Pydantic v2 extras | 🐍 Python |
+| #7 URL replace | 🐍 Python + asyncpg |
+| #8 测试 DB"不存在就建" | 🌐 通用思路 / 例子用 Python |
+| #9 FastAPI + asyncpg 测试 session | 🐍 Python + FastAPI |
+| #10 测试 engine NullPool | 🐍 SQLAlchemy + asyncio |
+| #11 Go 专属坑(待补) | 🐹 Go |
+| #12 React/Next 专属坑(待补) | ⚛️ React |
+
+> **Go / Rust / Java / TypeScript-React 项目用户**:本文件目前只能给 #1 / #3 / #4 / #5(部分) / #8 4 条提供价值。**stack-specific 坑欢迎 PR 到 plugin 仓库** —— 真实搭建过程中踩到的坑,反例 → 正例 → 为什么,各 5-10 条即可。
+
 ---
 
 ## 1. `pnpm setup` 是 pnpm 内置命令,会覆盖你的 npm script
+
+> 适用 stack:**📦 Node/TS**(用 pnpm 作 package manager 的项目)
 
 **反例**(项目第一版踩了):
 ```json
@@ -26,6 +49,8 @@
 ---
 
 ## 2. `asyncpg` 不需要 `libpq-dev` —— 别照 `psycopg2` 习惯装 apt 包
+
+> 适用 stack:**🐍 Python + PostgreSQL**
 
 **反例**:
 ```dockerfile
@@ -59,6 +84,8 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev
 
 ## 3. `PROJECT_NAME` 隔离不解决 host 端口冲突
 
+> 适用 stack:**🌐 Docker / docker-compose**(任何栈)
+
 **反例**:依赖 `COMPOSE_PROJECT_NAME` 隔离多项目,然后默认 5432/8000 标准端口。两个项目同时跑 → host 端口 `0.0.0.0:5432 already allocated`。
 
 **为什么不解决**:Docker Compose 的 project name 只隔离**容器名 / 卷名 / 网络名**,host 端口绑定是全局资源,任何项目占了端口其他人都进不来。
@@ -74,6 +101,8 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev
 ---
 
 ## 4. 别手设 `container_name`,用顶层 `name:`
+
+> 适用 stack:**🌐 Docker / docker-compose**(任何栈)
 
 **反例**:
 ```yaml
@@ -105,6 +134,8 @@ services:
 ---
 
 ## 5. scripts 命名要分层,生命周期和 tier 内操作不要混
+
+> 适用 stack:**🌐 Monorepo / `package.json` scripts**(例子用 Node,思路通用 Makefile / justfile / Taskfile)
 
 **反例**(nuxt 脚手架的真实代码):
 ```json
@@ -145,6 +176,8 @@ services:
 
 ## 6. Pydantic v2 特殊类型有隐式 extras 依赖
 
+> 适用 stack:**🐍 Python + Pydantic v2**
+
 **反例**:
 ```toml
 dependencies = ["pydantic>=2.10.0"]
@@ -177,6 +210,8 @@ dependencies = ["pydantic[email]>=2.10.0"]
 
 ## 7. 别用字符串 `replace` 改 URL
 
+> 适用 stack:**🐍 Python + asyncpg**(思路通用:driver-specific URL scheme 处理)
+
 **反例**(测试 conftest 第一版):
 ```python
 test_url = settings.DATABASE_URL.replace("/app", "/app_test")
@@ -200,6 +235,8 @@ JS 等价:`const url = new URL(baseUrl); url.pathname = '/app_test'`
 ---
 
 ## 8. 测试数据库要"不存在就建",别假设它已存在
+
+> 适用 stack:**🌐 通用思路 / 例子用 Python**(任何用 DB 的测试基建都适用)
 
 **反例**:conftest 直接连 `<db>_test`,数据库没建就报 `database "app_test" does not exist`。
 
@@ -226,6 +263,8 @@ async def _ensure_test_database(url, test_db_name):
 ---
 
 ## 9. FastAPI + asyncpg 测试模式 —— 共享 session 是病灶
+
+> 适用 stack:**🐍 Python + FastAPI + asyncpg + SQLAlchemy**
 
 **反例**:fixture 创建单个 `db_session`,覆盖 `get_db` 让所有请求共用它,期望"测试结束 rollback 整个 connection"。
 ```python
@@ -272,6 +311,8 @@ async def client(session_factory):
 
 ## 10. 测试 engine 必须用 `NullPool` —— 否则跨 event loop 必崩
 
+> 适用 stack:**🐍 Python + SQLAlchemy + asyncio**
+
 **反例**(承接 9 修对了之后还会崩):
 ```python
 @pytest_asyncio.fixture(scope="session")
@@ -301,6 +342,41 @@ asyncio_default_fixture_loop_scope = "session"  # session-scoped 异步 fixture 
 ```
 
 ---
+
+## 11. Go 专属坑(待补充)
+
+> 适用 stack:**🐹 Go**
+
+<!-- TODO(plugin maintainer / 社区 PR):补充 Go 真实搭建过程踩到的坑。预期主题:
+- goroutine leak(`go func()` 漏 cancel)
+- channel send / receive 死锁
+- `defer` 在 for loop 内(资源延迟到函数返回)
+- nil interface vs nil pointer 比较陷阱
+- `context.Context` 传递不完整
+- module path 跟 import path 不一致
+- `go.mod` `replace` directive 滥用
+- 并发 map 写需要 sync.Map / mutex
+- HTTP client 不复用导致连接泄漏
+- testing 包 -race 检测器没启用 -->
+
+每条按 反例 → 正例 → 为什么 格式。社区 PR 欢迎。
+
+## 12. React / Next.js 专属坑(待补充)
+
+> 适用 stack:**⚛️ React / Next.js**
+
+<!-- TODO(plugin maintainer / 社区 PR):补充 React+Vite / Next.js 真实搭建坑。预期主题:
+- `useEffect` 漏 deps 导致 stale closure
+- Strict Mode 双调用 effect 时副作用没幂等
+- `key={index}` 列表渲染错位
+- 状态 batching 假设错误(React 18 自动批处理)
+- Next.js App Router vs Pages Router 心智混淆
+- `'use client'` / `'use server'` 边界
+- TanStack Query staleTime 默认 0 导致频繁 refetch
+- Tailwind purge 漏 dynamic class name
+- Vite HMR 不刷新某些边界(全局 store) -->
+
+每条按 反例 → 正例 → 为什么 格式。社区 PR 欢迎。
 
 ## 跨条总结(怎么避免下次再踩)
 

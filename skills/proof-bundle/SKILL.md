@@ -28,7 +28,7 @@ The template (from `/feature-init` SKILL.md inline tasks.md § Proof Bundle):
 
 This skill **verifies** these items and **fills them in** at the bottom of `tasks.md`.
 
-> **Item 5a vs 5b 的区分**:5a 是 audit(已发生改动),5b 是 backlog(待处理建议)。早期版本把两者混成单条 "AGENTS.md drift 建议",用户无法区分 "我已改了什么" vs "还需改什么" —— v2.3.6 起拆开。
+> **Item 5a vs 5b 的区分**:5a 是 audit(已发生改动),5b 是 backlog(待处理建议)── 分开记让用户能区分 "我已改了什么" vs "还需改什么"。
 
 User input: `$ARGUMENTS` — feature slug or "current"
 

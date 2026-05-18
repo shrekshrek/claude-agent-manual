@@ -87,7 +87,7 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 - YYYY-MM-DD: 改了 §<N> <节名>;原因见 ADR-<NNNN>
 ```
 
-若 spec.md 没有 `## 修订记录` 节(老 spec,v2.3.1 之前的 template),提示用户在 spec.md 末尾手动加该节,**然后** skill 追加条目。
+若 spec.md 没有 `## 修订记录` 节(老 spec 或自定 template),提示用户在 spec.md 末尾手动加该节,**然后** skill 追加条目。
 
 ## Step 5.5 — (--module 模式追加)Module 边界变更
 

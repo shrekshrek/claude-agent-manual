@@ -34,9 +34,9 @@ User input: `$ARGUMENTS` — `<feature-slug>` or empty (use most recent feature)
 |---|---|---|
 | **M1** | spec.md 六要素是否齐(§1 Outcomes / §2 Scope / §3 Constraints / §4 Verification + plan.md `Prior decisions` + plan.md `§1 模块影响范围`)| grep `^## ` 节标题,核对清单 |
 | **M2** | spec.md `## 2. Scope` 是否有 `**Include**` + `**Exclude/不做**` 两个清单 | grep markdown bullet 在 `## 2.` 节内 |
-| **M3** | spec.md `## 4. Verification` 至少含 N(default 3)条具体可测项 | 数 `- [ ]` 或 `-` bullet |
+| **M3** | spec.md `## 4. Verification` 至少含 3 条具体可测项(plugin default,项目可调)| 数 `- [ ]` 或 `-` bullet |
 | **M4** | plan.md `§1.1 Sibling Alignment`(若多模块时)是否填(非 placeholder) | grep `Align` / `Deviate` / `Codify` 三选一关键词 |
-| **M5** | tasks.md 任务数 ≥ 3 且不全是 `## TODO`(用户填了具体内容) | grep `- [ ]` 数量 + 检 `{{TODO}}` 残留 |
+| **M5** | tasks.md 任务数 ≥ 3(plugin default,项目可调)且不全是 `## TODO`(用户填了具体内容) | grep `- [ ]` 数量 + 检 `{{TODO}}` 残留 |
 
 任一失败 → 报告给用户 + 提供修法建议(指向具体节)。
 

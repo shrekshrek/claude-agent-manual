@@ -58,7 +58,7 @@ P0 时根据栈填齐 placeholder。
 
 ## 框架特殊约定(**label-only**,detail 走 `.claude/rules/<fw>.md`)
 
-> ⚠️ 每条只给短标签(单行 ≤ 80 字符)。Detail 严禁重复 ── 违反 → 两边漂移(workflow §1.3 反模式 / 本仓 F-52)。
+> ⚠️ 每条只给短标签(单行 ≤ 80 字符)。Detail 严禁重复 ── 违反 → 两边漂移(workflow §1.3 反模式)。
 
 ### {{TIER_FRAMEWORK}}(critical labels,≤ 5 个)
 

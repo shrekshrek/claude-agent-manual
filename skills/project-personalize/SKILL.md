@@ -101,7 +101,7 @@ ls -la       # 此时 cwd 已是 target
 - **`<!-- @.claude/rules/security.md -->`** 注释 → AskUserQuestion(y/n)→ y → Edit 取消注释
 - **整行 missing** → 报告"建议手工追加 `@.claude/rules/security.md`(workflow §1.5)",不自动加(可能破坏 AGENTS.md 自定义结构)
 
-对应 project-init Step 4.5 同逻辑(F-30 silent fail 兜底)。
+对应 project-init Step 4.5 同逻辑(`@import` 兜底以避 silent fail)。
 
 ## Step 4.A — 替换 scaffold default 值
 

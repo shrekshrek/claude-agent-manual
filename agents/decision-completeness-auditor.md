@@ -100,7 +100,7 @@ Skip these (not your job):
 3. **language_conventions / 框架 vendor docs 钉死的 idiom** — match against language idiom 或 framework vendor 官方文档**唯一推荐**路径(`PascalCase.vue` / `defineProps<{...}>()` / `APIRouter` / `select()` 等 agent 凭训练即可识别) → ⚠️
 4. **None of above** → 🚫 unanchored plant,must-fix
 
-**⚠️ vs 🚫 边界(F-53 校准):vendor docs 钉死的强 idiom 归 ⚠️ 不归 🚫**:
+**⚠️ vs 🚫 边界:vendor docs 钉死的强 idiom 归 ⚠️ 不归 🚫**:
 - vendor docs 列**唯一推荐**路径(如 Vue 3 `PascalCase.vue` SFC naming / FastAPI `lifespan` 而非 deprecated `@app.on_event`)→ ⚠️ language/vendor idiom,**caller 端展示给用户处置(accept / fix / defer),不 block Preview**
 - vendor docs 列**多 idiom 并存**(如 Vitest 测试可 `.test.ts` 同目录 / `__tests__/` / `tests/` 顶层)→ ⚠️ language idiom,提示 Q&A 应该问
 - **真无追溯**(Q&A 没问 + vendor docs 没钉 + 无 language idiom 基础)→ 🚫 must-fix
@@ -109,7 +109,7 @@ Skip these (not your job):
 - ❌ "FastAPI mainstream uses `app/main.py`,所以 `app.celery_app` 也 plausibly OK" —— **错**。`app.main` 是 entry convention,`app.celery_app` 不是 → 仍是 🚫 plant
 - ❌ "Celery 通常配 Redis" —— **错**。"通常" ≠ "convention",Celery 官方文档列 Redis / RabbitMQ / SQS / 等多个 broker 都是 first-class → 仍是 🚫 plant 必须 Q&A 或 deferred
 
-**反例(避免过度严苛 ── F-53 修)**:
+**反例(避免过度严苛 ── vendor docs idiom 归 ⚠️)**:
 - ❌ 标 `PascalCase.vue` 为 🚫 must-fix —— **错**。Vue 3 官方 Style Guide A 唯一推荐 → ⚠️ language/vendor idiom,caller 让用户 accept / fix / defer
 - ❌ 标 `defineProps<{...}>()` generic 形式为 🚫 must-fix —— **错**。Vue 3 官方 TS+Composition 唯一推荐 → ⚠️ language/vendor idiom
 - ❌ 标 EP `unplugin-vue-components` + resolver 按需引入为 🚫 must-fix —— **错**。Element Plus 官方文档唯一按需路径 → ⚠️ language/vendor idiom
@@ -178,7 +178,7 @@ For each unique decision, list ALL its occurrences across `files_to_audit`. Flag
 
 ## Coverage
 
-**严算**(F-53 修):
+**严算**:
 - `verified_ratio = (✅+🛡️) / total`(锚定到 Q&A / plugin policy)
 - `acceptance_pending_ratio = ⚠️ / total`(language / vendor idiom,等 caller 决定 accept / fix / defer)
 - `must_fix_ratio = 🚫 / total`(unanchored plant,block Preview Gate)

@@ -153,7 +153,7 @@ sub-agent 返回结构化报告(2-3 candidates + recommendation + 理由)→ pro
   - 若 mixed-lang(Python + TS / Go + TS / etc.)→ **per-tier**(test / lint / pkg-mgr 在 Step 5.1 mini-Q&A 各 tier 单独问)
   - 若 single-lang(全 TS / 全 Python)→ **shared**(本轮追加问 test framework / lint / pkg-mgr,所有 tier 共享)
 
-> Round 3 已废:test framework / lint / pkg-mgr **per-tier** 时全挪进 mini-Q&A(F-22)。**只有 single-lang fullstack 或单 tier 项目本轮问这 3 项**。
+> Round 3 已废:test framework / lint / pkg-mgr **per-tier** 时全挪进 mini-Q&A。**只有 single-lang fullstack 或单 tier 项目本轮问这 3 项**。
 
 ### 命令推导主声明
 
@@ -238,7 +238,6 @@ cp "$PLUGIN_ROOT/docs/gotchas.md" docs/gotchas.md
 - `security.md`(always-on 全局规则)同样应含,描述 "Security baseline (always-loaded)"
 - 缺 `description:` 不算 silent fail(规则照常加载),但 hurt scalability / discoverability —— 多 path-scoped rule 时看不出每条管什么
 
-> ⚠️ **F-54 修(v2.9.5)**:`code-style.md` 中 `命名 / 缩进 / 行宽` 三项 placeholder 已从 template 删除 ── 跟 language / formatter default 一致的不该写(workflow §1.3 "标准通用约定不该收")。template 现在只留警告 prose 提示用户"真覆盖了 default 才在下方加一条 + 同步 lint config"。skill 不需要填这三项,只需复制 template 即可。
 
 ### 4.3 globs 推导(`{{CODE_STYLE_GLOBS}}` / `{{TESTING_GLOBS}}`)
 
@@ -321,7 +320,7 @@ Preview Gate 之前,dispatch [`decision-completeness-auditor`](../../agents/deci
   ```
 **Block 规则**(per [workflow §1.12](https://github.com/shrekshrek/project-workflow/blob/main/docs/workflow.md#112-生成纪律generation-discipline)):🚫 > 0 不进 4.6 Preview,按 agent 修正选项处理后**重跑本 step**;⚠️ 不 block,4.6 Preview Gate 同时展示给用户处置。
 
-> ⚠️ **vendor docs 钉死的 idiom**(如 Vue 3 `PascalCase.vue` / `defineProps<{...}>()` / EP `unplugin-vue-components` / UnoCSS `uno.config.ts` 等)auditor 据训练自识别归 ⚠️ language/vendor idiom,**不**归 🚫 must-fix ── 治 F-53 frontend audit 过激判断。详见 `decision-completeness-auditor.md` Phase 2 反例。
+> ⚠️ **vendor docs 钉死的 idiom**(如 Vue 3 `PascalCase.vue` / `defineProps<{...}>()` / EP `unplugin-vue-components` / UnoCSS `uno.config.ts` 等)auditor 据训练自识别归 ⚠️ language/vendor idiom,**不**归 🚫 must-fix。详见 `decision-completeness-auditor.md` Phase 2 反例。
 
 ### 4.6 落盘前 Preview Gate(强制,workflow §1.10 关键纪律)
 
@@ -439,7 +438,7 @@ cp "$PLUGIN_ROOT/template/_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.exampl
 - `{{TIER_SRC_DIR}}` / `{{TIER_ENTRY_POINT}}` / `{{TIER_TEST_DIR}}` 据 Step 5.1 题 4 答案渲染(每语言 ✨ default 或用户自定)
 - service-tier template 的 `## Source Layout` 节是 SOT,其他节(Commands / Testing / Module Structure)统一引用 `{{TIER_SRC_DIR}}`,渲染时只替换一处指针 — **防止多处独立 plant 出不自洽路径**(workflow §1.12 Cross-file consistency)
 
-**关键 1:framework 规则强制 split**(workflow §1.3 决策口诀 + 反模式防御 + F-52 修法):
+**关键 1:framework 规则强制 split**(workflow §1.3 决策口诀 + 反模式防御):
 
 - `{{TIER_FRAMEWORK_CRITICAL_LABELS}}` / `{{TIER_ORM_CRITICAL_LABELS}}` / `{{TIER_QUEUE_CRITICAL_LABELS}}` 只填 **≤ 5 个短标签**(label-only,单行 ≤ 80 字符),例:
   - FastAPI:`APIRouter 分组 / Depends DI / HTTPException 集中处理 / async 内禁 sync I/O / 输出返 Pydantic schema`
@@ -448,7 +447,7 @@ cp "$PLUGIN_ROOT/template/_multi_tier_examples/${TIER_CATEGORY}.CLAUDE.md.exampl
   1. 检测 `$PLUGIN_ROOT/template/.claude/rules/_examples/<framework>.example.md` 是否存在(`fastapi` / `vue` / `react` / `gin` / 等)
   2. 若有 → `cp "$PLUGIN_ROOT/template/.claude/rules/_examples/<framework>.example.md" .claude/rules/<framework>.md`,改 frontmatter `globs:` 适配 tier(如 `globs: backend/**/*.py`),`description:` 适配
   3. 若无 starter → tier-level labels 段填 ≤ 5 个标签;`.claude/rules/<framework>.md` 先建空壳带 frontmatter + TODO comment
-- **F-52 防漂移**:tier critical 段 verbatim 重复 `.claude/rules/<fw>.md` 内容 = 违反 tier 文件自己头部"差量于根"原则。**禁** 在 tier critical 段写整句 rule(只标签);整句 detail 永远在 rules 文件里
+- **防漂移**:tier critical 段 verbatim 重复 `.claude/rules/<fw>.md` 内容 = 违反 tier 文件自己头部"差量于根"原则。**禁** 在 tier critical 段写整句 rule(只标签);整句 detail 永远在 rules 文件里
 
 **关键 2:删除不适用的整个章节**:某 tier 用不到的章节(如 service-tier 不用 ORM 时 `### {{TIER_ORM}}` 整节删)直接整段删,不留空章节。
 

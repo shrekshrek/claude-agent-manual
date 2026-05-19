@@ -174,7 +174,7 @@ Dispatch [`decision-completeness-auditor`](../../agents/decision-completeness-au
 ✅ 决策完整性 audit:N 🚫 / M ⚠️(或:跳过 ── 纯空骨架无 pre-fill)
 
 📝 下一步:主会话 conversational fill 剩余 placeholder(见 6.2 引导)
-   填完后跑 `/project-workflow:spec-quality-check` 验收(机械检 + 主观二审 + audit 三层兜底)── 迭代到 pass。
+   填完后跑 `/project-workflow:spec-quality-check` 验收(机械检 + 主观二审)── 迭代到 pass。
 ```
 
 ## Failure modes

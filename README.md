@@ -45,19 +45,21 @@ Then in any project:
 
 ## Skills
 
-| Skill | Version | What it does |
-|---|---|---|
-| `/project-workflow:project-init` | v2.3.0 | P0 greenfield initialization — Q&A walks through stack and conventions, generates 10+ files (AGENTS.md / .claude/ / docs/adr/ / etc.). "不确定" answers trigger `tech-researcher` sub-agent for parallel research. Auto-handles fullstack tier structure. |
-| `/project-workflow:project-personalize` | v2.3.0 | P0 scaffold-cloned / retrofit — adapts existing v2-shaped project to user's values. Replaces scaffold defaults, completes tier-level AGENTS.md (双文件 scheme), dispatches `codebase-explorer` sub-agent to scan existing structure. |
-| `/project-workflow:feature-init` | v2.3.3 | Start a new feature spec — creates `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` with module-setup auto-detection (per workflow §2). **Pure scaffold + chat-context pre-fill + reminders + decision-completeness audit** ── **zero preset Q&A interview**. Mission-critical strong constraints (Scope "不做" / Sibling Alignment) become reminders gated by `/spec-quality-check`, not required Q&A. Adaptive hooks (tech-researcher / context7) trigger passively in main session. All TODOs filled via conversational mode (per spec-driven §3.6.5). |
-| `/project-workflow:spec-quality-check` | v2.3.2 | **Pre-implementation gate** — verify spec/plan/tasks quality per spec-driven.md §3.7 7-q checklist. Mechanical checks + dispatches `spec-quality-reviewer` sub-agent for subjective items. |
-| `/project-workflow:spec-revise` | v2.3.2 | **Mid-implementation revision** — orchestrate spec/plan/module change SOP per workflow.md §3.5 / §2.6 (ADR + spec.md 修订记录 + plan.md prior decisions + tasks.md rebalance). |
-| `/project-workflow:l1-review` | v2.1.0 | Run project's `check` command (lint/typecheck/test) and report pass/fail with concise summary |
-| `/project-workflow:l2-review` | v2.1.0 | A 类约定 compliance review (AGENTS.md 多层 + `.claude/rules/*.md`) via `agents-md-reviewer` sub-agent — finds rule violations on changed files |
-| `/project-workflow:l3-review` | v2.1.0 | spec.md compliance review via `spec-reviewer` sub-agent — finds missing items, deviations, scope creep |
-| `/project-workflow:proof-bundle` | v2.1.0 | Verify proof bundle completeness and write to `tasks.md` § Proof Bundle |
-| `/project-workflow:feature-done` | v2.1.0 | Composite: L1 → L2 → L3 → proof-bundle, single READY/NEEDS WORK/BLOCKED verdict |
-| `/project-workflow:agents-md-revise` | v2.3.3 | **P4 main tool** — proactively audit A 类约定 (AGENTS.md 多层 + `.claude/rules/`) vs project actual state; report objective drifts (commands / deps / dirs / versions / config), per-item yes/no/ignore-forever, apply + commit draft. Critical-only, no subjective signals, no hook auto-trigger. |
+> Version follows `plugin.json`(currently 2.9.x);per-skill version columns removed to avoid drift。
+
+| Skill | What it does |
+|---|---|
+| `/project-workflow:project-init` | P0 greenfield initialization — Q&A walks through stack and conventions, generates 10+ files (AGENTS.md / .claude/ / docs/adr/ / etc.). "不确定" answers trigger `tech-researcher` sub-agent for parallel research. Auto-handles fullstack tier structure. |
+| `/project-workflow:project-personalize` | P0 scaffold-cloned / retrofit — adapts existing v2-shaped project to user's values. Replaces scaffold defaults, completes tier-level AGENTS.md (双文件 scheme), dispatches `codebase-explorer` sub-agent to scan existing structure. |
+| `/project-workflow:feature-init` | Start a new feature spec — creates `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` with module-setup auto-detection (per workflow §2). **Pure scaffold + chat-context pre-fill + reminders + decision-completeness audit** ── **zero preset Q&A interview**. Mission-critical strong constraints (Scope "不做" / Sibling Alignment) become reminders gated by `/spec-quality-check`, not required Q&A. Adaptive hooks (tech-researcher / context7) trigger passively in main session. All TODOs filled via conversational mode (per spec-driven §3.6.5). |
+| `/project-workflow:spec-quality-check` | **Pre-implementation gate** — verify spec/plan/tasks quality per spec-driven.md §3.7 7-q checklist. Mechanical checks + dispatches `spec-quality-reviewer` sub-agent for subjective items. |
+| `/project-workflow:spec-revise` | **Mid-implementation revision** — orchestrate spec/plan/module change SOP per workflow.md §3.5 / §2.6 (ADR + spec.md 修订记录 + plan.md prior decisions + tasks.md rebalance) + `decision-completeness-auditor` 兜底 (Step 7.5) + Diff Review Gate with revert hatch (Step 7.6)。 |
+| `/project-workflow:l1-review` | Run project's `check` command (lint/typecheck/test) and report pass/fail with concise summary |
+| `/project-workflow:l2-review` | A 类约定 compliance review (AGENTS.md 多层 + `.claude/rules/*.md`) via `agents-md-reviewer` sub-agent — finds rule violations on changed files |
+| `/project-workflow:l3-review` | spec.md compliance review via `spec-reviewer` sub-agent — finds missing items, deviations, scope creep |
+| `/project-workflow:proof-bundle` | Verify proof bundle completeness and write to `tasks.md` § Proof Bundle |
+| `/project-workflow:feature-done` | Composite: L1 → L2 → L3 → proof-bundle, single READY/NEEDS WORK/BLOCKED verdict |
+| `/project-workflow:agents-md-revise` | **P4 main tool** — proactively audit A 类约定 (AGENTS.md 多层 + `.claude/rules/`) vs project actual state; report objective drifts (commands / deps / dirs / versions / config), per-item yes/no/ignore-forever, apply + commit draft. Critical-only, no subjective signals, no hook auto-trigger. |
 
 > Spec templates (`docs/specs/_template/{spec,plan,tasks}.md`) are plugin-canonical — `/feature-init` cps from `$CLAUDE_PLUGIN_ROOT/template/` at feature-creation time. To customize, fork the plugin and edit `template/docs/specs/_template/`.
 
@@ -70,6 +72,7 @@ Then in any project:
 | `tech-researcher` | `/project-init` Q&A | Researches stack/library choices (2-3 candidates + pros/cons + recommendation). Read-only. Triggers when user answers "不确定" / "帮我选" in Q&A. |
 | `codebase-explorer` | `/project-personalize` Path C | Surveys existing codebase structure → recommends `## Project Structure` content. Read-only, no edits. |
 | `spec-quality-reviewer` | `/spec-quality-check` | Subjective spec quality assessment (Outcomes specificity / Constraints真假 / tasks verifiable). 4-phase methodology, cite-or-skip discipline. Read-only. |
+| `decision-completeness-auditor` | `/project-init`, `/project-personalize`, `/feature-init`, `/agents-md-revise` | Pre-Preview-Gate plant-decision audit (workflow.md §1.12). Traces every specific-string decision (module name / path / broker / port / package name / host) back to Q&A answers or stack conventions; flags unanchored plants 🚫 must-fix. Read-only. |
 
 ## Read this first
 
@@ -94,7 +97,7 @@ v1 source preserved at git tag [`v1.1.0`](../../tree/v1.1.0). Install via `git c
 
 ## Status
 
-v2.1.0 ships 6 skills + 2 sub-agents. `/feature-init` is validated end-to-end (produced a 316-line spec/plan/tasks triple for `email-verification` feature on the reference scaffold). The remaining 5 skills are fresh — battle-testing welcome.
+v2.9.20 ships **11 skills + 6 sub-agents** covering the full P0→P2→P3→P4 lifecycle. `/feature-init` is validated end-to-end (produced a 316-line spec/plan/tasks triple for `email-verification` feature on the reference scaffold). The remaining skills are still gathering field hours — battle-testing welcome.
 
 The methodology docs (workflow.md / gotchas.md / spec-driven.md / dev-deploy.md) are complete and have been validated against a working Vue 3 + FastAPI scaffold (kept in a private dev playground until publish).
 

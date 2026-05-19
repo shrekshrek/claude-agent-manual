@@ -585,17 +585,19 @@ docs/adr/
 - (a) Fullstack / (b) Web Backend / (c) Web Frontend / (d) CLI·Library / (e) Mobile / (f) 其他
 - 若 (a) → 追加 1.5 tier 命名(default: `backend` + `frontend`)
 
-**轮 2 — 主语言 + 跨 tier 共性** ← 影响 globs / 命令推导
+**轮 2 — 主语言**(跨 tier 共性 auto-derive,user 可 override)← 影响 globs / 命令推导
 - 主语言?(若多语言列 2-3 个)
-- (Fullstack only)跨 tier 共性 = single-lang(共享)还是 mixed-lang(per-tier)?
-  - single-lang → 本轮追加问 test framework / lint / pkg-mgr(全 tier 共享)
-  - mixed-lang → 挪到 Step 5.1 mini-Q&A 各 tier 单独问
+- (Fullstack only)据主语言 auto-derive 跨 tier 共性,**不预问**:
+  - mixed-lang(Python+TS / Go+TS / etc.)→ **per-tier**(test/lint/pkg-mgr 挪到 Step 5.1 各 tier 单独问)
+  - single-lang(全 TS / 全 Python / etc.)→ **shared**(本轮追加问 test framework / lint / pkg-mgr 全 tier 共享)
+  - 告知 user 推断结果,user 可 reply `'per-tier'` override
 
 **Step 5.1 mini-Q&A(仅 Fullstack,每 tier 一轮)** ← 填 tier-level AGENTS.md
-- **Service-style** tier(backend / api / worker / etc.)required:框架 / ORM / 数据库 / [mixed-lang: test/lint/pkg-mgr];optional:任务队列 / Migration 工具
+- **Service-style** tier(backend / api / worker / etc.)required:框架 / ORM / 数据库 / source layout / [mixed-lang: test/lint/pkg-mgr];optional:任务队列 / Migration 工具
 - **UI-style** tier(frontend / web / mobile / etc.)required:框架 / UI 库 / state 管理 / [Nuxt/Next: 渲染模式] / [mixed-lang: test/lint/pkg-mgr];optional:样式方案 / E2E 框架
+- **Chat-context skip**:跑 mini-Q&A 前扫本 session 对话,user 已 hint 的题跳过
 
-题量:单 tier ~5 题 / single-lang fullstack ~8 题 / mixed-lang fullstack ~15-17 题。
+题量(F-69/70 简化后):单 tier ~3-4 题 / single-lang fullstack ~6-7 题 / mixed-lang fullstack ~12-14 题。
 
 #### 不问什么(故意省的题,每项都有原则)
 
@@ -995,7 +997,7 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 
 **预防比修订便宜**:写完 spec 后跑 [`spec-driven.md §3.7 质量自检 7 问`](spec-driven.md#37-specplan-写完后的质量自检7-问-checklist),实施开始前过一遍。
 
-**工具**:[`/project-workflow:spec-revise`](../skills/spec-revise/SKILL.md) 自动化本 SOP——orchestrate ADR 起草 + spec.md `## 修订记录` 格式化追加 + plan.md prior decisions + tasks.md 重排。**不强制起 ADR**:用户判断"不必修(只是模糊)"时,引导写 plan.md prior decisions 即可。
+**工具**:[`/project-workflow:spec-revise`](../skills/spec-revise/SKILL.md) 自动化本 SOP——orchestrate ADR 起草 + spec.md `## 修订记录` 格式化追加 + plan.md prior decisions + tasks.md 重排 + `decision-completeness-auditor` 兜底(Step 7.5,catch plant)+ Diff Review Gate(Step 7.6,user 可一键 revert 全部改动)。**不强制起 ADR**:用户判断"不必修(只是模糊)"时,引导写 plan.md prior decisions 即可。
 
 ---
 

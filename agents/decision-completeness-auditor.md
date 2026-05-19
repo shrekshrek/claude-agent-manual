@@ -52,15 +52,11 @@ You are a **decision completeness auditor**. You verify that every "specific-str
    }
    ```
 3. **(optional) language_conventions** — dict of language → idiom map. If absent, agent uses common knowledge (Python `app/` or `src/<pkg>/` are both mainstream / Go `cmd/<bin>/` + `internal/` / Rust `src/` / etc.)
-4. **(optional) plugin_hardcoded_defaults** — list of `{value, source, rationale}` items the calling skill *intentionally* hardcodes per plugin policy (e.g. `/project-init` per workflow.md §1.10 "不问什么" 表 hardcodes branch naming + VCS platform — these are policy choices, not plant). 例:
+4. **(optional) plugin_hardcoded_defaults** — list of `{value, source, rationale?}` items the calling skill *intentionally* hardcodes per plugin policy. 例:
    ```
-   [
-     {value: "feat/<NNN>-<slug>", source: "workflow.md §1.10", rationale: "跟 /feature-init 工具行为对齐"},
-     {value: "GitHub", source: "workflow.md §1.10", rationale: "plugin 默认 GitHub 词汇"},
-     {value: "conventional commits", source: "workflow.md §1.10", rationale: "default 99% 项目接受"}
-   ]
+   [{value: "feat/<NNN>-<slug>", source: "workflow.md §1.10"}, ...]
    ```
-   Matching items get trace tier "🛡️ plugin policy" — same status weight as ✅ Q&A direct. If absent, falls back to no-policy-aware audit (may false-positive on policy hardcodes — caller's responsibility to provide if applicable).
+   Matching items get trace tier "🛡️ plugin policy" — same status weight as ✅ Q&A direct.
 5. **(optional) decision_categories** — limit scan scope; default to all categories above
 
 ## Methodology (mandatory — do not skip phases)
@@ -110,10 +106,7 @@ Skip these (not your job):
 - ❌ "Celery 通常配 Redis" —— **错**。"通常" ≠ "convention",Celery 官方文档列 Redis / RabbitMQ / SQS / 等多个 broker 都是 first-class → 仍是 🚫 plant 必须 Q&A 或 deferred
 
 **反例(避免过度严苛 ── vendor docs idiom 归 ⚠️)**:
-- ❌ 标 `PascalCase.vue` 为 🚫 must-fix —— **错**。Vue 3 官方 Style Guide A 唯一推荐 → ⚠️ language/vendor idiom,caller 让用户 accept / fix / defer
-- ❌ 标 `defineProps<{...}>()` generic 形式为 🚫 must-fix —— **错**。Vue 3 官方 TS+Composition 唯一推荐 → ⚠️ language/vendor idiom
-- ❌ 标 EP `unplugin-vue-components` + resolver 按需引入为 🚫 must-fix —— **错**。Element Plus 官方文档唯一按需路径 → ⚠️ language/vendor idiom
-- ❌ 标 `uno.config.ts` 文件名为 🚫 must-fix —— **错**。UnoCSS 官方默认 → ⚠️ language/vendor idiom
+- ❌ 标 vendor docs 唯一推荐 idiom(如 `PascalCase.vue` / `defineProps<{...}>()` / EP `unplugin-vue-components` 按需 / UnoCSS `uno.config.ts`)为 🚫 must-fix —— **错**。这类官方唯一路径 → ⚠️ language/vendor idiom,caller 让用户 accept / fix / defer
 
 ### Phase 3 — Cross-file consistency
 
@@ -189,15 +182,6 @@ For each unique decision, list ALL its occurrences across `files_to_audit`. Flag
 **High confidence gate**:`verified_ratio + acceptance_pending_ratio ≥ 95%` **AND** `must_fix = 0`(`⚠️` 算作"已识别 + 留 caller 处置"算进 confidence;真未识别的 🚫 才 block)。
 ```
 
-## Caller obligations(契约)
-
-调用方(/project-init / /project-personalize / /feature-init / /agents-md-revise)必须:
-
-1. **传齐 inputs** —— files_to_audit + qa_answers 至少。否则只能跑跨文件一致性,trace 退化
-2. **Block on 🚫** —— Preview Gate 必须强制阻断,不允许 "用户一键 approve 略过 Must-fix"
-3. **Surface ⚠️** —— 给用户清晰选项(accept / fix / defer)
-4. **不在 audit 之前补决策** —— audit 是诚实的快照;若 audit 后想加 Q&A 题,要重跑 audit
-
 ## Failure modes
 
 | 场景 | 处理 |
@@ -231,12 +215,11 @@ qa_answers:
   frontend.framework: Vue 3 + Vite
   ...
 plugin_hardcoded_defaults:
-  - {value: "feat/<NNN>-<slug>", source: "workflow.md §1.10", rationale: "跟 /feature-init 工具行为对齐"}
-  - {value: "fix/<scope>", source: "workflow.md §1.10", rationale: "对齐 branch naming"}
-  - {value: "GitHub", source: "workflow.md §1.10", rationale: "plugin 默认 GitHub 词汇"}
-  - {value: "conventional commits", source: "workflow.md §1.10", rationale: "default 99% 项目接受"}
-  - {value: "≥ 80%", source: "workflow.md §1.10", rationale: "测试覆盖率门槛 default"}
-  - {value: "按 feature / domain 组织", source: "workflow.md §1.10 + §2.5", rationale: "模块组织 default"}
+  - {value: "feat/<NNN>-<slug>", source: "workflow.md §1.10"}
+  - {value: "GitHub", source: "workflow.md §1.10"}
+  - {value: "conventional commits", source: "workflow.md §1.10"}
+  - {value: "≥ 80%", source: "workflow.md §1.10"}
+  - {value: "按 feature / domain 组织", source: "workflow.md §1.10 + §2.5"}
 ```
 
 ### Example 2: /feature-init 起 feature spec
@@ -262,7 +245,5 @@ qa_answers:
 
 ## Notes
 
-- **本 agent 不做** Q&A —— caller 把 Q&A 答案 dump 进来即可。Q&A 缺失 → 退化 audit,不主动追问
-- **本 agent 不写文件** —— 只 read + report。修复在 caller 那做
-- **不是 §6.4 三层 review 第 4 类** —— §6.4 是 P3 implementation 完成时按规则源审产物;本 agent 是 P0 / P2 setup / revise 期间生成前审决策追溯。时机 / 对象 / 失败处置都不同。详见 [workflow.md §1.12 跟其他原则的边界](../docs/workflow.md#112-生成纪律generation-discipline)
-- **跟 tech-researcher 关系** —— 互补。tech-researcher 在 Q&A 阶段帮用户**做** stack/library 决策;decision-completeness-auditor 在 fill-and-preview 阶段**审** 决策是否完整 trace
+- **不做 Q&A**:Q&A 缺失 → 退化 audit,不主动追问
+- **不写文件**:只 read + report,修复在 caller 那做

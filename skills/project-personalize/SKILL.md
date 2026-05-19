@@ -9,7 +9,7 @@ description: Adapt a scaffold-cloned or v2-shaped existing project to user's spe
 
 Adapt a project that **already has** v2 baseline files (AGENTS.md / `.claude/`)—typically because you cloned a v2 scaffold or are retrofitting an existing project—to your specific values, tier structure, and codebase reality.
 
-> `docs/specs/_template/` 不是 v2 baseline 必需项 —— 模板由 `/feature-init` 提供;本 skill 检测到本地 `_template/` 时仅作为可选 override 处理。
+> `docs/specs/_template/` 不是 v2 baseline ── 模板由 `/feature-init` 从 plugin canonical 直接 cp,不支持 per-project 定制。
 
 **Use when**:
 - You cloned a v2-shaped scaffold(如 [`shrekshrek/full-stack-scaffolding-fastapi-nuxt4`](https://github.com/shrekshrek/full-stack-scaffolding-fastapi-nuxt4))
@@ -59,7 +59,6 @@ ls -la       # 此时 cwd 已是 target
 | 根 `AGENTS.md` 是否 v2 六要素结构 | 检测 `## Commands` + `## Testing` + `## Project Structure` + `## Code Style` + `## Git Workflow` + `## Boundaries` 是否齐 |
 | 根 `CLAUDE.md` | 存在 / 不存在 + 是否 `@AGENTS.md` alias |
 | `.claude/rules/` | 存在 / 不存在 |
-| `docs/specs/_template/`(可选)| 存在=用户 override / 不存在=用 plugin bundle 默认 |
 | Tier 目录(`backend/` / `frontend/` / `server/` / etc.) | 列出找到的 tier + 每个 tier 的 `AGENTS.md` / `CLAUDE.md` 状态 |
 
 **若根 `AGENTS.md` 不存在或非 v2 六要素结构** → 告诉用户:"这不像 v2-shaped 项目。建议先跑 `/project-init` 从零起 v2 baseline。" → 中止。

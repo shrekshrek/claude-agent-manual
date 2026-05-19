@@ -1,6 +1,6 @@
 ---
 name: project-init
-description: Initialize a project's v2 starter kit (AGENTS.md + .claude/ + tier-level AGENTS.md if fullstack). Q&A driven, language/stack agnostic. Dispatches tech-researcher sub-agent for "不确定" answers. Accepts optional `$ARGUMENTS` = target directory path (defaults to current working directory). Spec templates live in `/feature-init` skill bundle; projects can override by creating `docs/specs/_template/` manually. Claude Code-native. Use at P0 (project's first day). Not for adding features mid-project — use /feature-init for that.
+description: Initialize a project's v2 starter kit (AGENTS.md + .claude/ + tier-level AGENTS.md if fullstack). Q&A driven, language/stack agnostic. Dispatches tech-researcher sub-agent for "不确定" answers. Accepts optional `$ARGUMENTS` = target directory path (defaults to current working directory). Spec templates live in `/feature-init` skill bundle (plugin canonical, not per-project customizable). Claude Code-native. Use at P0 (project's first day). Not for adding features mid-project — use /feature-init for that.
 ---
 
 **Response language**: Match the user's prompt language (中文 / English / etc.) for all natural-language output. Generated file content stays in the language of the source template (Chinese for v2).
@@ -70,7 +70,6 @@ ls -la       # 此时 cwd 已是 target
 | 空目录 / 几乎空 | 直接进 Step 2(greenfield 流程) |
 | 已有 `AGENTS.md` | **`/project-init` 不适合**——跑 `/project-workflow:project-personalize` 替代(见下) |
 | 已有 `.claude/` 但无 AGENTS.md | 问: "已有 .claude/。要 (a) 全部覆盖 / (b) 中止?" |
-| 已有 `docs/specs/_template/` | 保留不动(用户 override,/feature-init 会优先读)|
 
 若用户选中止 → 直接停。否则继续。
 
@@ -538,7 +537,6 @@ agent 看上面输出 + Q&A 答案对照 3 项:
 
 - **AGENTS.md `## Boundaries` 节**:template default 是合理 baseline(改 API / 加依赖 / 改迁移 / 改权限 → ⚠️ Ask first);**项目特定**的 ⚠️ Ask first 项(如"改 prompt template 必问 LLM ops team" / "改 billing rate 必问 finance")只有你知道,P0 后扫一遍补上(workflow §1.10 不收集这部分,见同节"不问什么"表)
 - `.claude/rules/code-style.md` 各章节("函数/类"、"文件/模块"、"错误处理")可按项目实践补充
-- 想 per-project 定制 spec/plan/tasks 模板:`mkdir -p docs/specs/_template && touch docs/specs/_template/.user-customized` + 自己写 `spec.md / plan.md / tasks.md`(`/feature-init` 会优先读本地版)
 - 想加 framework-specific rules(FastAPI / Vue / etc.):`cp "$CLAUDE_PLUGIN_ROOT/template/.claude/rules/_examples/<framework>.example.md" .claude/rules/<framework>.md`,然后改 frontmatter `globs:` + `description:`(说明见同目录 README.md)
 
 ### ⚠️ Aspirational refs(本 P0 不创建)

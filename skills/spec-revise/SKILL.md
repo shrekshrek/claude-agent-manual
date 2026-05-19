@@ -125,6 +125,37 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 
 跟用户确认每条变化,用 Edit 工具更新 `tasks.md`。
 
+## Step 7.5 — 决策完整性 audit(强制,workflow §1.12 Generation Discipline)
+
+Step 5-7 Edit 已落盘 ── 在提示 user `git commit` 前 dispatch [`decision-completeness-auditor`](../../agents/decision-completeness-auditor.md) 审本次 revision 累积修改(catch ADR Decision 落地时引入的 plant):
+
+- `files_to_audit`: 本次 revision 涉及的所有文件 ── `docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md` + `docs/adr/<NNNN>-<topic>.md` +(若 Step 5.5 触发)`<module>/AGENTS.md` + `<tier>/AGENTS.md` + `.claude/rules/<topic>.md`
+- `qa_answers`: Step 2 触发发现(user 简述) + Step 4 ADR 三节(Context / Decision / Consequences) + Step 5/5.5/6/7 各步 user 确认的具体改动
+- `language_conventions`: null
+- `plugin_hardcoded_defaults`: `{value: "<NNNN>-<topic>", source: "spec-revise Step 3 ADR numbering convention"}`
+
+**典型 plant**(audit 应 catch):
+- 新引入的 entity / 字段名超出 ADR Decision 明示
+- API endpoint path 凭空(spec.md / plan.md §2 改动里出现 user 没说的 path)
+- 错误码 / HTTP method 凭印象 plant
+- module 路径 / `.claude/rules/<topic>` 命名超出 §5.5 Codify Decision
+
+**Block 规则**:🚫 > 0 → 报告给 user,提示 `git checkout HEAD -- <file>` 回退后据 audit feedback 重跑 spec-revise;⚠️ 不 block,Step 7.6 同时展示。
+
+## Step 7.6 — Diff Review Gate(强制,落盘已完成 → user 决定 commit / revert)
+
+跑 `git diff HEAD -- <files-touched>` 显示本次 revision 全部跨文件改动 + 附 Step 7.5 audit 摘要(`✅ N / ⚠️ M / 🚫 K`)。
+
+AskUserQuestion:
+
+| 选项 | 处理 |
+|---|---|
+| ✅ 全部接受 | 进 Step 8(改动已 commit-ready)|
+| ⚠️ 某项要调 | 指明 + 改完**重跑 Step 7.5 audit + 7.6 review** |
+| 🚫 全 revert | `git checkout HEAD -- <files-touched>` 回退,提示重新跑 spec-revise(从 Step 2 起)|
+
+> spec-revise 是**贵阶段** 修订(改 spec/plan/tasks/ADR/module/rules 多个 A 类约定文件,跨文件 inconsistency 风险高)── audit + diff review 双 gate 兜底,避免 plant 偷偷进 commit。
+
 ## Step 8 — 总结
 
 ```markdown
@@ -155,6 +186,8 @@ ls docs/adr/ | grep -E '^[0-9]{4}-' | sort -rn | head -1
 | spec.md 无 `## 修订记录` 节(老 spec)| 提示用户手动加节 → continue |
 | 用户走完 Step 2 决定 "其实不必修" | 引导写 plan.md prior decisions + 退出,不起 ADR |
 | 多个 ADR 同时起(并发 revision)| 警告"建议一次只 revise 一个 topic",用户确认后 continue |
+| Step 7.5 audit 标 🚫 | 报告 plant 给 user,提示 `git checkout HEAD -- <file>` 回退 + 据 feedback 重跑;skill 不主动重 audit(等 user 决定)|
+| Step 7.6 user 选 revert | 跑 `git checkout HEAD -- <files-touched>`,退回 Step 2 让 user 调整发现描述后重启 |
 
 ## Notes
 

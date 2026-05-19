@@ -132,12 +132,16 @@ sub-agent 返回结构化报告(2-3 candidates + recommendation + 理由)→ pro
   (2) 自定义:输入 tier 名 + 路径(如 server + web / api + app)
 ```
 
-### 轮 2:语言 + 跨 tier 共性
+### 轮 2:语言 + 跨 tier 共性(auto-derive)
 
 - 主语言?(若多语言列 2-3 个)
-- **(Fullstack only)** 跨 tier 共性问 — 答 "shared" / "per-tier":
-  - 若 mixed-lang(Python + TS / Go + TS / etc.)→ **per-tier**(test / lint / pkg-mgr 在 Step 5.1 mini-Q&A 各 tier 单独问)
-  - 若 single-lang(全 TS / 全 Python)→ **shared**(本轮追加问 test framework / lint / pkg-mgr,所有 tier 共享)
+- **(Fullstack only)** 据主语言 **auto-derive** 跨 tier 共性 ── **不预问**(用户答案 100% 能从主语言推):
+  - mixed-lang(Python + TS / Go + TS / Rust + TS / etc.)→ **per-tier**(test / lint / pkg-mgr 跨语言不可能共享 → 进 Step 5.1 mini-Q&A 各 tier 单独问)
+  - single-lang(全 TS / 全 Python / 全 Go)→ **shared**(同语言一套工具链 → 本轮追加问 test framework / lint / pkg-mgr,所有 tier 共享)
+  
+  告诉 user 推断结果:"📌 据主语言 `<X>` 推断为 **<shared/per-tier>** ── per-tier 时进 Step 5.1 mini-Q&A 各 tier 单独问 test/lint/pkg-mgr。"
+  
+  **Escape hatch**:若 user 主动 reject(罕见 corner case,如"全 TS 但 backend Bun + frontend pnpm"),允许 user 回 `'per-tier'` override auto-derive。
 
 > Round 3 已废:test framework / lint / pkg-mgr **per-tier** 时全挪进 mini-Q&A。**只有 single-lang fullstack 或单 tier 项目本轮问这 3 项**。
 
@@ -346,6 +350,8 @@ For each tier in [Q&A 轮 1.5 tier list]:
 **Q&A 规则(适用所有 tier 类别)**:
 - ✅ **Required**:必问。产出文件每条 project-specific 断言必 trace 到这些答案
 - ⚪️ **Optional**:可省;若省,生成文件**只能用 stack default 或留 TODO**,**禁** agent 单方面写决策塞进 AGENTS.md
+
+> **Chat-context pre-check**(per `/feature-init` F-60 chat-as-context pattern):跑 mini-Q&A 之前先扫本 session 早期对话 ── 若 user 已经明确 hint 出某题答案(如 P0 第一句 "我要做 FastAPI + SQLAlchemy + PostgreSQL,前端 Vue + Element Plus"),**跳过对应已 hint 的题**,只问未 hint 的。避免冗问 user 已明示的内容。Chat 没说的 ✅ Required 题仍必问。
 
 #### Service-style tier mini-Q&A
 

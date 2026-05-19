@@ -115,7 +115,6 @@ docs/specs/
 
 - 目录名 `<NNN>-<slug>`,编号便于排序和引用
 - 完成后**整个目录归档,不删、不改**;后续变更起新目录引用旧的(见 §5)
-- 想 per-project 定制 spec 模板字段(如金融加合规节)→ `mkdir docs/specs/_template/` + 写自己的 `{spec,plan,tasks}.md` + `touch .user-customized` 哨兵,`/feature-init` 优先读本地 override
 
 ### 3.3 `spec.md` 写法(WHAT,冻结)
 
@@ -318,12 +317,12 @@ docs/specs/
 
 ---
 
-### 3.6.5 Phase A:填 TODOs 的 AI 协作 SOP(主会话用)
+### 3.6.5 Phase A:填 TODOs 的 AI 协作 SOP(主会话用 ── primary mode)
 
-**何时用本节**:`/feature-init` 退出后,如果用户选择**不**走 Step 7 自动 Q&A 填(或后续单独跟 AI 在主会话填),AI 应**读本节后按规则引导**——保证 quality 标准 inline 内化,**不依赖事后 quality-check 才发现问题**。
+**本节是 conversational fill 的 primary mode SOP**:`/feature-init` 创建 spec/plan/tasks scaffold + 走完 mission-critical 强约束(Step 7.A 7.B)+ adaptive hooks(Step 7.C)+ 决策完整性 audit(Step 7.E)后,**绝大多数 TODOs 由 user 在主会话跟 AI 对话填**(spec.md §1 Outcomes / §3 Constraints / §4 Verification / plan.md §2 架构决策 / §3 Prior decisions / tasks.md 任务清单 等)。AI 应**读本节后按规则引导** ── 保证 quality 标准 inline 内化,**不依赖事后 quality-check 才发现问题**。
 
-> **若用户跑 /feature-init Step 7,本 SOP 已被 skill 内化**,不需另外引用。
-> 本节只在 **主会话非-skill context** 下生效。
+> **本节既适用 `/feature-init` Step 7.D 提示用户走的对话路径,也适用主会话非-skill context 的纯人 + AI 协作填**。
+> Plugin **不预设** Q&A 替用户填这些 ── feature 类型多样,固定 Q&A 不可能通用;conversational 模式让 AI 据 user 真实业务上下文自适应 fill。
 
 #### 顺序:按节依次填,不跳
 

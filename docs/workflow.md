@@ -805,10 +805,16 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 /project-workflow:feature-init <slug>
    ├─ 创建 docs/specs/<NNN>-<slug>/{spec,plan,tasks}.md
    ├─ 检测 Module Setup(§2 sub-flow);新模块时反常判定(§2.3)
-   └─ (可选)Step 7 Q&A 走完 spec §1-3 + plan §2 TODOs
+   ├─ (若 user 已在本 session chat 讨论过 feature)读 chat 上下文 → 据已讨论事实 pre-fill placeholder
+   └─ (可选)Step 7:mission-critical 强约束 + adaptive hooks + audit
+        ├─ 7.A Scope "不做"(必走;chat 已覆盖则直接填)
+        ├─ 7.B Sibling Alignment(多模块时;chat 已覆盖则直接填)
+        ├─ 7.C 按需 dispatch tech-researcher / context7(stack 不确定 / 拉外部库文档)
+        ├─ 7.D 其余 TODOs 走主会话 conversational fill(参 spec-driven.md §3.6.5)
+        └─ 7.E decision-completeness-auditor 兜底
         │
         ▼
-   主会话补 TODOs(若 Step 7 skip 或没走完)→ 详见 spec-driven.md §3.6.5
+   主会话 conversational fill 剩余 TODOs(primary mode;chat-as-context 已 pre-fill 的则跳过)
         │
         ▼
 ─────── 实施前 gate(§3.7 / spec-driven.md §3.7)───────

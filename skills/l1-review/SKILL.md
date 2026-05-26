@@ -90,3 +90,4 @@ User input: `$ARGUMENTS` (optional — usually empty; could be a sub-scope like 
 - **不跑用户没要求的 sub-scope**。用户说 "backend",别顺手跑 frontend
 - **Stack-agnostic**:任何在 AGENTS.md 里定义了 check 命令的项目都适用
 - 若 check 命令需要 container / server 跑(如 `docker compose exec backend pytest`)而当前没起,fail fast:"Container `backend` not running. Start with `pnpm dev` first, then retry."
+- **跟 hooks 的关系**:hook(`lint-on-edit.js`)做保存时单文件 lint+format 且**自动改文件**(`eslint --fix` / `ruff format` / `gofmt -w`);本 skill 做端点全项目 lint+typecheck+test 且**只读报告(不改)**。同属 L1 机械层、两个交付节奏。**检测覆盖**上本 skill 是 hook 超集(hook 查的 lint 它都查 + 加 type/test/全项目);**但 hook 另含 auto-fix(本 skill 不做)**。共享同一份 linter config,所以保存时过的 lint 端点不矛盾报红(workflow.md §4.2 时间尺度层叠 / §6.4)。

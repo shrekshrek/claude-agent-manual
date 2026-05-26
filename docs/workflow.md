@@ -1009,7 +1009,7 @@ v2 对模块**长什么样**有 opinionated 偏好(不强制):
 
 | 层 | 规则来源 | 检查什么 | 检查机制 | 时机 |
 |---|---|---|---|---|
-| **L1 通用规则** | `~/.claude/rules/*` | 不可变、no console.log、安全等 | hooks(机械强制) | 文件保存后立即 |
+| **L1 机械层** | tool config(lint/type/test)+ `~/.claude/rules/*` 通用卫生 | 代码机械合规吗?(lint/type/test/format) | hook(保存时单文件 lint+format,**自动改**)+ `/l1-review`(端点全量 lint+type+test,**只读**) | 保存后 + 端点 |
 | **L2 项目约定** | `AGENTS.md` + `.claude/rules/*.md`(A 类约定全集) | 代码长得像这个项目吗? | linter + agent review | hook + 端点 |
 | **L3 功能规约** | `docs/specs/<NNN>/spec.md` | 代码做了说要做的事吗? | 测试 + agent review + 人审 | 交付时 |
 
@@ -1342,7 +1342,7 @@ LLM 的 attention 是 quadratic 或 sub-linear cost over context length。当 co
 
 | 层 | 工具 | 时机 |
 |---|---|---|
-| L1 | hooks(eslint / ruff / gofmt + universal rules)| 文件保存后(P3 持续) |
+| L1 | hook(eslint/ruff/gofmt,保存时单文件 lint+format,**自动改文件**)+ `/l1-review` skill(端点全量 check 命令 lint+type+test,**只读报告**)| 保存后 + 端点 |
 | L2 | reviewer agent + AGENTS.md 作 context | 端点(P3 proof bundle) |
 | L3 | reviewer agent + spec.md 作 context + 测试 | 端点(P3 proof bundle) |
 
